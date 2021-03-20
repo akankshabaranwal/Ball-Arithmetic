@@ -6,3 +6,4 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 
 add_executable(ball_arithmetic src/arb-test.c)
 target_link_libraries(ball_arithmetic arb flint)
+include_directories(include)
