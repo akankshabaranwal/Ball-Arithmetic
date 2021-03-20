@@ -1,0 +1,6 @@
+arb
+cmake-build-debug
+build
+*.out
+*.bin
+*.so
