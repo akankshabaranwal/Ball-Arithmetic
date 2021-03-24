@@ -13,6 +13,3 @@ Now you can build the project:
 $ `mkdir -p build && cd build`  
 $ `cmake ..`  
 $ `cmake --build .`
-
-### Windows
-TODO
