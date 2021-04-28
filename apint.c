@@ -13,7 +13,7 @@ void apint_add(apint_t *dst, apint_t *v1, apint_t *v2)
     char carry = 0;
     for (size_t i = 0; i < v1->length; i++)
     {
-        carry = _addcarry_u64(carry, v1->values[i], v2->values[i], &dst->values[i]);
+        carry = _addcarryx_u64(carry, v1->values[i], v2->values[i], &dst->values[i]);
     }
 }
 
