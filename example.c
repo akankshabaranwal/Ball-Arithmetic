@@ -25,7 +25,7 @@ int main(int argc, char const *argv[])
 
     apint_add(&dst, &a, &b);
 
-    printf("%0xllx, 0x%llx\n", dst.values[1], dst.values[0]);
+    printf("0x%llx, 0x%llx\n", dst.values[1], dst.values[0]);
 
     return 0;
 }
