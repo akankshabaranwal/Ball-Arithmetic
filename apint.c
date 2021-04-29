@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <immintrin.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "apint.h"
 
@@ -18,16 +19,26 @@ void apint_free(apint_t x)
     x->limbs = NULL;
 }
 
+void apint_copy(apint_ptr dst, apint_srcptr src)
+{
+    dst->length = src->length;
+    dst->limbs = realloc(dst->limbs, src->length * APINT_LIMB_BYTES);
+    memcpy(dst->limbs, src->limbs, src->length * APINT_LIMB_BYTES);
+}
+
 // right shift
-void apint_shiftr(apint_ptr x, size_t shift)
+void apint_shiftr(apint_ptr x, unsigned int shift)
 {
     assert(x->limbs);
+
+    if (!shift)
+        return;
 
     size_t sl, sr;
     for (apint_size_t i = 0; i < (x->length - 1); i++)
     {
         sr = shift;
-        sl = (sizeof(apint_limb_t) * 8) - shift;
+        sl = APINT_LIMB_BITS - shift;
 
         x->limbs[i] = (x->limbs[i + 1] << sl) | (x->limbs[i] >> sr);
     }
@@ -35,7 +46,7 @@ void apint_shiftr(apint_ptr x, size_t shift)
     x->limbs[x->length - 1] >>= shift;
 }
 
-void apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
+char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length);
@@ -47,6 +58,8 @@ void apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
     {
         carry = _addcarryx_u64(carry, a->limbs[i], b->limbs[i], &x->limbs[i]);
     }
+
+    return carry;
 }
 
 // a - b

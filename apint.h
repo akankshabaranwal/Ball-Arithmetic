@@ -19,22 +19,32 @@ typedef const __apint_struct *apint_srcptr;
 
 void apint_init(apint_t x, apint_size_t p);
 void apint_free(apint_t x);
+void apint_copy(apint_ptr dst, apint_srcptr src);
 
-void apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b);
+static inline apint_limb_t apint_getlimb(apint_ptr x, apint_size_t offset);
+
+char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b);
 void apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b);
-void apint_shiftr(apint_ptr x, size_t shift);
+void apint_shiftr(apint_ptr x, unsigned int shift);
 
-void apint_add_test();
-void apint_sub_test();
+static inline void apint_setmsb(apint_ptr x)
+{
+    x->limbs[x->length - 1] |= 1ull << (APINT_LIMB_BITS - 1);
+}
 
+// To-do: Deprecate and remove this, we should have a better API for setting apint values.
 static inline apint_limb_t apint_getlimb(apint_ptr x, apint_size_t offset)
 {
     return x->limbs[offset];
 }
 
+// To-do: Deprecate and remove this, we should have a better API for setting apint values.
 static inline void apint_setlimb(apint_ptr x, apint_size_t offset, apint_limb_t limb)
 {
     x->limbs[offset] = limb;
 }
+
+void apint_add_test();
+void apint_sub_test();
 
 #endif /* !APINT_H */
