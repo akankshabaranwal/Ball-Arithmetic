@@ -24,9 +24,9 @@ void apint_copy(apint_ptr dst, apint_srcptr src);
 char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b);
 void apint_shiftr(apint_ptr x, unsigned int shift);
 
-inline void appint_setmsb(apint_ptr x)
+inline void apint_setmsb(apint_ptr x)
 {
-    x->limbs[x->length - 1] |= 1 << (APINT_LIMB_BITS - 1);
+    x->limbs[x->length - 1] |= 1ull << (APINT_LIMB_BITS - 1);
 }
 
 // To-do: Deprecate and remove this, we should have a better API for setting apint values.
