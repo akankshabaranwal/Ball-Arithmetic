@@ -30,6 +30,9 @@ void apint_shiftr(apint_ptr x, unsigned int shift)
 {
     assert(x->limbs);
 
+    if (!shift)
+        return;
+
     size_t sl, sr;
     for (apint_size_t i = 0; i < (x->length - 1); i++)
     {
