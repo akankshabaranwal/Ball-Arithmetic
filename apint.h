@@ -20,14 +20,14 @@ typedef const __apint_struct    *apint_srcptr;
 void apint_init(apint_t x, apint_size_t p);
 void apint_free(apint_t x);
 
-void apint_add(apint_t x, apint_t a, apint_t b);
+void apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b);
 
-inline apint_limb_t apint_getlimb(apint_t x, apint_size_t offset)
+inline apint_limb_t apint_getlimb(apint_ptr x, apint_size_t offset)
 {
     return x->limbs[offset];
 }
 
-inline void apint_setlimb(apint_t x, apint_size_t offset, apint_limb_t limb)
+inline void apint_setlimb(apint_ptr x, apint_size_t offset, apint_limb_t limb)
 {
     x->limbs[offset] = limb;
 }

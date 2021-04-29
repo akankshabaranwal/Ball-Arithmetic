@@ -18,7 +18,7 @@ void apint_free(apint_t x)
     x->limbs = NULL;
 }
 
-void apint_add(apint_t x, apint_t a, apint_t b)
+void apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length);
@@ -32,17 +32,17 @@ void apint_add(apint_t x, apint_t a, apint_t b)
     }
 }
 
-void apint_sub(apint_t *dst, apint_t *v1, apint_t *v2)
+void apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     // To-do: Implement substraction. Possibly add a negative value flag in apint_t.
 }
 
-void apint_mul(apint_t *dst, apint_t *v1, apint_t *v2)
+void apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     // To-do: Implement multiplication.
 }
 
-void apint_div(apint_t *dst, apint_t *v1, apint_t *v2)
+void apint_div(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     // To-do: Implement division.
 }
