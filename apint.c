@@ -26,7 +26,7 @@ void apint_shiftr(apint_ptr x, unsigned int shift)
     for (apint_size_t i = 0; i < (x->length - 1); i++)
     {
         sr = shift;
-        sl = (sizeof(apint_limb_t) * 8) - shift;
+        sl = APINT_LIMB_BITS - shift;
 
         x->limbs[i] = (x->limbs[i + 1] << sl) | (x->limbs[i] >> sr);
     }
