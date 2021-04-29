@@ -18,7 +18,7 @@ void apint_free(apint_t x)
     x->limbs = NULL;
 }
 
-void apint_shiftr(apint_ptr x, size_t shift)
+void apint_shiftr(apint_ptr x, unsigned int shift)
 {
     assert(x->limbs);
 

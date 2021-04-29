@@ -21,7 +21,7 @@ void apint_init(apint_t x, apint_size_t p);
 void apint_free(apint_t x);
 
 char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b);
-void apint_shiftr(apint_ptr x, size_t shift);
+void apint_shiftr(apint_ptr x, unsigned int shift);
 
 inline apint_limb_t apint_getlimb(apint_ptr x, apint_size_t offset)
 {
