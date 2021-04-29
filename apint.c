@@ -1,19 +1,34 @@
 #include <assert.h>
 #include <immintrin.h>
+#include <stdlib.h>
 
 #include "apint.h"
 
-void apint_add(apint_t *dst, apint_t *v1, apint_t *v2)
+void apint_init(apint_t x, apint_size_t p)
 {
-    // To-do: Support adding AP ints with differing lengths.
-    assert(v1->length == v2->length);
+    x->length = (p / APINT_LIMB_BITS) + ((p % APINT_LIMB_BITS) > 0);
+    x->limbs = malloc(x->length * APINT_LIMB_BYTES);
+}
 
-    dst->length = v1->length;
+void apint_free(apint_t x)
+{
+    free(x->limbs);
+
+    x->length = 0;
+    x->limbs = NULL;
+}
+
+void apint_add(apint_t x, apint_t a, apint_t b)
+{
+    assert(x->limbs && a->limbs && b->limbs);
+    assert(a->length == b->length);
+    assert(a->length == x->length);
 
     char carry = 0;
-    for (size_t i = 0; i < v1->length; i++)
+
+    for (apint_size_t i = 0; i < a->length; i++)
     {
-        carry = _addcarryx_u64(carry, v1->values[i], v2->values[i], &dst->values[i]);
+        carry = _addcarryx_u64(carry, a->limbs[i], b->limbs[i], &x->limbs[i]);
     }
 }
 
