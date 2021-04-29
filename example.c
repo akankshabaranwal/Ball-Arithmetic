@@ -17,6 +17,7 @@ int main(int argc, char const *argv[])
     apint_setlimb(b, 1, 0x1);
 
     apint_add(x, a, b);
+    apint_shiftr(x, 2);
 
     printf("0x%llx 0x%llx\n", apint_getlimb(x, 1), apint_getlimb(x, 0));
 

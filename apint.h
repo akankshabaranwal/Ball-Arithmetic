@@ -2,7 +2,7 @@
 #define APINT_H
 
 typedef unsigned long long  apint_limb_t;
-typedef unsigned int        apint_size_t;
+typedef int                 apint_size_t;
 
 #define APINT_LIMB_BYTES    sizeof(apint_limb_t)
 #define APINT_LIMB_BITS     (APINT_LIMB_BYTES * 8)
@@ -21,6 +21,7 @@ void apint_init(apint_t x, apint_size_t p);
 void apint_free(apint_t x);
 
 void apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b);
+void apint_shiftr(apint_ptr x, size_t shift);
 
 inline apint_limb_t apint_getlimb(apint_ptr x, apint_size_t offset)
 {
