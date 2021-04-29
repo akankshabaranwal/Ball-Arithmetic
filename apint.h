@@ -24,6 +24,11 @@ void apint_copy(apint_ptr dst, apint_srcptr src);
 char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b);
 void apint_shiftr(apint_ptr x, unsigned int shift);
 
+inline void appint_setmsb(apint_ptr x)
+{
+    x->limbs[x->length - 1] |= 1 << (APINT_LIMB_BITS - 1);
+}
+
 inline apint_limb_t apint_getlimb(apint_ptr x, apint_size_t offset)
 {
     return x->limbs[offset];
