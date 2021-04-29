@@ -18,6 +18,7 @@ void apint_free(apint_t x)
     x->limbs = NULL;
 }
 
+// right shift
 void apint_shiftr(apint_ptr x, size_t shift)
 {
     assert(x->limbs);
@@ -48,9 +49,20 @@ void apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
     }
 }
 
+// a - b
 void apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     // To-do: Implement substraction. Possibly add a negative value flag in apint_t.
+    assert(x->limbs && a->limbs && b->limbs);
+    assert(a->length == b->length); // only handle same lengths for now
+    assert(a->length == x->length);
+
+    char borrow = 0;
+
+    for (apint_size_t i = 0; i < a->length; i++)
+    {
+        borrow = _subborrow_u64(borrow, a->limbs[i], b->limbs[i], &x->limbs[i]);
+    }
 }
 
 void apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
