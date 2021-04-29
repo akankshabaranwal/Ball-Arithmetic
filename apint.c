@@ -34,7 +34,7 @@ void apint_shiftr(apint_ptr x, size_t shift)
     x->limbs[x->length - 1] >>= shift;
 }
 
-void apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
+char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length);
@@ -46,6 +46,8 @@ void apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
     {
         carry = _addcarryx_u64(carry, a->limbs[i], b->limbs[i], &x->limbs[i]);
     }
+
+    return carry;
 }
 
 void apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
