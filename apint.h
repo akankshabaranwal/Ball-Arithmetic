@@ -19,6 +19,7 @@ typedef const __apint_struct    *apint_srcptr;
 
 void apint_init(apint_t x, apint_size_t p);
 void apint_free(apint_t x);
+void apint_copy(apint_ptr dst, apint_srcptr src);
 
 char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b);
 void apint_shiftr(apint_ptr x, unsigned int shift);

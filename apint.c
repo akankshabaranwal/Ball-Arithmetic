@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <immintrin.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "apint.h"
 
@@ -16,6 +17,13 @@ void apint_free(apint_t x)
 
     x->length = 0;
     x->limbs = NULL;
+}
+
+void apint_copy(apint_ptr dst, apint_srcptr src)
+{
+    dst->length = src->length;
+    dst->limbs = realloc(dst->limbs, src->length * APINT_LIMB_BYTES);
+    memcpy(dst->limbs, src->limbs, src->length * APINT_LIMB_BYTES);
 }
 
 void apint_shiftr(apint_ptr x, unsigned int shift)
