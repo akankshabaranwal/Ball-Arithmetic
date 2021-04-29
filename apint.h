@@ -29,11 +29,13 @@ inline void appint_setmsb(apint_ptr x)
     x->limbs[x->length - 1] |= 1 << (APINT_LIMB_BITS - 1);
 }
 
+// To-do: Deprecate and remove this, we should have a better API for setting apint values.
 inline apint_limb_t apint_getlimb(apint_ptr x, apint_size_t offset)
 {
     return x->limbs[offset];
 }
 
+// To-do: Deprecate and remove this, we should have a better API for setting apint values.
 inline void apint_setlimb(apint_ptr x, apint_size_t offset, apint_limb_t limb)
 {
     x->limbs[offset] = limb;
