@@ -9,4 +9,4 @@ add_executable(example
     apint.c
     apfp.c
     example.c
-)
+        apbar.cpp apbar.h)
