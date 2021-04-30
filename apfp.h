@@ -4,7 +4,7 @@
 #include "apint.h"
 
 typedef apint_t             apfp_mant_t;
-typedef int                 apfp_sign_t;
+typedef int                 apfp_sign_t; //AB: Why is sign an int?
 typedef unsigned long       apfp_exp_t;
 
 typedef struct
