@@ -18,6 +18,7 @@ typedef __apfp_struct          apfp_t[1];
 typedef __apfp_struct          *apfp_ptr;
 typedef const __apfp_struct    *apfp_srcptr;
 
+void apfp_init(apfp_t x, apint_size_t p);
 void apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
 
 #endif /* !APFP_H */

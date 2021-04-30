@@ -8,5 +8,5 @@ project(ball-arithmetic C)
 add_executable(example
     apint.c
     apfp.c
-    example.c
-        apbar.cpp apbar.h)
+    apbar.c apbar.h
+        example.c )
