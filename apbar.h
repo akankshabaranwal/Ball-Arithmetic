@@ -17,5 +17,6 @@ typedef __apbar_struct          *apbar_ptr;
 typedef const __apbar_struct    *apbar_srcptr;
 
 void apbar_init(apbar_t x, apint_size_t p);
+void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
 
 #endif //APBAR_H
