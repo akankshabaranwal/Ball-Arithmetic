@@ -7,12 +7,16 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -madx")
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build)
 
 include_directories(include)
-add_executable(ball_arithmetic
+
+add_executable(arblib-test
         src/arb-test.c
-        apint.c
-        apfp.c
-        apbar.c
-        example.c
+)
+target_link_libraries(arblib-test arb flint)
+
+add_executable(ball-test
+        src/apint.c
+        src/apfp.c
+        src/apbar.c
+        src/example.c
 )
 
-target_link_libraries(ball_arithmetic arb flint)
