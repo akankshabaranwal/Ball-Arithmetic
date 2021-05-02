@@ -1,12 +1,22 @@
-# v3.13 is current on Debian stable.
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.10)
+project(ball_arithmetic C)
 
+set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -madx")
 
-project(ball-arithmetic C)
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build)
 
-add_executable(example
-    apint.c
-    apfp.c
-    example.c
+include_directories(include)
+
+add_executable(arblib-test
+        src/arb-test.c
 )
+target_link_libraries(arblib-test arb flint)
+
+add_executable(ball-test
+        src/apint.c
+        src/apfp.c
+        src/apbar.c
+        src/example.c
+)
+
