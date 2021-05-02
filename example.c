@@ -26,6 +26,9 @@ int main(int argc, char const *argv[])
     apint_free(x->mant);
     apint_free(a->mant);
     apint_free(b->mant);
+
+    // This is kinda jank but I'm testing sub
+    apint_sub_test();
 }
 
 void apint_sub_test()
