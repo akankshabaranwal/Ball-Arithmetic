@@ -5,6 +5,16 @@ void apfp_init(apfp_t x, apint_size_t p)
     apint_init(x->mant, p);
 }
 
+void apfp_set_mant(apfp_ptr x, apint_size_t offset, apint_limb_t limb)
+{
+    apint_setlimb(x->mant, offset, limb);
+}
+
+void apfp_set_exp(apfp_ptr x, apfp_exp_t exp)
+{
+    x->exp = exp;
+}
+
 void apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     // To-do: Handle negative values.

@@ -23,6 +23,23 @@ void apbar_init(apbar_t x, apint_size_t p)
 {    apfp_init(x->midpt, p);
 }
 
+void apbar_set_rad(apbar_ptr x, int mant, apfp_exp_t exp, apfp_sign_t sign)
+{
+    x->rad->mant = mant;
+    x->rad->exp = exp;
+    x->rad->sign = sign;
+}
+
+void apbar_set_midpt_exp(apbar_ptr x, apfp_exp_t exp)
+{
+    apfp_set_exp(x->midpt, exp);
+}
+
+void apbar_set_midpt_mant(apbar_ptr x, apint_size_t offset, apint_limb_t limb)
+{
+    apfp_set_mant(x->midpt, offset, limb);
+}
+
 void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 {
     apbar_init(c, p);
