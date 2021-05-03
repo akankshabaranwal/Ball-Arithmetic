@@ -41,14 +41,14 @@ void apint_add_test()
     apint_init(a, 128);
     apint_init(b, 128);
 
-    apint_setlimb(a, 0, 0x0000000000000001);
+    apint_setlimb(a, 0, 0x1);
     apint_setlimb(a, 1, 0x0);
 
-    apint_setlimb(b, 0, 0x0000000000000000);
+    apint_setlimb(b, 0, 0x1);
     apint_setlimb(b, 1, 0x0);
 
     apint_add(x, a, b);
-    // apint_shiftr(x, 2);
+    // apint_shiftr(x, 2); # Julia: what's the purpose of this again?
 
     printf("0x%llx 0x%llx\n", apint_getlimb(x, 1), apint_getlimb(x, 0));
 
@@ -89,14 +89,19 @@ void apint_mult_test()
     apint_init(a, 128);
     apint_init(b, 128);
 
-    apint_setlimb(a, 0, 0x1);
+    apint_setlimb(x, 0, 0);
+    apint_setlimb(x, 1, 0);
+    apint_setlimb(x, 2, 0);
+    apint_setlimb(x, 3, 0);
+
+    apint_setlimb(a, 0, 0x2);
     apint_setlimb(a, 1, 0x0);
 
-    apint_setlimb(b, 0, 0x1);
+    apint_setlimb(b, 0, 0x8);
     apint_setlimb(b, 1, 0x0);
 
     apint_mul(x, a, b);
-    apint_shiftr(x, 2);
+    // apint_shiftr(x, 2); # JULIA: what is the purpose of this again
 
     printf("0x%llx 0x%llx\n", apint_getlimb(x, 1), apint_getlimb(x, 0));
     printf("0x%llx 0x%llx\n", apint_getlimb(x, 3), apint_getlimb(x, 2));
