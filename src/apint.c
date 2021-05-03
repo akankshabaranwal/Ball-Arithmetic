@@ -81,6 +81,21 @@ void apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
 void apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     // To-do: Implement multiplication.
+    assert(x->limbs && a->limbs && b->limbs);
+    assert(a->length == b->length); // only handle same lengths for now
+    assert(a->length + b->length == x->length);
+
+    uint64_t overflow = 0;
+
+    for (apint_size_t i = 0; i < b->length; i++)
+    {
+        for (apint_size_t j = 0; j < a->length; j++)
+        {
+            x->limbs[i + j] += overflow;
+            x->limbs[i + j] += _mulx_u64(a->limbs[j], b->limbs[i], &overflow);
+        }
+        overflow = 0;
+    }
 }
 
 void apint_div(apint_ptr x, apint_srcptr a, apint_srcptr b)
