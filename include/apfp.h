@@ -24,5 +24,6 @@ void apfp_set_mant(apfp_ptr x, apint_size_t offset, apint_limb_t val);
 void apfp_set_exp(apfp_ptr x, apfp_exp_t exp);
 
 void apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
+void apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
 
 #endif /* !APFP_H */

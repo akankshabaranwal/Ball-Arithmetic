@@ -1,6 +1,11 @@
 #ifndef APINT_H
 #define APINT_H
 
+#include <assert.h>
+#include <immintrin.h>
+#include <stdlib.h>
+#include <string.h>
+
 typedef unsigned long long apint_limb_t;
 typedef int apint_size_t;
 

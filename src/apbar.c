@@ -3,7 +3,6 @@
 void mag_add(mag_ptr x, mag_srcptr a, mag_srcptr b)
 {
     // derived from apfp_add
-    // Todo: validate this
     // After swap, `a` is guaranteed to have largest exponent
     if (b->exp > a->exp)
     {
@@ -13,21 +12,22 @@ void mag_add(mag_ptr x, mag_srcptr a, mag_srcptr b)
     apfp_exp_t factor = a->exp - b->exp;
     x->mant = b->mant;
     x->mant = x->mant>>factor;
-
-    // Todo: check if we need to handle carry here?
-    x->mant = x->mant + a->mant;
-    x->exp = a->exp;
+    char carry =0;
+    carry = _addcarryx_u64(carry, a->mant, b->mant, &x->mant);
+    x->mant>>carry;
+    x->exp = a->exp + carry;
+    //x->mant = x->mant + a->mant;
+    //x->exp = a->exp;
 }
 
 void apbar_init(apbar_t x, apint_size_t p)
 {    apfp_init(x->midpt, p);
 }
 
-void apbar_set_rad(apbar_ptr x, int mant, apfp_exp_t exp, apfp_sign_t sign)
+void apbar_set_rad(apbar_ptr x, int mant, apfp_exp_t exp)
 {
     x->rad->mant = mant;
     x->rad->exp = exp;
-    x->rad->sign = sign;
 }
 
 void apbar_set_midpt_exp(apbar_ptr x, apfp_exp_t exp)
