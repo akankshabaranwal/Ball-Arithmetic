@@ -5,6 +5,11 @@ void apfp_init(apfp_t x, apint_size_t p)
     apint_init(x->mant, p);
 }
 
+void apfp_free(apfp_t x)
+{
+    apint_free(x->mant);
+}
+
 void apfp_set_mant(apfp_ptr x, apint_size_t offset, apint_limb_t limb)
 {
     apint_setlimb(x->mant, offset, limb);

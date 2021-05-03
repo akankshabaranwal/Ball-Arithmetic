@@ -16,15 +16,22 @@ void mag_add(mag_ptr x, mag_srcptr a, mag_srcptr b)
     carry = _addcarryx_u64(carry, a->mant, b->mant, &x->mant);
     x->mant>>carry;
     x->exp = a->exp + carry;
-    //x->mant = x->mant + a->mant;
-    //x->exp = a->exp;
+
+    //Set MSB
+    x->mant |= 1ull<<(APINT_LIMB_BITS-1);
 }
 
 void apbar_init(apbar_t x, apint_size_t p)
 {    apfp_init(x->midpt, p);
 }
 
-void apbar_set_rad(apbar_ptr x, int mant, apfp_exp_t exp)
+void apbar_free(apbar_t x)
+{
+    apfp_free(x->midpt);
+    //TODO: Need to free mag_t/ radius memory as well??
+}
+
+void apbar_set_rad(apbar_ptr x, apint_limb_t mant, apfp_exp_t exp)
 {
     x->rad->mant = mant;
     x->rad->exp = exp;

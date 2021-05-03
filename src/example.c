@@ -1,33 +1,38 @@
 #include <stdio.h>
-
-#include "apint.h"
-#include "apfp.h"
+#include "apbar.h"
 
 int main(int argc, char const *argv[])
 {
-    apfp_t x, a, b;
+    apbar_t x, a, b;
 
-    apint_init(x->mant, 128);
-    apint_init(a->mant, 128);
-    apint_init(b->mant, 128);
+    apbar_init(x, 128);
+    apbar_init(a, 128);
+    apbar_init(b, 128);
 
-    a->exp = 0;
-    apint_setlimb(a->mant, 0, 0x8000000000000000);
-    apint_setlimb(a->mant, 1, 0x8000000000000001);
+    // Initializing radius
+    apbar_set_rad(a,0x8000000000000000,0);
+    apbar_set_rad(b,0x8000000000000001,0);
 
-    b->exp = 0;
-    apint_setlimb(b->mant, 0, 0x8000000000000000);
-    apint_setlimb(b->mant, 1, 0x8000000000000001);
+    // Initialize midpt
+    apbar_set_midpt_exp(a,0);
+    apbar_set_midpt_mant(a, 0,0x8000000000000000);
+    apbar_set_midpt_mant(a, 1,0x8000000000000001);
 
-    apfp_add(x, a, b);
+    apbar_set_midpt_exp(b,0);
+    apbar_set_midpt_mant(b, 0,0x8000000000000000);
+    apbar_set_midpt_mant(b, 1,0x8000000000000001);
 
-    printf("0x%llx 0x%llx\n", apint_getlimb(x->mant, 1), apint_getlimb(x->mant, 0));
+    apbar_add(x, a, b, 128);
 
-    apint_free(x->mant);
-    apint_free(a->mant);
-    apint_free(b->mant);
+    //TODO: Add print for apbar
+    //printf("0x%llx 0x%llx\n", apint_getlimb(x->mant, 1), apint_getlimb(x->mant, 0));
 
-    // This is kinda jank but I'm testing sub
+    //TODO: Radius memory is not being freed currently
+    apbar_free(x);
+    apbar_free(a);
+    apbar_free(b);
+
+    // This is kinda junk but I'm testing sub
     apint_add_test();
     apint_sub_test();
     apint_mult_test();
