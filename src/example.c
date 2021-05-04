@@ -6,9 +6,25 @@
 
 int main(int argc, char const *argv[])
 {
-    apbar_t x, a, b;
+    apbar_t x, y, z;
+    apbar_init(x, 64);
+    apbar_set_midpt_mant(x, 0, 5816961868702417);
+    apbar_set_midpt_exp(x, 49);
+    apbar_set_rad(x, 0, 0);
+    apbar_print(x); printf("\n");
 
-    apbar_init(x, 128);
+    apbar_init(y, 64);
+    apbar_set_midpt_mant(y, 0, 1752215507021039);
+    apbar_set_midpt_exp(y, 49);
+    apbar_set_rad(y, 0, 0);
+    apbar_print(y); printf("\n");
+
+    apbar_add(z, x, y, 64);
+    apbar_print(z); printf("\n"); // This should print (118268396495679 * 2^-43) +/- (0)
+
+    apbar_t c, a, b;
+
+    apbar_init(c, 128);
     apbar_init(a, 128);
     apbar_init(b, 128);
 
@@ -25,13 +41,14 @@ int main(int argc, char const *argv[])
     apbar_set_midpt_mant(b, 0,0x8000000000000000);
     apbar_set_midpt_mant(b, 1,0x8000000000000001);
 
-    apbar_add(x, a, b, 128);
+    apbar_add(c, a, b, 128);
 
     //TODO: Add print for apbar
     //printf("0x%llx 0x%llx\n", apint_getlimb(x->mant, 1), apint_getlimb(x->mant, 0));
+    apbar_print(c); printf("\n");
 
     //TODO: Radius memory is not being freed currently
-    apbar_free(x);
+    apbar_free(c);
     apbar_free(a);
     apbar_free(b);
 

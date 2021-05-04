@@ -34,15 +34,20 @@ static inline void print_mid(apbar_srcptr value)
 
 static inline void print_rad(apbar_srcptr value)
 {
-    //printf("%lu", value->rad);
+    printf("(");
+    if (value->rad->mant == 0) {
+        printf("0");
+    }
+    else {
+        printf("%llu * 2^-%lu", value->rad->mant, value->rad->exp);
+    }
+    printf(")");
 }
 
 void apbar_print(apbar_srcptr value) {
-    printf("[");
     print_mid(value);
-    printf(",");
+    printf(" +/- ");
     print_rad(value);
-    printf("]");
 }
 
 void apbar_free(apbar_t x)
@@ -65,6 +70,12 @@ void apbar_set_midpt_exp(apbar_ptr x, apfp_exp_t exp)
 void apbar_set_midpt_mant(apbar_ptr x, apint_size_t offset, apint_limb_t limb)
 {
     apfp_set_mant(x->midpt, offset, limb);
+}
+
+void apbar_set_d(apbar_t x, double val)
+{
+    apbar_set_rad(x, 0, 0);
+    apfp_set_d(x->midpt, val);
 }
 
 void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
