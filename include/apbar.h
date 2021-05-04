@@ -1,7 +1,7 @@
-#include "apfp.h"
-
 #ifndef APBAR_H
 #define APBAR_H
+
+#include <apfp.h>
 
 typedef apfp_t apbar_midpt; //mid point is arbitrary precision floating point
 typedef unsigned long apbar_rad; //radius is fixed precision. In arb paper it is mag_t which is unsigned floating point
@@ -38,6 +38,8 @@ void apbar_free(apbar_t x);
 void apbar_set_rad(apbar_ptr x, apint_limb_t mant, apfp_exp_t exp);
 void apbar_set_midpt_exp(apbar_ptr x, apfp_exp_t exp);
 void apbar_set_midpt_mant(apbar_ptr x, apint_size_t offset, apint_limb_t limb);
+
+void apbar_print(apbar_srcptr value);
 
 //TODO: Check if we need a precision for add??
 void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);

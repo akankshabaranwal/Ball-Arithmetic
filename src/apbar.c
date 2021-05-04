@@ -1,4 +1,6 @@
-#include "apbar.h"
+#include <stdio.h>
+
+#include <apbar.h>
 
 void mag_add(mag_ptr x, mag_srcptr a, mag_srcptr b)
 {
@@ -23,6 +25,24 @@ void mag_add(mag_ptr x, mag_srcptr a, mag_srcptr b)
 
 void apbar_init(apbar_t x, apint_size_t p)
 {    apfp_init(x->midpt, p);
+}
+
+static inline void print_mid(apbar_srcptr value)
+{
+    apfp_print(value->midpt);
+}
+
+static inline void print_rad(apbar_srcptr value)
+{
+    //printf("%lu", value->rad);
+}
+
+void apbar_print(apbar_srcptr value) {
+    printf("[");
+    print_mid(value);
+    printf(",");
+    print_rad(value);
+    printf("]");
 }
 
 void apbar_free(apbar_t x)

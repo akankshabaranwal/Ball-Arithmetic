@@ -1,9 +1,33 @@
-#include "apint.h"
+#include <assert.h>
+#include <immintrin.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+
+#include <apint.h>
+#include <flint/fmpz.h>
 
 void apint_init(apint_t x, apint_size_t p)
 {
     x->length = (p / APINT_LIMB_BITS) + ((p % APINT_LIMB_BITS) > 0);
     x->limbs = malloc(x->length * APINT_LIMB_BYTES);
+}
+
+void apint_print(apint_srcptr value)
+{
+    fmpz_t number;
+    fmpz_init2(number, value->length);
+
+    fmpz_set_ui(number, value->limbs[0]);
+    for (int i = 1; i < value->length; ++i) {
+        fmpz_t val;
+        fmpz_set_ui(val, value->limbs[i]);
+        fmpz_mul_2exp(val, val, sizeof(apint_limb_t) * 8 * i);
+        fmpz_add(number, number, val);
+    }
+
+    fmpz_print(number);
+    fmpz_clear(number);
 }
 
 void apint_free(apint_t x)

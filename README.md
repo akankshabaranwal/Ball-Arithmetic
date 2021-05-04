@@ -1,8 +1,5 @@
 # Ball Arithmetic
-<<<<<<< HEAD
-=======
 Team 25: _Akanksha Baranwal, Gyorgy Rethy, Jiaqi Chen, Kouroche Bouchiat_
->>>>>>> apba-wip
 
 ## Setup
 ### Linux (Ubuntu 18.04)
@@ -17,9 +14,6 @@ Now you can build the project:
 $ `mkdir -p build && cd build`  
 $ `cmake ..`  
 $ `cmake --build .`
-<<<<<<< HEAD
-=======
 
 ### Windows
 TODO
->>>>>>> apba-wip

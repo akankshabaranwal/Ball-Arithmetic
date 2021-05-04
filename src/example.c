@@ -1,5 +1,8 @@
 #include <stdio.h>
-#include "apbar.h"
+
+#include <apint.h>
+#include <apfp.h>
+#include <apbar.h>
 
 int main(int argc, char const *argv[])
 {
@@ -56,6 +59,7 @@ void apint_add_test()
     // apint_shiftr(x, 2);
 
     printf("0x%llx 0x%llx\n", apint_getlimb(x, 1), apint_getlimb(x, 0));
+    apint_print(x); printf("\n");
 
     apint_free(x);
     apint_free(a);
@@ -80,6 +84,7 @@ void apint_sub_test()
     apint_shiftr(x, 2);
 
     printf("0x%llx 0x%llx\n", apint_getlimb(x, 1), apint_getlimb(x, 0));
+    apint_print(x); printf("\n");
 
     apint_free(x);
     apint_free(a);
@@ -105,6 +110,7 @@ void apint_mult_test()
 
     printf("0x%llx 0x%llx\n", apint_getlimb(x, 1), apint_getlimb(x, 0));
     printf("0x%llx 0x%llx\n", apint_getlimb(x, 3), apint_getlimb(x, 2));
+    apint_print(x); printf("\n");
 
     apint_free(x);
     apint_free(a);
