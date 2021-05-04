@@ -13,18 +13,23 @@ void apint_init(apint_t x, apint_size_t p)
     x->limbs = malloc(x->length * APINT_LIMB_BYTES);
 }
 
+void apint_to_fmpz(fmpz_t res, apint_srcptr src)
+{
+    fmpz_init2(res, src->length);
+
+    fmpz_set_ui(res, src->limbs[0]);
+    for (int i = 1; i < src->length; ++i) {
+        fmpz_t val;
+        fmpz_set_ui(val, src->limbs[i]);
+        fmpz_mul_2exp(val, val, sizeof(apint_limb_t) * 8 * i);
+        fmpz_add(res, res, val);
+    }
+}
+
 void apint_print(apint_srcptr value)
 {
     fmpz_t number;
-    fmpz_init2(number, value->length);
-
-    fmpz_set_ui(number, value->limbs[0]);
-    for (int i = 1; i < value->length; ++i) {
-        fmpz_t val;
-        fmpz_set_ui(val, value->limbs[i]);
-        fmpz_mul_2exp(val, val, sizeof(apint_limb_t) * 8 * i);
-        fmpz_add(number, number, val);
-    }
+    apint_to_fmpz(number, value);
 
     fmpz_print(number);
     fmpz_clear(number);

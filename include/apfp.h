@@ -5,7 +5,7 @@
 
 typedef apint_t             apfp_mant_t;
 typedef int                 apfp_sign_t; //AB: Why is sign an int?. Its also not been used anywhere??
-typedef unsigned long       apfp_exp_t;
+typedef int64_t             apfp_exp_t;
 
 typedef struct
 {

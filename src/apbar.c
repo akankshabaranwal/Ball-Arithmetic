@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdint.h>
 
 #include <apbar.h>
 
@@ -13,14 +14,15 @@ void mag_add(mag_ptr x, mag_srcptr a, mag_srcptr b)
     // Align `b` mantissa to `a` given exponent difference
     apfp_exp_t factor = a->exp - b->exp;
     x->mant = b->mant;
-    x->mant = x->mant>>factor;
-    char carry =0;
+    x->mant = x->mant >> factor;
+
+    uint8_t carry = 0;
     carry = _addcarryx_u64(carry, a->mant, b->mant, &x->mant);
-    x->mant>>carry;
+    x->mant >>= carry;
     x->exp = a->exp + carry;
 
     //Set MSB
-    x->mant |= 1ull<<(APINT_LIMB_BITS-1);
+    if(carry) x->mant |= 1ull<<(APINT_LIMB_BITS-1);
 }
 
 void apbar_init(apbar_t x, apint_size_t p)
@@ -39,7 +41,7 @@ static inline void print_rad(apbar_srcptr value)
         printf("0");
     }
     else {
-        printf("%llu * 2^-%lu", value->rad->mant, value->rad->exp);
+        printf("%llu * 2^%ld", value->rad->mant, value->rad->exp);
     }
     printf(")");
 }

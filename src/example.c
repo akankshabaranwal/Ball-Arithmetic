@@ -8,19 +8,15 @@ int main(int argc, char const *argv[])
 {
     apbar_t x, y, z;
     apbar_init(x, 64);
-    apbar_set_midpt_mant(x, 0, 5816961868702417);
-    apbar_set_midpt_exp(x, 49);
-    apbar_set_rad(x, 0, 0);
+    apbar_set_d(x, 10.333);
     apbar_print(x); printf("\n");
 
     apbar_init(y, 64);
-    apbar_set_midpt_mant(y, 0, 1752215507021039);
-    apbar_set_midpt_exp(y, 49);
-    apbar_set_rad(y, 0, 0);
+    apbar_set_d(y, 3.11256);
     apbar_print(y); printf("\n");
 
     apbar_add(z, x, y, 64);
-    apbar_print(z); printf("\n"); // This should print (118268396495679 * 2^-43) +/- (0)
+    apbar_print(z); printf("\n");
 
     apbar_t c, a, b;
 

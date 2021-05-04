@@ -5,6 +5,7 @@
 #include <immintrin.h>
 #include <stdlib.h>
 #include <string.h>
+#include <flint/fmpz.h>
 
 typedef unsigned long long apint_limb_t;
 typedef int apint_size_t;
@@ -26,6 +27,7 @@ void apint_init(apint_t x, apint_size_t p);
 void apint_print(apint_srcptr value);
 void apint_free(apint_t x);
 void apint_copy(apint_ptr dst, apint_srcptr src);
+void apint_to_fmpz(fmpz_t res, apint_srcptr src);
 
 static inline apint_limb_t apint_getlimb(apint_ptr x, apint_size_t offset);
 

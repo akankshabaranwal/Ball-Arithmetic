@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <apfp.h>
+#include <flint/fmpz.h>
+#include <arf.h>
 
 void apfp_init(apfp_t x, apint_size_t p)
 {
@@ -28,18 +30,30 @@ void apfp_set_d(apfp_ptr x, double val)
 
     u.uf = val;
     h = u.ul;
-    x->sign = h >> 63; // Type narrowing could be compiler dependent
-    printf("exp: %lu\n", (h << 1) >> 53);
-    x->exp = (h << 1) >> 53;
-    x->mant->limbs[0] = h & 0xfffffffffffff;
+    x->sign = (int) (h >> 63);
+    x->exp = (int64_t) (((h << 1) >> 53) - 1023 - 52);
+    x->mant->limbs[0] = ((h << 12) >> 12) | (UWORD(1) << 52); // | 1ull<<(APINT_LIMB_BITS-1);
 }
 
 void apfp_print(apfp_srcptr value)
 {
+//    fmpz_t exp, man;
+//    apint_to_fmpz(man, value->mant);
+//    fmpz_set_ui(exp, value->exp);
+//
+//    arf_t arf_val;
+//    arf_init(arf_val);
+//    arf_set_fmpz_2exp(arf_val, man, exp);
+//    arf_fprint(stdout, arf_val);
+//
+//    arf_clear(arf_val);
+//    fmpz_clear(exp);
+//    fmpz_clear(man);
+
     printf("(");
     apint_print((apint_srcptr) &value->mant);
     printf(" * 2^");
-    printf("-%lu", value->exp);
+    printf("%ld", value->exp);
     printf(")");
 }
 
@@ -66,5 +80,5 @@ void apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 
     // Set the msb on the mantissa
     // To-do: Check for 0, +inf, -inf.
-    apint_setmsb(x->mant);
+    if(carry) apint_setmsb(x->mant);
 }
