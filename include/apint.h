@@ -18,6 +18,7 @@ typedef __apint_struct *apint_ptr;
 typedef const __apint_struct *apint_srcptr;
 
 void apint_init(apint_t x, apint_size_t p);
+void apint_print(apint_srcptr value);
 void apint_free(apint_t x);
 void apint_copy(apint_ptr dst, apint_srcptr src);
 

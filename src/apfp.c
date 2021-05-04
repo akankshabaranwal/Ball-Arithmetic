@@ -1,4 +1,5 @@
-#include "apfp.h"
+#include <stdio.h>
+#include <apfp.h>
 
 void apfp_init(apfp_t x, apint_size_t p)
 {
@@ -14,6 +15,16 @@ void apfp_set_exp(apfp_ptr x, apfp_exp_t exp)
 {
     x->exp = exp;
 }
+
+void apfp_print(apfp_srcptr value)
+{
+    printf("(");
+    apint_print((apint_srcptr) &value->mant);
+    printf(" * 2^");
+    printf("-%lu", value->exp);
+    printf(")");
+}
+
 
 void apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
