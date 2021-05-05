@@ -70,6 +70,28 @@ void apint_shiftr(apint_ptr x, unsigned int shift)
     x->limbs[x->length - 1] >>= shift;
 }
 
+void apint_shiftl(apint_ptr x, unsigned int shift){
+    assert(x->limbs);
+    if (shift == 0) return;
+
+    uint full_limbs_shifted = shift / APINT_LIMB_BITS;
+    shift -= full_limbs_shifted * APINT_LIMB_BITS;
+    for (int i = x->length - 1; i >= 0; i--) {
+        if (i-(int)full_limbs_shifted >= 0) {
+            x->limbs[i] = x->limbs[i-full_limbs_shifted];
+        }
+
+        else {
+            x->limbs[i] = 0;
+        }
+    }
+
+    for (int i = x->length - 1; i > 0 ; i--) {
+        x->limbs[i] = (x->limbs[i] << shift) + (x->limbs[i-1] >> (APINT_LIMB_BITS - shift));
+    }
+    x->limbs[0] <<= shift;
+}
+
 char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);

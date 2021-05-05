@@ -24,7 +24,6 @@ int main(int argc, char const *argv[])
 
     printf("PI test\n");
     apbar_t pi, three, result;
-    apbar_init(result, 128);
     apbar_init(three, 128);
     apbar_set_d(three, 3.0);
     printf("3 is:\t\t"); apbar_print(three); printf("\n");
