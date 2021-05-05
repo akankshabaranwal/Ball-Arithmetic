@@ -39,6 +39,17 @@ int main()
     arb_add(c, a, b, 64);
     arb_print(c); printf("\n");
 
-    flint_cleanup();
+
+    printf("PI test\n");
+    arb_t x, y;
+    arb_init(x); arb_init(y);
+    arb_set_ui(x, 3);       /* x = 3 */
+    printf("3 is:\t\t"); arb_print(x); printf("\n");
+    arb_const_pi(y, 128);   /* y = pi, to 128 bits */
+    printf("pi is:\t\t"); arb_print(y); printf("\n");
+    arb_add(y, y, x, 128);   /* y = y - x, to 53 bits */
+    printf("pi + 3 is:\t"); arb_print(y); printf("\n");
+    arb_clear(x); arb_clear(y);
+
     return 0;
 }

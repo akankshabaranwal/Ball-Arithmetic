@@ -18,6 +18,30 @@ int main(int argc, char const *argv[])
     apbar_add(z, x, y, 64);
     apbar_print(z); printf("\n");
 
+    apbar_free(x);
+    apbar_free(y);
+    apbar_free(z);
+
+    printf("PI test\n");
+    apbar_t pi, three, result;
+    apbar_init(result, 128);
+    apbar_init(three, 128);
+    apbar_set_d(three, 3.0);
+    printf("3 is:\t\t"); apbar_print(three); printf("\n");
+    apbar_init(pi, 128);
+    apbar_set_midpt_mant(pi, 0, 0xC4C6628B80DC1CD1);
+    apbar_set_midpt_mant(pi, 1, 0xC90FDAA22168C234);
+    apbar_set_midpt_exp(pi, -126);
+    apbar_set_rad(pi, 536870912, -156);
+    printf("pi is:\t\t"); apbar_print(pi); printf("\n");
+
+    apbar_add(result, three, pi, 128);
+    printf("pi + 3 is:\t"); apbar_print(result); printf("\n");
+
+    apbar_free(three);
+    apbar_free(pi);
+
+    printf("Add some random numbers\n");
     apbar_t c, a, b;
 
     apbar_init(c, 128);
