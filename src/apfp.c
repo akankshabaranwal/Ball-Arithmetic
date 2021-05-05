@@ -58,7 +58,7 @@ void apfp_print(apfp_srcptr value)
 }
 
 
-void apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+int apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     // To-do: Handle negative values.
 
@@ -81,4 +81,6 @@ void apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     // Set the msb on the mantissa
     // To-do: Check for 0, +inf, -inf.
     if(carry) apint_setmsb(x->mant);
+
+    return carry;
 }

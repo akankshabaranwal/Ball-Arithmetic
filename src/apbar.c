@@ -13,13 +13,12 @@ void mag_add(mag_ptr x, mag_srcptr a, mag_srcptr b)
     }
     // Align `b` mantissa to `a` given exponent difference
     apfp_exp_t factor = a->exp - b->exp;
-    x->mant = b->mant;
-    x->mant = x->mant >> factor;
+    x->mant = a->mant;
+    x->mant <<= factor;
 
-    uint8_t carry = 0;
-    carry = _addcarryx_u64(carry, a->mant, b->mant, &x->mant);
+    uint8_t carry = _addcarryx_u64(carry, x->mant, b->mant, &x->mant);
     x->mant >>= carry;
-    x->exp = a->exp + carry;
+    x->exp = b->exp + carry;
 
     //Set MSB
     if(carry) x->mant |= 1ull<<(APINT_LIMB_BITS-1);
@@ -83,6 +82,17 @@ void apbar_set_d(apbar_t x, double val)
 void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 {
     apbar_init(c, p);
-    apfp_add(c->midpt, a->midpt, b->midpt);
+    int is_not_exact = apfp_add(c->midpt, a->midpt, b->midpt);
     mag_add(c->rad, a->rad, b->rad);
+
+    if (is_not_exact) {
+        // TODO: operation was inexact we need to increase the radius
+//        fmpz_t e;
+//        fmpz_init(e);
+//        fmpz_sub_ui(e, ARF_EXPREF(mid_result), prec);
+//        mag_add_2exp_fmpz(rad_result, rad_result, e);
+//        fmpz_clear(e);
+
+
+    }
 }
