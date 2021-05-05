@@ -37,24 +37,24 @@ void apfp_set_d(apfp_ptr x, double val)
 
 void apfp_print(apfp_srcptr value)
 {
-//    fmpz_t exp, man;
-//    apint_to_fmpz(man, value->mant);
-//    fmpz_set_ui(exp, value->exp);
-//
-//    arf_t arf_val;
-//    arf_init(arf_val);
-//    arf_set_fmpz_2exp(arf_val, man, exp);
-//    arf_fprint(stdout, arf_val);
-//
-//    arf_clear(arf_val);
-//    fmpz_clear(exp);
-//    fmpz_clear(man);
+    fmpz_t exp, man;
+    apint_to_fmpz(man, value->mant);
+    fmpz_set_si(exp, value->exp);
 
-    printf("(");
-    apint_print((apint_srcptr) &value->mant);
-    printf(" * 2^");
-    printf("%ld", value->exp);
-    printf(")");
+    arf_t arf_val;
+    arf_init(arf_val);
+    arf_set_fmpz_2exp(arf_val, man, exp);
+    arf_fprint(stdout, arf_val);
+
+    arf_clear(arf_val);
+    fmpz_clear(exp);
+    fmpz_clear(man);
+
+//    printf("(");
+//    apint_print((apint_srcptr) &value->mant);
+//    printf(" * 2^");
+//    printf("%ld", value->exp);
+//    printf(")");
 }
 
 
