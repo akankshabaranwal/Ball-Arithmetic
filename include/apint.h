@@ -26,6 +26,7 @@ static inline apint_limb_t apint_getlimb(apint_ptr x, apint_size_t offset);
 char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b);
 void apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b);
 void apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b);
+void apint_div(apint_ptr x, apint_srcptr a, apint_srcptr b);
 void apint_shiftr(apint_ptr x, unsigned int shift);
 
 static inline void apint_setmsb(apint_ptr x)
