@@ -102,4 +102,5 @@ void apint_div(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     // To-do: Implement division.
     
+    // keep trying greatest powers of 2 and if it doesnt work shift, otherwise multiply (well its by 1 anyways), but just subtract
 }

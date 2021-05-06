@@ -27,10 +27,10 @@ int main(int argc, char const *argv[])
     apint_free(a->mant);
     apint_free(b->mant);
 
-    // This is kinda jank but I'm testing sub
-    apint_add_test();
+    // This is kinda jank but I'm testing sub - Julia
+    // apint_add_test();
     apint_sub_test();
-    apint_mult_test();
+    // apint_mult_test();
 }
 
 void apint_add_test()
@@ -48,7 +48,6 @@ void apint_add_test()
     apint_setlimb(b, 1, 0x0);
 
     apint_add(x, a, b);
-    // apint_shiftr(x, 2); # Julia: what's the purpose of this again?
 
     printf("0x%llx 0x%llx\n", apint_getlimb(x, 1), apint_getlimb(x, 0));
 
@@ -65,14 +64,13 @@ void apint_sub_test()
     apint_init(a, 128);
     apint_init(b, 128);
 
-    apint_setlimb(a, 0, 0x8000000000000000);
-    apint_setlimb(a, 1, 0x1);
+    apint_setlimb(a, 0, 0x0000000000000001);
+    apint_setlimb(a, 1, 0x0);
 
-    apint_setlimb(b, 0, 0x8000000000000000);
-    apint_setlimb(b, 1, 0x1);
+    apint_setlimb(b, 0, 0x0000000000000001);
+    apint_setlimb(b, 1, 0x0);
 
     apint_sub(x, a, b);
-    apint_shiftr(x, 2);
 
     printf("0x%llx 0x%llx\n", apint_getlimb(x, 1), apint_getlimb(x, 0));
 
@@ -101,7 +99,6 @@ void apint_mult_test()
     apint_setlimb(b, 1, 0x1);
 
     apint_mul(x, a, b);
-    // apint_shiftr(x, 2); # JULIA: what is the purpose of this again
 
     printf("0x%llx 0x%llx\n", apint_getlimb(x, 1), apint_getlimb(x, 0));
     printf("0x%llx 0x%llx\n", apint_getlimb(x, 3), apint_getlimb(x, 2));
@@ -131,7 +128,6 @@ void apint_div_test()
     apint_setlimb(b, 1, 0x1);
 
     apint_div(x, a, b);
-    // apint_shiftr(x, 2); # JULIA: what is the purpose of this again
 
     printf("0x%llx 0x%llx\n", apint_getlimb(x, 1), apint_getlimb(x, 0));
     printf("0x%llx 0x%llx\n", apint_getlimb(x, 3), apint_getlimb(x, 2));
