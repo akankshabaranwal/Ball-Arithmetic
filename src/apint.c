@@ -1,5 +1,5 @@
 #include <assert.h>
-#include <immintrin.h>
+#include <x86intrin.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
