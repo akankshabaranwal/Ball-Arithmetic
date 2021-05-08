@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <apfp.h>
+#include <flint/fmpz.h>
+#include <arf.h>
 
 void apfp_init(apfp_t x, apint_size_t p)
 {
@@ -28,23 +30,35 @@ void apfp_set_d(apfp_ptr x, double val)
 
     u.uf = val;
     h = u.ul;
-    x->sign = h >> 63; // Type narrowing could be compiler dependent
-    printf("exp: %lu\n", (h << 1) >> 53);
-    x->exp = (h << 1) >> 53;
-    x->mant->limbs[0] = h & 0xfffffffffffff;
+    x->sign = (int) (h >> 63);
+    x->exp = (int64_t) (((h << 1) >> 53) - 1023 - 52);
+    x->mant->limbs[0] = ((h << 12) >> 12) | (UWORD(1) << 52); // | 1ull<<(APINT_LIMB_BITS-1);
 }
 
 void apfp_print(apfp_srcptr value)
 {
-    printf("(");
-    apint_print((apint_srcptr) &value->mant);
-    printf(" * 2^");
-    printf("-%lu", value->exp);
-    printf(")");
+    fmpz_t exp, man;
+    apint_to_fmpz(man, value->mant);
+    fmpz_set_si(exp, value->exp);
+
+    arf_t arf_val;
+    arf_init(arf_val);
+    arf_set_fmpz_2exp(arf_val, man, exp);
+    arf_fprint(stdout, arf_val);
+
+    arf_clear(arf_val);
+    fmpz_clear(exp);
+    fmpz_clear(man);
+
+//    printf("(");
+//    apint_print((apint_srcptr) &value->mant);
+//    printf(" * 2^");
+//    printf("%ld", value->exp);
+//    printf(")");
 }
 
 
-void apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+int apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     // To-do: Handle negative values.
 
@@ -56,15 +70,17 @@ void apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 
     // Align `b` mantissa to `a` given exponent difference
     apfp_exp_t factor = a->exp - b->exp;
-    apint_copy(x->mant, b->mant);
-    apint_shiftr(x->mant, factor);
+    apint_copy(x->mant, a->mant);
+    apint_shiftl(x->mant, factor);
 
     // Add mantissa, shift by carry and update exponent
-    char carry = apint_add(x->mant, x->mant, a->mant);
+    char carry = apint_add(x->mant, x->mant, b->mant);
     apint_shiftr(x->mant, carry);
-    x->exp = a->exp + carry;
+    x->exp = b->exp + carry;
 
     // Set the msb on the mantissa
     // To-do: Check for 0, +inf, -inf.
-    apint_setmsb(x->mant);
+    if(carry) apint_setmsb(x->mant);
+
+    return carry;
 }

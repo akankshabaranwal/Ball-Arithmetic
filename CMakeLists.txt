@@ -19,4 +19,4 @@ add_executable(ball-test
         src/apbar.c
         src/example.c
 )
-target_link_libraries(ball-test flint gmp)
+target_link_libraries(ball-test flint gmp arb)

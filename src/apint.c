@@ -13,18 +13,23 @@ void apint_init(apint_t x, apint_size_t p)
     x->limbs = malloc(x->length * APINT_LIMB_BYTES);
 }
 
+void apint_to_fmpz(fmpz_t res, apint_srcptr src)
+{
+    fmpz_init2(res, src->length);
+
+    fmpz_set_ui(res, src->limbs[0]);
+    for (int i = 1; i < src->length; ++i) {
+        fmpz_t val;
+        fmpz_set_ui(val, src->limbs[i]);
+        fmpz_mul_2exp(val, val, sizeof(apint_limb_t) * 8 * i);
+        fmpz_add(res, res, val);
+    }
+}
+
 void apint_print(apint_srcptr value)
 {
     fmpz_t number;
-    fmpz_init2(number, value->length);
-
-    fmpz_set_ui(number, value->limbs[0]);
-    for (int i = 1; i < value->length; ++i) {
-        fmpz_t val;
-        fmpz_set_ui(val, value->limbs[i]);
-        fmpz_mul_2exp(val, val, sizeof(apint_limb_t) * 8 * i);
-        fmpz_add(number, number, val);
-    }
+    apint_to_fmpz(number, value);
 
     fmpz_print(number);
     fmpz_clear(number);
@@ -63,6 +68,28 @@ void apint_shiftr(apint_ptr x, unsigned int shift)
     }
 
     x->limbs[x->length - 1] >>= shift;
+}
+
+void apint_shiftl(apint_ptr x, unsigned int shift){
+    assert(x->limbs);
+    if (shift == 0) return;
+
+    uint full_limbs_shifted = shift / APINT_LIMB_BITS;
+    shift -= full_limbs_shifted * APINT_LIMB_BITS;
+    for (int i = x->length - 1; i >= 0; i--) {
+        if (i-(int)full_limbs_shifted >= 0) {
+            x->limbs[i] = x->limbs[i-full_limbs_shifted];
+        }
+
+        else {
+            x->limbs[i] = 0;
+        }
+    }
+
+    for (int i = x->length - 1; i > 0 ; i--) {
+        x->limbs[i] = (x->limbs[i] << shift) + (x->limbs[i-1] >> (APINT_LIMB_BITS - shift));
+    }
+    x->limbs[0] <<= shift;
 }
 
 char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
