@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <x86intrin.h>
 
 #include <apbar.h>
 
@@ -25,7 +26,8 @@ void mag_add(mag_ptr x, mag_srcptr a, mag_srcptr b)
 }
 
 void apbar_init(apbar_t x, apint_size_t p)
-{    apfp_init(x->midpt, p);
+{    
+    apfp_init(x->midpt, p);
 }
 
 static inline void print_mid(apbar_srcptr value)
@@ -92,7 +94,5 @@ void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 //        fmpz_sub_ui(e, ARF_EXPREF(mid_result), prec);
 //        mag_add_2exp_fmpz(rad_result, rad_result, e);
 //        fmpz_clear(e);
-
-
     }
 }
