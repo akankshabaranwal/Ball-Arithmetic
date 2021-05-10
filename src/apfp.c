@@ -1,8 +1,14 @@
-#include "apfp.h"
+#include <stdio.h>
+#include <apfp.h>
 
 void apfp_init(apfp_t x, apint_size_t p)
 {
     apint_init(x->mant, p);
+}
+
+void apfp_free(apfp_t x)
+{
+    apint_free(x->mant);
 }
 
 void apfp_set_mant(apfp_ptr x, apint_size_t offset, apint_limb_t limb)
@@ -14,6 +20,29 @@ void apfp_set_exp(apfp_ptr x, apfp_exp_t exp)
 {
     x->exp = exp;
 }
+
+void apfp_set_d(apfp_ptr x, double val)
+{
+    u_int64_t h;
+    union { double uf; u_int64_t ul; } u;
+
+    u.uf = val;
+    h = u.ul;
+    x->sign = h >> 63; // Type narrowing could be compiler dependent
+    printf("exp: %lu\n", (h << 1) >> 53);
+    x->exp = (h << 1) >> 53;
+    x->mant->limbs[0] = h & 0xfffffffffffff;
+}
+
+void apfp_print(apfp_srcptr value)
+{
+    printf("(");
+    apint_print((apint_srcptr) &value->mant);
+    printf(" * 2^");
+    printf("-%lu", value->exp);
+    printf(")");
+}
+
 
 void apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
