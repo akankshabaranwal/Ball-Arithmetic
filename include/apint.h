@@ -9,13 +9,14 @@
 
 typedef unsigned long long apint_limb_t;
 typedef int apint_size_t;
+typedef int sign_t;
 
 #define APINT_LIMB_BYTES sizeof(apint_limb_t)
 #define APINT_LIMB_BITS (APINT_LIMB_BYTES * 8)
 
-//TODO: Check if a sign bit required for integers as well?
 typedef struct
 {
+    sign_t sign;
     apint_limb_t *limbs;
     apint_size_t length;
 } __apint_struct;

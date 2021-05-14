@@ -6,26 +6,23 @@
 typedef apfp_t apbar_midpt; //mid point is arbitrary precision floating point
 typedef unsigned long apbar_rad; //radius is fixed precision. In arb paper it is mag_t which is unsigned floating point
 
-// mag_t datatype for radius
 typedef struct
 {
-   // In ARB mantissa is 30 bits
-   apfp_sign_t sign;
+   sign_t sign;
    apint_limb_t mant;
    apfp_exp_t exp;
+} __rad_struct;
 
-} __mag_struct;
+typedef __rad_struct          rad_t[1];
+typedef __rad_struct          *rad_ptr;
+typedef const __rad_struct    *rad_srcptr;
 
-typedef __mag_struct          mag_t[1];
-typedef __mag_struct          *mag_ptr;
-typedef const __mag_struct    *mag_srcptr;
-
-void mag_add(mag_ptr x, mag_srcptr a, mag_srcptr b);
+void rad_add(rad_ptr x, rad_srcptr a, rad_srcptr b);
 
 typedef struct
 {
     apbar_midpt midpt;
-    mag_t rad;
+    rad_t rad;
 } __apbar_struct;
 
 typedef __apbar_struct          apbar_t[1];
@@ -42,7 +39,6 @@ void apbar_set_d(apbar_ptr x, double val);
 
 void apbar_print(apbar_srcptr value);
 
-//TODO: Check if we need a precision for add??
 void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
 void apbar_sub(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
 
