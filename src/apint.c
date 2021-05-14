@@ -104,12 +104,11 @@ char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
     {
         carry = _addcarryx_u64(carry, a->limbs[i], b->limbs[i], &x->limbs[i]);
     }
-
     return carry;
 }
 
 // a - b
-void apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
+char apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     // To-do: Implement substraction. Possibly add a negative value flag in apint_t.
     assert(x->limbs && a->limbs && b->limbs);
@@ -122,6 +121,7 @@ void apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
     {
         borrow = _subborrow_u64(borrow, a->limbs[i], b->limbs[i], &x->limbs[i]);
     }
+    return borrow;
 }
 
 void apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
