@@ -16,16 +16,16 @@ typedef struct
 
 } __mag_struct;
 
-typedef __mag_struct          mag_t[1];
-typedef __mag_struct          *mag_ptr;
-typedef const __mag_struct    *mag_srcptr;
+typedef __mag_struct          apbar_mag_t[1];
+typedef __mag_struct          *apbar_mag_ptr;
+typedef const __mag_struct    *apbar_mag_srcptr;
 
-void mag_add(mag_ptr x, mag_srcptr a, mag_srcptr b);
+void apbar_mag_add(apbar_mag_ptr x, apbar_mag_srcptr a, apbar_mag_srcptr b);
 
 typedef struct
 {
     apbar_midpt midpt;
-    mag_t rad;
+    apbar_mag_t rad;
 } __apbar_struct;
 
 typedef __apbar_struct          apbar_t[1];
