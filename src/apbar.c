@@ -5,13 +5,13 @@
 #include <apbar.h>
 #include <mag.h>
 
-void apbar_mag_add(apbar_mag_ptr x, apbar_mag_srcptr a, apbar_mag_srcptr b)
+void rad_add(rad_ptr x, rad_srcptr a, rad_srcptr b)
 {
     // derived from apfp_add
     // After swap, `a` is guaranteed to have largest exponent
     if (b->exp > a->exp)
     {
-        apbar_mag_srcptr t = a; a = b; b = t;
+        rad_srcptr t = a; a = b; b = t;
     }
     // Align `b` mantissa to `a` given exponent difference
     apfp_exp_t factor = a->exp - b->exp;
@@ -27,7 +27,7 @@ void apbar_mag_add(apbar_mag_ptr x, apbar_mag_srcptr a, apbar_mag_srcptr b)
 }
 
 void apbar_init(apbar_t x, apint_size_t p)
-{
+{    
     apfp_init(x->midpt, p);
 }
 
@@ -83,7 +83,7 @@ void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 {
     apbar_init(c, p);
     int is_not_exact = apfp_add(c->midpt, a->midpt, b->midpt);
-    apbar_mag_add(c->rad, a->rad, b->rad);
+    rad_add(c->rad, a->rad, b->rad);
 
     if (is_not_exact) {
         // From the arb paper delta y is (|y|+n)*e

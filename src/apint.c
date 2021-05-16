@@ -104,12 +104,11 @@ char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
     {
         carry = _addcarryx_u64(carry, a->limbs[i], b->limbs[i], &x->limbs[i]);
     }
-
     return carry;
 }
 
 // a - b
-void apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
+char apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     // To-do: Implement substraction. Possibly add a negative value flag in apint_t.
     assert(x->limbs && a->limbs && b->limbs);
@@ -122,16 +121,16 @@ void apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
     {
         borrow = _subborrow_u64(borrow, a->limbs[i], b->limbs[i], &x->limbs[i]);
     }
+    return borrow;
 }
 
 void apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
-{// Commented below because it was erroring out.
-/*    // To-do: Implement multiplication.
+{
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length); // only handle same lengths for now
     assert(a->length + b->length == x->length);
 
-    uint64_t overflow = 0;
+    unsigned long long overflow = 0;
 
     for (apint_size_t i = 0; i < b->length; i++)
     {
@@ -141,7 +140,7 @@ void apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
             x->limbs[i + j] += _mulx_u64(a->limbs[j], b->limbs[i], &overflow);
         }
         overflow = 0;
-    }*/
+    }
 }
 
 void apint_div(apint_ptr x, apint_srcptr a, apint_srcptr b)

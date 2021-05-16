@@ -4,12 +4,11 @@
 #include <apint.h>
 
 typedef apint_t             apfp_mant_t;
-typedef int                 apfp_sign_t; //AB: Why is sign an int?. Its also not been used anywhere??
 typedef int64_t             apfp_exp_t;
 
 typedef struct
 {
-    apfp_sign_t sign;
+    sign_t sign;
     apfp_mant_t mant;
     apfp_exp_t  exp;
 } __apfp_struct;

@@ -9,12 +9,14 @@
 
 typedef unsigned long long apint_limb_t;
 typedef int apint_size_t;
+typedef int sign_t;
 
 #define APINT_LIMB_BYTES sizeof(apint_limb_t)
 #define APINT_LIMB_BITS (APINT_LIMB_BYTES * 8)
 
 typedef struct
 {
+    sign_t sign;
     apint_limb_t *limbs;
     apint_size_t length;
 } __apint_struct;
@@ -32,7 +34,7 @@ void apint_to_fmpz(fmpz_t res, apint_srcptr src);
 static inline apint_limb_t apint_getlimb(apint_ptr x, apint_size_t offset);
 
 char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b);
-void apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b);
+char apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b);
 void apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b);
 void apint_shiftr(apint_ptr x, unsigned int shift);
 void apint_shiftl(apint_ptr x, unsigned int shift);
