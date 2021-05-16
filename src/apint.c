@@ -105,18 +105,15 @@ void apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
         if(a->sign==1)//only a is negative. so equivalent to b-a.
         {
             borrow=apint_minus(x,b,a);
-            if(borrow)
-                x->sign = 1;
-            else
-                x->sign = 0;
         }
-        else{ //only b is negative.
+        else
+        { //only b is negative.
             borrow = apint_minus(x,a,b);
-            if(borrow)
-                x->sign = 1;
-            else
-                x->sign=0;
         }
+        if(borrow)
+            x->sign = -1;
+        else
+            x->sign = 1;
     }
 }
 
@@ -129,17 +126,17 @@ void apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
         {
             borrow = apint_minus(x, a, b);
             if (borrow) //|a|<|b|
-                x->sign = 1;
+                x->sign = -1;
             else
-                x->sign = 0;
+                x->sign = 1;
         }
         else //both are negative
         {
             borrow = apint_minus(x, a, b);
             if (borrow) //|a|<|b|
-                x->sign = 0;
-            else
                 x->sign = 1;
+            else
+                x->sign = -1;
         }
     }
     else
@@ -187,6 +184,10 @@ void apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
     assert(a->length + b->length == x->length);
 
     unsigned long long overflow = 0;
+    if(a->sign==b->sign)
+        x->sign = 1;
+    else
+        x->sign =-1;
 
     for (apint_size_t i = 0; i < b->length; i++)
     {
