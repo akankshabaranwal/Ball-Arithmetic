@@ -61,8 +61,8 @@ void barith_init(unsigned int prec)
     apbar_init(apbar_in2, prec);
     
     // TODO: Use arbitrary precision random number. 
-    apbar_set_d(apbar_in1, rand() / RAND_MAX);
-    apbar_set_d(apbar_in2, rand() / RAND_MAX);
+    apbar_set_d(apbar_in1, (double)rand() / RAND_MAX);
+    apbar_set_d(apbar_in2, (double)rand() / RAND_MAX);
 }
 
 void barith_deinit(unsigned int prec)
