@@ -57,7 +57,6 @@ void apfp_print(apfp_srcptr value)
 //    printf(")");
 }
 
-
 int apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     // To-do: Handle negative values.
@@ -74,7 +73,7 @@ int apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     apint_shiftl(x->mant, factor);
 
     // Add mantissa, shift by carry and update exponent
-    char carry = apint_add(x->mant, x->mant, b->mant);
+    char carry = apint_plus(x->mant, x->mant, b->mant);
     apint_shiftr(x->mant, carry);
     x->exp = b->exp + carry;
 
