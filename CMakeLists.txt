@@ -13,10 +13,20 @@ add_executable(arblib-test
 )
 target_link_libraries(arblib-test arb flint)
 
-add_executable(ball-test
+set(BALL_ARITH_SRC
         src/apint.c
         src/apfp.c
         src/apbar.c
+)
+
+add_executable(ball-test
+        ${BALL_ARITH_SRC}
         src/example.c
 )
+
+add_executable(benchmark
+        ${BALL_ARITH_SRC}
+        src/benchmark.c)
+
 target_link_libraries(ball-test flint gmp arb)
+target_link_libraries(benchmark flint gmp arb)
