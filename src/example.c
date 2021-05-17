@@ -40,37 +40,6 @@ int main(int argc, char const *argv[])
     apbar_free(three);
     apbar_free(pi);
 
-    printf("Add some random numbers\n");
-    apbar_t c, a, b;
-
-    apbar_init(c, 128);
-    apbar_init(a, 128);
-    apbar_init(b, 128);
-
-    // Initializing radius
-    apbar_set_rad(a,0x8000000000000000,0);
-    apbar_set_rad(b,0x8000000000000001,0);
-
-    // Initialize midpt
-    apbar_set_midpt_exp(a,0);
-    apbar_set_midpt_mant(a, 0,0x8000000000000000);
-    apbar_set_midpt_mant(a, 1,0x8000000000000001);
-
-    apbar_set_midpt_exp(b,0);
-    apbar_set_midpt_mant(b, 0,0x8000000000000000);
-    apbar_set_midpt_mant(b, 1,0x8000000000000001);
-
-    apbar_add(c, a, b, 128);
-
-    //TODO: Add print for apbar
-    //printf("0x%llx 0x%llx\n", apint_getlimb(x->mant, 1), apint_getlimb(x->mant, 0));
-    apbar_print(c); printf("\n");
-
-    //TODO: Radius memory is not being freed currently
-    apbar_free(c);
-    apbar_free(a);
-    apbar_free(b);
-
     // This is kinda junk but I'm testing sub
     apint_add_test();
     apint_sub_test();
