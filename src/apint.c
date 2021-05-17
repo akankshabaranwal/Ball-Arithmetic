@@ -58,16 +58,22 @@ void apint_shiftr(apint_ptr x, unsigned int shift)
     if (!shift)
         return;
 
-    size_t sl, sr;
-    for (apint_size_t i = 0; i < (x->length - 1); i++)
-    {
-        sr = shift;
-        sl = APINT_LIMB_BITS - shift;
-
-        x->limbs[i] = (x->limbs[i + 1] << sl) | (x->limbs[i] >> sr);
+    uint full_limbs_shifted = shift / APINT_LIMB_BITS;
+    shift -= full_limbs_shifted * APINT_LIMB_BITS;
+    for (int i = 0; i < x->length; ++i) {
+        if (i + full_limbs_shifted < x->length) {
+            x->limbs[i] = x->limbs[i+full_limbs_shifted];
+        }
+        else {
+            x->limbs[i] = 0;
+        }
     }
 
-    x->limbs[x->length - 1] >>= shift;
+    for (int i = 0; i < x->length - 1; ++i) {
+        x->limbs[i] = (x->limbs[i] >> shift) + (x->limbs[i+1] << (APINT_LIMB_BITS - shift));
+    }
+
+    x->limbs[x->length-1] >>= shift;
 }
 
 void apint_shiftl(apint_ptr x, unsigned int shift){
