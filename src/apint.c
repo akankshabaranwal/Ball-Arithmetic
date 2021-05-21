@@ -162,19 +162,31 @@ char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
 }
 
 // |a| - |b|. Do not handle sign here.
-char apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
+sign_t apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length); // only handle same lengths for now
     assert(a->length == x->length);
+    sign_t result_sign;
+    unsigned char borrow = 0;
 
-    char borrow = 0;
-
-    for (apint_size_t i = 0; i < a->length; i++)
+    if(apint_is_greater(a,b)) // a > b so a-b
     {
-        borrow = _subborrow_u64(borrow, a->limbs[i], b->limbs[i], &x->limbs[i]);
+        result_sign=1;
+        for (apint_size_t i = 0; i < a->length; i++)
+        {
+            borrow = _subborrow_u64(borrow, a->limbs[i], b->limbs[i], &x->limbs[i]);
+        }
     }
-    return borrow;
+    else // b > a so -(b-a)
+    {
+        result_sign=-1;
+        for (apint_size_t i = 0; i < a->length; i++)
+        {
+            borrow = _subborrow_u64(borrow, b->limbs[i], a->limbs[i], &x->limbs[i]);
+        }
+    }
+    return result_sign;
 }
 
 
