@@ -177,6 +177,20 @@ char apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
     return borrow;
 }
 
+
+int apint_is_greater(apint_srcptr a, apint_srcptr b)
+{
+    //Works only for same length a, b
+    //TODO: Check if there's a vector intrinsic for the comparison
+    //TODO: Verify that the most significant limb understanding is correct
+    for (apint_size_t i = 0; i < (a->length - 1); i++)
+    {
+        if(a->limbs[i] >b->limbs[i])
+            return 1;
+    }
+    return 0;
+}
+
 void apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
