@@ -102,7 +102,7 @@ void apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
     }
     else
     {
-        if(a->sign==1)//only a is negative. so equivalent to b-a.
+        if(a->sign==-1)//only a is negative. so equivalent to b-a.
         {
             borrow=apint_minus(x,b,a);
         }
@@ -122,7 +122,7 @@ void apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
     char borrow;
     if(a->sign==b->sign)
     {
-        if (a->sign == 0) //both are positive
+        if (a->sign == 1) //both are positive
         {
             borrow = apint_minus(x, a, b);
             if (borrow) //|a|<|b|
