@@ -57,7 +57,6 @@ void apfp_print(apfp_srcptr value)
 //    printf(")");
 }
 
-
 int apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     // To-do: Handle negative values.
@@ -74,7 +73,7 @@ int apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     apint_shiftl(x->mant, factor);
 
     // Add mantissa, shift by carry and update exponent
-    char carry = apint_add(x->mant, x->mant, b->mant);
+    char carry = apint_plus(x->mant, x->mant, b->mant);
     apint_shiftr(x->mant, carry);
     x->exp = b->exp + carry;
 
@@ -83,4 +82,38 @@ int apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     if(carry) apint_setmsb(x->mant);
 
     return carry;
+}
+
+//a-b
+//TODO: Someone needs to review this
+int apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+{
+    // After swap, `a` is guaranteed to have largest exponent
+    if (b->exp > a->exp)
+    {
+        apfp_srcptr t = a; a = b; b = t;
+    }
+
+    // Align `b` mantissa to `a` given exponent difference
+    apfp_exp_t factor = a->exp - b->exp;
+    apint_copy(x->mant, a->mant);
+    apint_shiftl(x->mant, factor);
+
+    // Add mantissa, shift by borrow and update exponent
+    char borrow = apint_minus(x->mant, x->mant, b->mant);
+    apint_shiftl(x->mant, borrow);
+    x->exp = b->exp - borrow;
+
+    // Set the msb on the mantissa
+    // To-do: Check for 0, +inf, -inf.
+    if(borrow)
+    {
+        apint_setmsb(x->mant);
+        x->sign = -1;
+    }
+    else
+    {
+        x->sign = 1;
+    }
+    return borrow;
 }
