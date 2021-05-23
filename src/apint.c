@@ -94,7 +94,7 @@ void apint_shiftl(apint_ptr x, unsigned int shift){
 
 void apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
-    char borrow;
+    //sign_t borrow;
     if(a->sign==b->sign)
     {
         apint_plus(x,a,b);
@@ -104,39 +104,26 @@ void apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
     {
         if(a->sign==-1)//only a is negative. so equivalent to b-a.
         {
-            borrow=apint_minus(x,b,a);
+            x->sign=apint_minus(x,b,a);
         }
         else
         { //only b is negative.
-            borrow = apint_minus(x,a,b);
+            x->sign = apint_minus(x,a,b);
         }
-        if(borrow)
-            x->sign = -1;
-        else
-            x->sign = 1;
     }
 }
 
 void apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
-    char borrow;
     if(a->sign==b->sign)
     {
         if (a->sign == 1) //both are positive
         {
-            borrow = apint_minus(x, a, b);
-            if (borrow) //|a|<|b|
-                x->sign = -1;
-            else
-                x->sign = 1;
+            x->sign = apint_minus(x, a, b);
         }
         else //both are negative
         {
-            borrow = apint_minus(x, a, b);
-            if (borrow) //|a|<|b|
-                x->sign = 1;
-            else
-                x->sign = -1;
+            x->sign = apint_minus(x, a, b);
         }
     }
     else
