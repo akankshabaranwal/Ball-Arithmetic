@@ -105,3 +105,17 @@ void apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 
     //TODO: Check if we need to set msb and do any shifting similar to apfp_add
 }
+
+void apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+{
+    x->exp = a->exp + b->exp;
+    apint_mul(x->mant, a->mant, b->mant);
+    if(a->sign == b->sign)
+    {
+        x->sign = a->sign;
+    }
+    else
+    {
+        x->sign = -1;
+    }
+}
