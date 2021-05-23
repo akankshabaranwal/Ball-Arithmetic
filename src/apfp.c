@@ -85,8 +85,8 @@ int apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 }
 
 //a-b
-//TODO: Someone needs to review this
-int apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+//TODO: Needs to be validated
+void apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     // After swap, `a` is guaranteed to have largest exponent
     if (b->exp > a->exp)
@@ -99,21 +99,9 @@ int apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     apint_copy(x->mant, a->mant);
     apint_shiftl(x->mant, factor);
 
-    // Add mantissa, shift by borrow and update exponent
-    char borrow = apint_minus(x->mant, x->mant, b->mant);
-    apint_shiftl(x->mant, borrow);
-    x->exp = b->exp - borrow;
+    // borrow always returns the sign.
+    // apint_minus always subtracts larger number from smaller. So it just returns the sign
+    x->sign = apint_minus(x->mant, x->mant, b->mant);
 
-    // Set the msb on the mantissa
-    // To-do: Check for 0, +inf, -inf.
-    if(borrow)
-    {
-        apint_setmsb(x->mant);
-        x->sign = -1;
-    }
-    else
-    {
-        x->sign = 1;
-    }
-    return borrow;
+    //TODO: Check if we need to set msb and do any shifting similar to apfp_add
 }
