@@ -6,9 +6,9 @@
 typedef apint_t             apfp_mant_t;
 typedef int64_t             apfp_exp_t;
 
+// sign is only part of mantissa. otherwise there can be confusion.
 typedef struct
 {
-    sign_t sign;
     apfp_mant_t mant;
     apfp_exp_t  exp;
 } __apfp_struct;

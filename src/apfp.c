@@ -30,7 +30,7 @@ void apfp_set_d(apfp_ptr x, double val)
 
     u.uf = val;
     h = u.ul;
-    x->sign = (int) (h >> 63);
+    x->mant->sign = (int) (h >> 63);
     x->exp = (int64_t) (((h << 1) >> 53) - 1023 - 52);
     x->mant->limbs[0] = ((h << 12) >> 12) | (UWORD(1) << 52); // | 1ull<<(APINT_LIMB_BITS-1);
 }
@@ -72,6 +72,8 @@ int apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     apint_copy(x->mant, a->mant);
     apint_shiftl(x->mant, factor);
 
+    //For handling negative numbers
+
     // Add mantissa, shift by carry and update exponent
     char carry = apint_plus(x->mant, x->mant, b->mant);
     apint_shiftr(x->mant, carry);
@@ -101,7 +103,7 @@ void apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 
     // borrow always returns the sign.
     // apint_minus always subtracts larger number from smaller. So it just returns the sign
-    x->sign = apint_minus(x->mant, x->mant, b->mant);
+    x->mant->sign = apint_minus(x->mant, x->mant, b->mant);
 
     //TODO: Check if we need to set msb and do any shifting similar to apfp_add
 }
@@ -110,12 +112,12 @@ void apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     x->exp = a->exp + b->exp;
     apint_mul(x->mant, a->mant, b->mant);
-    if(a->sign == b->sign)
+    if(a->mant->sign == b->mant->sign)
     {
-        x->sign = a->sign;
+        x->mant->sign = a->mant->sign;
     }
     else
     {
-        x->sign = -1;
+        x->mant->sign = -1;
     }
 }
