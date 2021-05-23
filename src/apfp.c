@@ -57,10 +57,8 @@ void apfp_print(apfp_srcptr value)
 //    printf(")");
 }
 
-int apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
-    // To-do: Handle negative values.
-
     // After swap, `a` is guaranteed to have largest exponent
     if (b->exp > a->exp)
     {
@@ -73,39 +71,63 @@ int apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     apint_shiftl(x->mant, factor);
 
     //For handling negative numbers
+    char carry;
+    if(a->mant->sign==b->mant->sign ) // if both have the same sign then simple add
+    {
+        // Add mantissa, shift by carry and update exponent
+        carry = apint_plus(x->mant, x->mant, b->mant);
+        apint_shiftr(x->mant, carry);
+        x->exp = b->exp + carry;
 
-    // Add mantissa, shift by carry and update exponent
-    char carry = apint_plus(x->mant, x->mant, b->mant);
-    apint_shiftr(x->mant, carry);
-    x->exp = b->exp + carry;
-
-    // Set the msb on the mantissa
-    // To-do: Check for 0, +inf, -inf.
-    if(carry) apint_setmsb(x->mant);
-
+        // Set the msb on the mantissa
+        // To-do: Check for 0, +inf, -inf.
+        if (carry) apint_setmsb(x->mant);
+    }
+    else // either a -b or b-a
+    {
+        apint_sub(x->mant, a->mant, b->mant);
+        carry = 0;
+    }
     return carry;
 }
 
 //a-b
 //TODO: Needs to be validated
-void apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+char apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     // After swap, `a` is guaranteed to have largest exponent
     if (b->exp > a->exp)
     {
         apfp_srcptr t = a; a = b; b = t;
     }
-
+    char is_inexact;
     // Align `b` mantissa to `a` given exponent difference
     apfp_exp_t factor = a->exp - b->exp;
     apint_copy(x->mant, a->mant);
     apint_shiftl(x->mant, factor);
 
+    char carry;
+    if(a->mant->sign==b->mant->sign ) // if both have the same sign then simple add
+    {
+        apint_sub(x->mant, a->mant, b->mant); //x->mant->sign is set here
+        carry = 0;
+    }
+    else
+    {
+        x->mant->sign = a->mant->sign;
+        // Add mantissa, shift by carry and update exponent
+        carry = apint_plus(x->mant, x->mant, b->mant);
+        apint_shiftr(x->mant, carry);
+        x->exp = b->exp + carry;
+
+        // Set the msb on the mantissa
+        // To-do: Check for 0, +inf, -inf.
+        if (carry) apint_setmsb(x->mant);
+    }
     // borrow always returns the sign.
-    // apint_minus always subtracts larger number from smaller. So it just returns the sign
-    x->mant->sign = apint_minus(x->mant, x->mant, b->mant);
 
     //TODO: Check if we need to set msb and do any shifting similar to apfp_add
+    return is_inexact;
 }
 
 void apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
