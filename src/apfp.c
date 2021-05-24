@@ -106,23 +106,22 @@ char apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     apint_copy(x->mant, a->mant);
     apint_shiftl(x->mant, factor);
 
-    char carry;
     if(a->mant->sign==b->mant->sign ) // if both have the same sign then simple add
     {
         apint_sub(x->mant, a->mant, b->mant); //x->mant->sign is set here
-        carry = 0;
+        is_inexact = 0;
     }
     else
     {
         x->mant->sign = a->mant->sign;
         // Add mantissa, shift by carry and update exponent
-        carry = apint_plus(x->mant, x->mant, b->mant);
-        apint_shiftr(x->mant, carry);
-        x->exp = b->exp + carry;
+        is_inexact = apint_plus(x->mant, x->mant, b->mant);
+        apint_shiftr(x->mant, is_inexact);
+        x->exp = b->exp + is_inexact;
 
         // Set the msb on the mantissa
         // To-do: Check for 0, +inf, -inf.
-        if (carry) apint_setmsb(x->mant);
+        if (is_inexact) apint_setmsb(x->mant);
     }
     // borrow always returns the sign.
 

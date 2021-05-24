@@ -192,6 +192,7 @@ int apint_is_greater(apint_srcptr a, apint_srcptr b)
 
 void apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
+    //TODO: check if these checks are needed anywhere else in the code.
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length); // only handle same lengths for now
     assert(a->length + b->length == x->length);
