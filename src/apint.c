@@ -70,33 +70,50 @@ void apint_shiftr(apint_ptr x, unsigned int shift)
     x->limbs[x->length - 1] >>= shift;
 }
 
-void increaseprecision(apint_srcptr x, apint_size_t extralength)
+void reprecision(apint_ptr x, apint_size_t extralimbs)
 {
-    // create x->new with new length of x
-    // copy over all the limbs of x to x new
-    // make x point to x->new
-    // free old x.
-    // it would be required for b as well because apint_add needs both inputs to be of the same precision
+    if(!extralimbs)
+        return;
+    apint_t x_new;
+    apint_init(x_new, x->length + extralimbs);
+    apint_size_t i;
+    for(i=0; i<x->length; i++)
+    {
+        apint_setlimb(x_new, i, x->limbs[i]);
+    }
+    for(;i<x_new->length; i++)
+    {
+        apint_setlimb(x_new, i, 0);
+    }
+    apint_ptr tmp;
+    tmp = x;
+    apint_copy(x, x_new); //copy the new x over
+    apint_free(tmp); //free the old x
 }
 
 int apint_shiftl(apint_ptr x, unsigned int shift){
     assert(x->limbs);
     if (shift == 0) return 0;
-    int is_not_exact = 0;
-    apint_limb_t overflow;
-    overflow = x->limbs[x->length - 1]&(1ULL<<(APINT_LIMB_BITS-shift));
 
-    if(overflow)
+    apint_limb_t overflow;
+
+    apint_size_t nlimbs_new; //additional limbs that are being added
+    nlimbs_new = (apint_size_t)(shift/APINT_LIMB_BITS);
+
+    if(nlimbs_new == 0)
     {
-        is_not_exact = 1;
-        x->length = x->length + 1;
-        // but the new limbs also need to be initialized and pointed correctly.
-        //apint_init();
+        overflow = x->limbs[x->length - 1]&(1ULL<<(APINT_LIMB_BITS-shift));
+        if(overflow)
+        {
+            nlimbs_new = 1;
+        }
     }
     else
     {
-        is_not_exact = 0;
+        nlimbs_new++;
     }
+
+    reprecision(x, nlimbs_new);
 
     uint full_limbs_shifted = shift / APINT_LIMB_BITS;
     shift -= full_limbs_shifted * APINT_LIMB_BITS;
@@ -113,8 +130,8 @@ int apint_shiftl(apint_ptr x, unsigned int shift){
     for (int i = x->length - 1; i > 0 ; i--) {
         x->limbs[i] = (x->limbs[i] << shift) + (x->limbs[i-1] >> (APINT_LIMB_BITS - shift));
     }
-
     x->limbs[0] <<= shift;
+    return nlimbs_new;
 }
 
 void apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)

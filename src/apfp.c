@@ -59,23 +59,31 @@ void apfp_print(apfp_srcptr value)
 
 char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
+    apint_size_t is_not_exact;
     // After swap, `a` is guaranteed to have largest exponent
     if (b->exp > a->exp)
     {
         apfp_srcptr t = a; a = b; b = t;
     }
 
+    apfp_ptr b_new; //b reprecisioned
     // Align `b` mantissa to `a` given exponent difference
     apfp_exp_t factor = a->exp - b->exp;
     apint_copy(x->mant, a->mant);
-    apint_shiftl(x->mant, factor);
+    apint_copy(b_new->mant, a->mant);
 
+    apint_size_t nlimbs_new = apint_shiftl(x->mant, factor);
+
+    if(!nlimbs_new)
+    {
+        reprecision(b_new->mant, nlimbs_new);
+    }
     //For handling negative numbers
     char carry;
     if(a->mant->sign==b->mant->sign ) // if both have the same sign then simple add
     {
         // Add mantissa, shift by carry and update exponent
-        carry = apint_plus(x->mant, x->mant, b->mant);
+        carry = apint_plus(x->mant, x->mant, b_new->mant);
         apint_shiftr(x->mant, carry);
         x->exp = b->exp + carry;
 
@@ -85,7 +93,7 @@ char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     }
     else // either a -b or b-a
     {
-        apint_sub(x->mant, a->mant, b->mant);
+        apint_sub(x->mant, a->mant, b_new->mant);
         x->exp = b->exp;
         carry = 0;
     }
