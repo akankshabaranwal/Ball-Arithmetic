@@ -58,10 +58,30 @@ static inline void apint_setlimb(apint_ptr x, apint_size_t offset, apint_limb_t 
 
 static inline void apint_trim(apint_ptr x, apint_ptr x_temp)
 {
-    for (int i = x->length - 1; i >= 0; i--)
+    for (int i = 0; i < x->length; i++) // least sig bits
     {
         x->limbs[i] = x_temp->limbs[i];
     }
+}
+
+static inline void apint_shiftl_by_d(apint_ptr x, apint_ptr x_orig, int shift)
+{
+    for (int i = 0; i < x_orig->length; i++)
+    {
+        x->limbs[i] = x_orig->limbs[i];
+    }
+
+    // LEFT SHIFT, multiplying by 2
+    size_t sl, sr;
+    for (apint_size_t i = (x->length - 2); i >= 0; i--)
+    {
+        sl = shift;
+        sr = APINT_LIMB_BITS - shift;
+
+        x->limbs[i + 1] = x->limbs[i + 1] << sl | x->limbs[i] >> sr;
+    }
+
+    x->limbs[x->length - 1] <<= shift;
 }
 
 // Find maximum between two numbers.

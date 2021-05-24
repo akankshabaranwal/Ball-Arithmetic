@@ -156,7 +156,22 @@ uint64_t apint_mul_karatsuba(apint_ptr x, apint_srcptr a, apint_srcptr b)
         // printf("Small enough size, returning\n");
         return apint_mul_karatsuba_base_case(x, a, b);
     }
-    return apint_mul_karatsuba_recurse(x, a, b); // this returns a unit64_t
+
+    printf("b before: 0x%llx 0x%llx\n", apint_getlimb(b, 1), apint_getlimb(b, 0));
+
+    // int x_original_length = x->length; // this was for some reason overwriting b?
+    apint_t x_new;
+    apint_init(x_new, (a->length + b->length) * 64); // making x longer for now...
+
+    printf("b after: 0x%llx 0x%llx\n", apint_getlimb(b, 1), apint_getlimb(b, 0));
+
+    uint64_t overflow = apint_mul_karatsuba_recurse(x_new, a, b); // Although I don't think there will be overflow here
+
+    // need to bring x down to the original number of precision
+    apint_trim(x, x_new); // bring x_new back down to precision of x
+
+    apint_free(x_new);
+    return overflow; // this returns a unit64_t
 }
 
 /*
@@ -165,7 +180,7 @@ This is a recursive method
 uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     // if a < 10 or b < 10, return a*b
-    if (a->length <= 1 || b->length <= 1)
+    if (a->length == 1 || b->length == 1)
     {
         printf("Small enough size, returning\n");
         return apint_mul_karatsuba_base_case(x, a, b);
@@ -173,6 +188,8 @@ uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b
 
     // d = floor(max(length(a), length(b)) / 2)
     apint_size_t d = floor(max(a->length, b->length) / 2); // They're the same length anyways
+
+    // okay at some point a length is 0?
 
     // x_high, x_low = split x at d, or right shift by d
     apint_t a_high, a_low;
@@ -192,7 +209,7 @@ uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b
 
     apint_t z0, z1, z2;
     apint_init(z0, (a_high->length + b_high->length) * 64);
-    apint_init(z1, ((max(a_high->length, a_low->length) + 1) + (max(b_high->length, b_low->length) + 1)) * 64);
+    apint_init(z1, ((max(a_high->length, a_low->length)) + (max(b_high->length, b_low->length))) * 64);
     apint_init(z2, (a_low->length + b_low->length) * 64);
     // apint_init(z0, (a->length + b->length) * 64); // Padding it to oblivion, trade off between performance and precision
     // apint_init(z1, (a->length + b->length) * 64);
@@ -201,11 +218,12 @@ uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b
     // printf("z0: 0x%llx 0x%llx 0x%llx 0x%llx\n", apint_getlimb(z0, 3), apint_getlimb(z0, 2), apint_getlimb(z0, 1), apint_getlimb(z0, 0));
 
     apint_t a_add, b_add;
-    apint_init(a_add, (max(a_high->length, a_low->length) + 1) * 64);
-    apint_init(b_add, (max(b_high->length, b_low->length) + 1) * 64);
+    char a_add_overflow, b_add_overflow;
+    apint_init(a_add, (max(a_high->length, a_low->length)) * 64);
+    apint_init(b_add, (max(b_high->length, b_low->length)) * 64);
 
-    apint_add_karatsuba(a_add, a_high, a_low); // a_high and a_low have to be the same length for now ASSUMPTION
-    apint_add_karatsuba(b_add, b_high, b_low); // a_high and a_low have to be the same length for now
+    a_add_overflow = apint_add_karatsuba(a_add, a_high, a_low); // a_high and a_low have to be the same length for now ASSUMPTION
+    b_add_overflow = apint_add_karatsuba(b_add, b_high, b_low); // a_high and a_low have to be the same length for now
 
     // printf("Length a_add: %d\n", a_add->length);
     // printf("Length b_add: %d\n", b_add->length);
@@ -224,17 +242,45 @@ uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b
     // printf("Length b_low: %d\n\n", b_low->length);
 
     apint_mul_karatsuba_recurse(z0, a_high, b_high); // There should be an overflow but I don't think I need to do anything with it
-    // apint_mul_karatsuba_recurse(z1, a_add, b_add);
+    apint_mul_karatsuba_recurse(z1, a_add, b_add);   // THE LENGTH NEVER DECREASES, ok now it decreases, so its fine
     apint_mul_karatsuba_recurse(z2, a_low, b_low);
 
-    // printf("Length z0: %d\n", z0->length);
-    // printf("Length z1: %d\n", z1->length);
-    // printf("Length z2: %d\n", z2->length);
+    printf("Length z0: %d\n", z0->length);
+    printf("Length z1: %d\n", z1->length);
+    printf("Length z2: %d\n", z2->length);
+    printf("LENGTH OF x: %d\n", x->length);
 
-    // printf("z0 before shift: 0x%llx 0x%llx\n", apint_getlimb(z0, 1), apint_getlimb(z0, 0));
+    printf("z0 before shift: 0x%llx 0x%llx\n", apint_getlimb(z0, 1), apint_getlimb(z0, 0));
+    printf("z1 before shift: 0x%llx 0x%llx\n", apint_getlimb(z1, 1), apint_getlimb(z1, 0));
+    printf("z2 before shift: 0x%llx 0x%llx\n", apint_getlimb(z2, 1), apint_getlimb(z2, 0));
+
+    apint_t z2_, z1_;
+    apint_init(z2_, (x->length) * 64);
+    apint_init(z1_, (x->length) * 64);
+
+    apint_t z1_z2, z1_z2_z0;
+    apint_init(z1_z2, (z1->length) * 64); // should be same length as operands
+    apint_init(z1_z2_z0, (z1->length) * 64);
+    apint_sub(z1_z2, z1, z2);
+    apint_sub(z1_z2_z0, z1_z2, z0);
+
+    printf("z2_ before shift: 0x%llx 0x%llx\n", apint_getlimb(z2, 1), apint_getlimb(z2, 0));
+    printf("z1_ before shift: 0x%llx 0x%llx\n", apint_getlimb(z1_z2_z0, 1), apint_getlimb(z1_z2_z0, 0));
+
+    apint_shiftl_by_d(z2_, z2, 2 * d);
+    apint_shiftl_by_d(z1_, z1_z2_z0, d);
+
+    printf("z2_ before shift: 0x%llx 0x%llx\n", apint_getlimb(z2_, 1), apint_getlimb(z2_, 0));
+    printf("z1_ before shift: 0x%llx 0x%llx\n", apint_getlimb(z1_, 1), apint_getlimb(z1_, 0));
+
+    apint_t x_;
+    apint_init(x_, (x->length) * 64);
+    apint_add_karatsuba(x_, z2_, z1_);
+    apint_add_karatsuba(x, x_, z0);
     // x = z2 * 2 ^ (2 * d) + (z1 - z2 - z0) * 2 ^ (d) + z0;
 
-    // return result
+    uint64_t result; // not used yet
+    return result;
 }
 
 // YOU can'T JUst SpeCIFY WhatEVEr THe fuCK PreciSion YOu WANt FOR THe OutpuT??????!!!!!!!!!
@@ -268,11 +314,13 @@ uint64_t apint_mul_karatsuba_base_case(apint_ptr x, apint_srcptr a, apint_srcptr
 char apint_add_karatsuba(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
-    assert((max(a->length, b->length) + 1) == x->length);
+    assert((max(a->length, b->length)) == x->length);
     /*
     a has to be the bigger one because when we pass in a_high,
     it will always be greater or equal because of how we calculate "d"
     */
+    printf("add_karatsuba a length: %d\n", a->length);
+    printf("add_karatsuba b length: %d\n", b->length);
     assert(a->length >= b->length);
 
     char carry = 0;
@@ -287,7 +335,7 @@ char apint_add_karatsuba(apint_ptr x, apint_srcptr a, apint_srcptr b)
         carry = _addcarryx_u64(carry, a->limbs[i], 0, &x->limbs[i]);
     }
 
-    x->limbs[x->length - 1] = carry;
+    // x->limbs[x->length - 1] = carry;
     return carry;
 }
 
