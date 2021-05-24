@@ -40,7 +40,7 @@ sign_t apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b);
 int apint_is_greater(apint_srcptr a, apint_srcptr b);
 void apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b);
 void apint_shiftr(apint_ptr x, unsigned int shift);
-void apint_shiftl(apint_ptr x, unsigned int shift);
+int apint_shiftl(apint_ptr x, unsigned int shift);
 
 static inline void apint_setmsb(apint_ptr x)
 {

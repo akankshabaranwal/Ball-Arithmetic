@@ -86,6 +86,7 @@ char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     else // either a -b or b-a
     {
         apint_sub(x->mant, a->mant, b->mant);
+        x->exp = b->exp;
         carry = 0;
     }
     return carry;
@@ -109,6 +110,7 @@ char apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     if(a->mant->sign==b->mant->sign ) // if both have the same sign then simple add
     {
         apint_sub(x->mant, a->mant, b->mant); //x->mant->sign is set here
+        x->exp = b->exp;
         is_inexact = 0;
     }
     else
@@ -123,9 +125,7 @@ char apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
         // To-do: Check for 0, +inf, -inf.
         if (is_inexact) apint_setmsb(x->mant);
     }
-    // borrow always returns the sign.
 
-    //TODO: Check if we need to set msb and do any shifting similar to apfp_add
     return is_inexact;
 }
 
