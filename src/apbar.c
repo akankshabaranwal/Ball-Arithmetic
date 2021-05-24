@@ -79,9 +79,9 @@ void apbar_set_d(apbar_t x, double val)
     apfp_set_d(x->midpt, val);
 }
 
+//assumes that c, a, b are already allocated
 void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 {
-    apbar_init(c, p);
     int is_not_exact = apfp_add(c->midpt, a->midpt, b->midpt);
     rad_add(c->rad, a->rad, b->rad);
 

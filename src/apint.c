@@ -98,7 +98,48 @@ void apint_shiftl(apint_ptr x, unsigned int shift){
     x->limbs[0] <<= shift;
 }
 
-char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
+void apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
+{
+    //sign_t borrow;
+    if(a->sign==b->sign)
+    {
+        apint_plus(x,a,b);
+        x->sign=a->sign;
+    }
+    else
+    {
+        if(a->sign==-1)//only a is negative. so equivalent to b-a.
+        {
+            x->sign=apint_minus(x,b,a);
+        }
+        else
+        { //only b is negative.
+            x->sign = apint_minus(x,a,b);
+        }
+    }
+}
+
+void apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
+{
+    if(a->sign==b->sign)
+    {
+        if (a->sign == 1) //both are positive
+        {
+            x->sign = apint_minus(x, a, b);
+        }
+        else //both are negative
+        {
+            x->sign = apint_minus(x, a, b);
+        }
+    }
+    else
+    {
+        apint_plus(x,a,b);
+        x->sign = a->sign;
+    }
+}
+
+char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length);
@@ -113,30 +154,60 @@ char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
     return carry;
 }
 
-// a - b
-char apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
+// |a| - |b|. Do not handle sign here.
+sign_t apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
-    // To-do: Implement substraction. Possibly add a negative value flag in apint_t.
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length); // only handle same lengths for now
     assert(a->length == x->length);
+    sign_t result_sign;
+    unsigned char borrow = 0;
 
-    char borrow = 0;
-
-    for (apint_size_t i = 0; i < a->length; i++)
+    if(apint_is_greater(a,b)) // a > b so a-b
     {
-        borrow = _subborrow_u64(borrow, a->limbs[i], b->limbs[i], &x->limbs[i]);
+        result_sign=1;
+        for (apint_size_t i = 0; i < a->length; i++)
+        {
+            borrow = _subborrow_u64(borrow, a->limbs[i], b->limbs[i], &x->limbs[i]);
+        }
     }
-    return borrow;
+    else // b > a so -(b-a)
+    {
+        result_sign=-1;
+        for (apint_size_t i = 0; i < a->length; i++)
+        {
+            borrow = _subborrow_u64(borrow, b->limbs[i], a->limbs[i], &x->limbs[i]);
+        }
+    }
+    return result_sign;
+}
+
+
+int apint_is_greater(apint_srcptr a, apint_srcptr b)
+{
+    //Works only for same length a, b
+    //TODO: Check if there's a vector intrinsic for the comparison
+    //TODO: Verify that the most significant limb understanding is correct
+    for (apint_size_t i = 0; i < (a->length - 1); i++)
+    {
+        if(a->limbs[i] >b->limbs[i])
+            return 1;
+    }
+    return 0;
 }
 
 void apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
+    //TODO: check if these checks are needed anywhere else in the code.
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length); // only handle same lengths for now
     assert(a->length + b->length == x->length);
 
     unsigned long long overflow = 0;
+    if(a->sign==b->sign)
+        x->sign = 1;
+    else
+        x->sign =-1;
 
     for (apint_size_t i = 0; i < b->length; i++)
     {

@@ -30,7 +30,7 @@ void apfp_set_d(apfp_ptr x, double val)
 
     u.uf = val;
     h = u.ul;
-    x->sign = (int) (h >> 63);
+    x->mant->sign = (int) (h >> 63);
     x->exp = (int64_t) (((h << 1) >> 53) - 1023 - 52);
     x->mant->limbs[0] = ((h << 12) >> 12) | (UWORD(1) << 52); // | 1ull<<(APINT_LIMB_BITS-1);
 }
@@ -63,10 +63,8 @@ void apfp_print_msg(const char *msg, apfp_srcptr value){
     printf("\n");
 }
 
-int apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
-    // To-do: Handle negative values.
-
     // After swap, `a` is guaranteed to have largest exponent
     if (b->exp > a->exp)
     {
@@ -78,14 +76,75 @@ int apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     apint_copy(x->mant, a->mant);
     apint_shiftl(x->mant, factor);
 
-    // Add mantissa, shift by carry and update exponent
-    char carry = apint_add(x->mant, x->mant, b->mant);
-    apint_shiftr(x->mant, carry);
-    x->exp = b->exp + carry;
+    //For handling negative numbers
+    char carry;
+    if(a->mant->sign==b->mant->sign ) // if both have the same sign then simple add
+    {
+        // Add mantissa, shift by carry and update exponent
+        carry = apint_plus(x->mant, x->mant, b->mant);
+        apint_shiftr(x->mant, carry);
+        x->exp = b->exp + carry;
 
-    // Set the msb on the mantissa
-    // To-do: Check for 0, +inf, -inf.
-    if(carry) apint_setmsb(x->mant);
-
+        // Set the msb on the mantissa
+        // To-do: Check for 0, +inf, -inf.
+        if (carry) apint_setmsb(x->mant);
+    }
+    else // either a -b or b-a
+    {
+        apint_sub(x->mant, a->mant, b->mant);
+        carry = 0;
+    }
     return carry;
+}
+
+//a-b
+//TODO: Needs to be validated
+char apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+{
+    // After swap, `a` is guaranteed to have largest exponent
+    if (b->exp > a->exp)
+    {
+        apfp_srcptr t = a; a = b; b = t;
+    }
+    char is_inexact;
+    // Align `b` mantissa to `a` given exponent difference
+    apfp_exp_t factor = a->exp - b->exp;
+    apint_copy(x->mant, a->mant);
+    apint_shiftl(x->mant, factor);
+
+    if(a->mant->sign==b->mant->sign ) // if both have the same sign then simple add
+    {
+        apint_sub(x->mant, a->mant, b->mant); //x->mant->sign is set here
+        is_inexact = 0;
+    }
+    else
+    {
+        x->mant->sign = a->mant->sign;
+        // Add mantissa, shift by carry and update exponent
+        is_inexact = apint_plus(x->mant, x->mant, b->mant);
+        apint_shiftr(x->mant, is_inexact);
+        x->exp = b->exp + is_inexact;
+
+        // Set the msb on the mantissa
+        // To-do: Check for 0, +inf, -inf.
+        if (is_inexact) apint_setmsb(x->mant);
+    }
+    // borrow always returns the sign.
+
+    //TODO: Check if we need to set msb and do any shifting similar to apfp_add
+    return is_inexact;
+}
+
+void apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+{
+    x->exp = a->exp + b->exp;
+    apint_mul(x->mant, a->mant, b->mant);
+    if(a->mant->sign == b->mant->sign)
+    {
+        x->mant->sign = a->mant->sign;
+    }
+    else
+    {
+        x->mant->sign = -1;
+    }
 }

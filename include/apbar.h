@@ -6,9 +6,9 @@
 typedef apfp_t apbar_midpt; //mid point is arbitrary precision floating point
 typedef unsigned long apbar_rad; //radius is fixed precision. In arb paper it is mag_t which is unsigned floating point
 
+//sign is only part of the mantissa.
 typedef struct
 {
-   sign_t sign;
    apint_limb_t mant;
    apfp_exp_t exp;
 } __rad_struct;
