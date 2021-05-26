@@ -10,7 +10,8 @@
 void apint_init(apint_t x, apint_size_t p)
 {
     x->length = (p / APINT_LIMB_BITS) + ((p % APINT_LIMB_BITS) > 0);
-    x->limbs = malloc(x->length * APINT_LIMB_BYTES);
+    x->limbs = calloc(x->length,  APINT_LIMB_BYTES);
+    assert(x->limbs != NULL);
 }
 
 void apint_to_fmpz(fmpz_t res, apint_srcptr src)
