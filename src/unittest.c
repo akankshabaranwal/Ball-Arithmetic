@@ -57,6 +57,86 @@ TEST_GROUP(apint, {
             ASSERT_EQUAL_UL(apint_test->limbs[0], 1ull);
     });
 
+    TEST_CASE(addition with positive numbers, {
+            apint_setlimb(apint_test, 0, 1);
+            apint_setlimb(apint_test, 1, 1);
+            apint_setlimb(apint_test, 2, 1);
+            apint_setlimb(apint_test, 3, 1);
+
+            apint_setlimb(apint_other, 0, 2);
+            apint_setlimb(apint_other, 1, 2);
+            apint_setlimb(apint_other, 2, 2);
+            apint_setlimb(apint_other, 3, 2);
+
+            apint_plus(apint_res, apint_test, apint_other);
+
+            ASSERT_EQUAL_UL(apint_getlimb(apint_res, 0), 3ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_res, 1), 3ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_res, 2), 3ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_res, 3), 3ull);
+    });
+
+    TEST_CASE(addition with positive numbers and overflow, {
+            apint_setlimb(apint_test, 0, UINT64_MAX);
+            apint_setlimb(apint_test, 1, 1);
+            apint_setlimb(apint_test, 2, UINT64_MAX);
+            apint_setlimb(apint_test, 3, UINT64_MAX - 1);
+
+            apint_setlimb(apint_other, 0, 2);
+            apint_setlimb(apint_other, 1, 2);
+            apint_setlimb(apint_other, 2, 3);
+            apint_setlimb(apint_other, 3, 3);
+
+            char carry = apint_plus(apint_res, apint_test, apint_other);
+
+            ASSERT_EQUAL_UL(apint_getlimb(apint_res, 0), 1ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_res, 1), 4ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_res, 2), 2ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_res, 3), 2ull);
+
+            ASSERT_EQUAL_I(carry, 1);
+    });
+
+    TEST_CASE(portable addition with positive numbers, {
+            apint_setlimb(apint_test, 0, 1);
+            apint_setlimb(apint_test, 1, 1);
+            apint_setlimb(apint_test, 2, 1);
+            apint_setlimb(apint_test, 3, 1);
+
+            apint_setlimb(apint_other, 0, 2);
+            apint_setlimb(apint_other, 1, 2);
+            apint_setlimb(apint_other, 2, 2);
+            apint_setlimb(apint_other, 3, 2);
+
+            apint_plus_portable(apint_res, apint_test, apint_other);
+
+            ASSERT_EQUAL_UL(apint_getlimb(apint_res, 0), 3ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_res, 1), 3ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_res, 2), 3ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_res, 3), 3ull);
+    });
+
+    TEST_CASE(portable addition with positive numbers and overflow, {
+            apint_setlimb(apint_test, 0, UINT64_MAX);
+            apint_setlimb(apint_test, 1, 1);
+            apint_setlimb(apint_test, 2, UINT64_MAX);
+            apint_setlimb(apint_test, 3, UINT64_MAX - 1);
+
+            apint_setlimb(apint_other, 0, 2);
+            apint_setlimb(apint_other, 1, 2);
+            apint_setlimb(apint_other, 2, 3);
+            apint_setlimb(apint_other, 3, 3);
+
+            char carry = apint_plus_portable(apint_res, apint_test, apint_other);
+
+            ASSERT_EQUAL_UL(apint_getlimb(apint_res, 0), 1ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_res, 1), 4ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_res, 2), 2ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_res, 3), 2ull);
+
+            ASSERT_EQUAL_I(carry, 1);
+    });
+
     TEST_CASE(multiply, {
             apint_setlimb(apint_test, 0, 1);
             apint_setlimb(apint_test, 1, 1);
@@ -70,6 +150,7 @@ TEST_GROUP(apint, {
 
             apint_mul(apint_res, apint_test, apint_other);
 
+            // Calculated with: https://defuse.ca/big-number-calculator.htm
             ASSERT_EQUAL_UL(apint_getlimb(apint_res, 0), 2ull);
             ASSERT_EQUAL_UL(apint_getlimb(apint_res, 1), 4ull);
             ASSERT_EQUAL_UL(apint_getlimb(apint_res, 2), 6ull);

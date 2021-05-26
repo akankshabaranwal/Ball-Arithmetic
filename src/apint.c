@@ -139,11 +139,29 @@ void apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
     }
 }
 
+char apint_plus_portable(apint_ptr x, apint_srcptr a, apint_srcptr b)
+{
+    assert(x->limbs && a->limbs && b->limbs);
+    assert(a->length == b->length);
+    assert(a->length <= x->length);
+
+    char carry = 0;
+
+    for (apint_size_t i = 0; i < a->length; i++)
+    {
+        x->limbs[i] = (unsigned) carry;
+        x->limbs[i] += a->limbs[i] + b->limbs[i];
+        carry = (a->limbs[i] > UINT64_MAX - b->limbs[i]) ? 1 : 0;
+    }
+
+    return carry;
+}
+
 char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length);
-    assert(a->length == x->length);
+    assert(a->length <= x->length);
 
     char carry = 0;
 
@@ -159,7 +177,7 @@ sign_t apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length); // only handle same lengths for now
-    assert(a->length == x->length);
+    assert(a->length <= x->length);
     sign_t result_sign;
     unsigned char borrow = 0;
 
@@ -190,7 +208,7 @@ int apint_is_greater(apint_srcptr a, apint_srcptr b)
     //TODO: Verify that the most significant limb understanding is correct
     for (apint_size_t i = 0; i < (a->length - 1); i++)
     {
-        if(a->limbs[i] >b->limbs[i])
+        if(a->limbs[i] > b->limbs[i])
             return 1;
     }
     return 0;
@@ -201,7 +219,7 @@ void apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
     //TODO: check if these checks are needed anywhere else in the code.
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length); // only handle same lengths for now
-    assert(a->length + b->length == x->length);
+    assert(a->length + b->length <= x->length);
 
     unsigned long long overflow = 0;
     if(a->sign==b->sign)

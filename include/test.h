@@ -25,7 +25,7 @@ helper_t teardown = NULL;
 #define ASSERT_EQUAL_I(ACTUAL, EXPECTED)                                       \
 if ((EXPECTED) != (ACTUAL)) {                                                  \
     printf("\t---- %d expected got %d at line %d", EXPECTED, ACTUAL, __LINE__);\
-    printf(" (ASSERT_EQUAL_I(" #EXPECTED ", " #ACTUAL "))\n");                 \
+    printf(" (ASSERT_EQUAL_I(" #ACTUAL ", " #EXPECTED "))\n");                 \
     did_pass = false;                                                          \
     BAIL;                                                                      \
 }
@@ -33,7 +33,7 @@ if ((EXPECTED) != (ACTUAL)) {                                                  \
 #define ASSERT_EQUAL_L(ACTUAL, EXPECTED)                                       \
 if ((EXPECTED) != (ACTUAL)) {                                                  \
     printf("\t---- %ld expected got %ld at line %d", EXPECTED, ACTUAL, __LINE__);\
-    printf(" (ASSERT_EQUAL_L(" #EXPECTED ", " #ACTUAL "))\n");                 \
+    printf(" (ASSERT_EQUAL_L(" #ACTUAL ", " #EXPECTED "))\n");                 \
     did_pass = false;                                                          \
     BAIL;                                                                      \
 }
@@ -49,7 +49,7 @@ if ((LHS) < (RHS)) {                                                           \
 #define ASSERT_EQUAL_UL(ACTUAL, EXPECTED)                                      \
 if ((EXPECTED) != (ACTUAL)) {                                                  \
     printf("\t---- %llu expected got %llu at line ", EXPECTED, ACTUAL);        \
-    printf("%d (ASSERT_EQUAL_UL(" #EXPECTED ", " #ACTUAL ")\n", __LINE__);     \
+    printf("%d (ASSERT_EQUAL_UL(" #ACTUAL ", " #EXPECTED ")\n", __LINE__);     \
     did_pass = false;                                                          \
     BAIL;                                                                      \
 }
@@ -57,7 +57,7 @@ if ((EXPECTED) != (ACTUAL)) {                                                  \
 #define ASSERT_NOT_EQUAL_UL(ACTUAL, EXPECTED)                                  \
 if ((EXPECTED) == (ACTUAL)) {                                                  \
     printf("\t---- Assertion not equal failed for: ");                         \
-    printf(#EXPECTED " and " #ACTUAL " on line: %d\n", __LINE__);              \
+    printf(#ACTUAL " and " #EXPECTED " on line: %d\n", __LINE__);              \
     did_pass = false;                                                          \
     BAIL;                                                                      \
 }
