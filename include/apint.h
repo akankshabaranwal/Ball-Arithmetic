@@ -8,7 +8,7 @@
 #include <flint/fmpz.h>
 
 typedef unsigned long long apint_limb_t;
-typedef int apint_size_t;
+typedef uint apint_size_t;
 typedef int sign_t;
 
 #define APINT_LIMB_BYTES sizeof(apint_limb_t)
