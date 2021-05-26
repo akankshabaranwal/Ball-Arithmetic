@@ -41,7 +41,8 @@ int apint_is_greater(apint_srcptr a, apint_srcptr b);
 void apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b);
 void apint_shiftr(apint_ptr x, unsigned int shift);
 int apint_shiftl(apint_ptr x, unsigned int shift);
-void reprecision(apint_ptr x, apint_size_t extralimbs);
+void increaseprecision(apint_ptr x, apint_size_t extralimbs);
+void reduceprecision(apint_ptr x, apint_size_t extralimbs);
 
 static inline void apint_setmsb(apint_ptr x)
 {

@@ -57,7 +57,7 @@ void apfp_print(apfp_srcptr value)
 //    printf(")");
 }
 
-char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+int apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     apint_size_t is_not_exact;
     // After swap, `a` is guaranteed to have largest exponent
@@ -76,7 +76,8 @@ char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 
     if(!nlimbs_new)
     {
-        reprecision(b_new->mant, nlimbs_new);
+        increaseprecision(b_new->mant, nlimbs_new);
+        is_not_exact=1;
     }
     //For handling negative numbers
     char carry;
@@ -95,46 +96,52 @@ char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     {
         apint_sub(x->mant, a->mant, b_new->mant);
         x->exp = b->exp;
-        carry = 0;
     }
-    return carry;
+    if(is_not_exact)
+    {
+        x->exp = x->exp + (nlimbs_new*APINT_LIMB_BITS);
+        reduceprecision(x->mant, nlimbs_new);
+    }
+    return is_not_exact;
 }
 
 //a-b
-//TODO: Needs to be validated
-char apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+int apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
+    int is_not_exact;
     // After swap, `a` is guaranteed to have largest exponent
     if (b->exp > a->exp)
     {
         apfp_srcptr t = a; a = b; b = t;
     }
-    char is_inexact;
+
+
     // Align `b` mantissa to `a` given exponent difference
     apfp_exp_t factor = a->exp - b->exp;
     apint_copy(x->mant, a->mant);
     apint_shiftl(x->mant, factor);
 
+    char carry;
     if(a->mant->sign==b->mant->sign ) // if both have the same sign then simple add
     {
         apint_sub(x->mant, a->mant, b->mant); //x->mant->sign is set here
         x->exp = b->exp;
-        is_inexact = 0;
+        is_not_exact = 0;
     }
     else
     {
         x->mant->sign = a->mant->sign;
         // Add mantissa, shift by carry and update exponent
-        is_inexact = apint_plus(x->mant, x->mant, b->mant);
-        apint_shiftr(x->mant, is_inexact);
-        x->exp = b->exp + is_inexact;
+        carry = apint_plus(x->mant, x->mant, b->mant);
+        apint_shiftr(x->mant, is_not_exact);
+        x->exp = b->exp + is_not_exact;
 
         // Set the msb on the mantissa
         // To-do: Check for 0, +inf, -inf.
-        if (is_inexact) apint_setmsb(x->mant);
+        if (is_not_exact) apint_setmsb(x->mant);
     }
 
-    return is_inexact;
+    return is_not_exact;
 }
 
 void apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)

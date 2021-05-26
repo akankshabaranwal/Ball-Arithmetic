@@ -70,7 +70,7 @@ void apint_shiftr(apint_ptr x, unsigned int shift)
     x->limbs[x->length - 1] >>= shift;
 }
 
-void reprecision(apint_ptr x, apint_size_t extralimbs)
+void increaseprecision(apint_ptr x, apint_size_t extralimbs)
 {
     if(!extralimbs)
         return;
@@ -84,6 +84,23 @@ void reprecision(apint_ptr x, apint_size_t extralimbs)
     for(;i<x_new->length; i++)
     {
         apint_setlimb(x_new, i, 0);
+    }
+    apint_ptr tmp;
+    tmp = x;
+    apint_copy(x, x_new); //copy the new x over
+    apint_free(tmp); //free the old x
+}
+
+void reduceprecision(apint_ptr x, apint_size_t extralimbs) //reduce precision by extra limbs
+{
+    if(!extralimbs)
+        return;
+    apint_t x_new;
+    apint_init(x_new, x->length - extralimbs);
+    apint_size_t i;
+    for(i=x_new->length-1; i>=0; i--)
+    {
+        apint_setlimb(x_new, i, x->limbs[i]);
     }
     apint_ptr tmp;
     tmp = x;
@@ -113,7 +130,7 @@ int apint_shiftl(apint_ptr x, unsigned int shift){
         nlimbs_new++;
     }
 
-    reprecision(x, nlimbs_new);
+    increaseprecision(x, nlimbs_new);
 
     uint full_limbs_shifted = shift / APINT_LIMB_BITS;
     shift -= full_limbs_shifted * APINT_LIMB_BITS;
