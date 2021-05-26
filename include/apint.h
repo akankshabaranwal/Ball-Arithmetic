@@ -39,6 +39,7 @@ char apint_plus_portable(apint_ptr x, apint_srcptr a, apint_srcptr b);
 char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b);
 sign_t apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b);
 int apint_is_greater(apint_srcptr a, apint_srcptr b);
+void apint_mul_portable(apint_ptr x, apint_srcptr a, apint_srcptr b);
 void apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b);
 void apint_shiftr(apint_ptr x, unsigned int shift);
 void apint_shiftl(apint_ptr x, unsigned int shift);
