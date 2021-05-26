@@ -67,7 +67,7 @@ int apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
         apfp_srcptr t = a; a = b; b = t;
     }
 
-    apfp_ptr b_new; //b reprecisioned
+    apfp_ptr b_new; //new b reprecisioned
     // Align `b` mantissa to `a` given exponent difference
     apfp_exp_t factor = a->exp - b->exp;
     apint_copy(x->mant, a->mant);
@@ -117,7 +117,7 @@ int apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
         apfp_srcptr t = a; a = b; b = t;
     }
 
-    apfp_ptr b_new; //b reprecisioned
+    apfp_ptr b_new; //new b reprecisioned
     // Align `b` mantissa to `a` given exponent difference
     apfp_exp_t factor = a->exp - b->exp;
     apint_copy(x->mant, a->mant);
@@ -159,8 +159,12 @@ int apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 
 void apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
+    //TODO: fix detecting inexact for multiplication
     x->exp = a->exp + b->exp;
+    increaseprecision(x->mant, a->mant->length + b->mant->length-x->mant->length);
     apint_mul(x->mant, a->mant, b->mant);
+    reduceprecision(x->mant, a->mant->length + b->mant->length-x->mant->length);
+    x->exp = x->exp + (a->mant->length + b->mant->length-x->mant->length)*APINT_LIMB_BITS;
     if(a->mant->sign == b->mant->sign)
     {
         x->mant->sign = a->mant->sign;
