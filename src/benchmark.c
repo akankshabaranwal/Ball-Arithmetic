@@ -6,18 +6,18 @@
 #include "tsc_x86.h"
 #include "benchmark.h"
 
-static double bench(benchmark_fun_t f, unsigned int prec) 
+static double bench(benchmark_fun_t f, unsigned int prec)
 {
     /* Warm up the cpu. */
     for (int i = 0; i < BENCHMARK_WARMUPS; ++i) {
         f(prec);
     }
-  
+
     /* Start the benchmark. */
     double start = start_tsc();
     f(prec);
     double cycles = stop_tsc(start);
-    
+
     return cycles;
 }
 
@@ -59,8 +59,8 @@ void barith_init(unsigned int prec)
     apbar_init(apbar_out, prec);
     apbar_init(apbar_in1, prec);
     apbar_init(apbar_in2, prec);
-    
-    // TODO: Use arbitrary precision random number. 
+
+    // TODO: Use arbitrary precision random number.
     apbar_set_d(apbar_in1, (double)rand() / RAND_MAX);
     apbar_set_d(apbar_in2, (double)rand() / RAND_MAX);
 }
@@ -126,22 +126,25 @@ static void int_mul(uint prec)
 }
 
 BENCHMARK_BEGIN_TABLE()
-    BENCHMARK_FUNCTION(arblib_add, arblib_init, arblib_deinit, 4.0)
-    BENCHMARK_FUNCTION(barith_add, barith_init, barith_deinit, 4.0)
-    BENCHMARK_FUNCTION(int_mul, int_init, int_cleanup, 1.0)
+    BENCHMARK_FUNCTION(arblib_add, arblib_init, arblib_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith_add, barith_init, barith_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(int_mul, int_init, int_cleanup, 1.0, 8, 17)
 BENCHMARK_END_TABLE()
 
 int main(int argc, char const *argv[])
 {
-    const unsigned int precision = 256; 
-
     BENCHMARK_FOREACH(current)
     {
-        current->init(precision);
-        double cycles = bench(current->function, precision) / BENCHMARK_ITER / current->divisor;
-        current->deinit(precision);
+        for (unsigned int p = current->prec_start; p < current->prec_stop; p++)
+        {
+            unsigned int precision = 1u << p;
 
-        printf("%-14s : %.2f cyc\n", current->name, cycles);
+            current->init(precision);
+            double cycles = bench(current->function, precision) / BENCHMARK_ITER / current->divisor;
+            current->deinit(precision);
+
+            printf("%-14s %5d bits : %.2f cyc\n", current->name, precision, cycles);
+        }
     }
 
     return 0;
