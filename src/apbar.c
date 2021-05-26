@@ -105,6 +105,13 @@ void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
         // e is 2^-p so we essentially just need to subtract p from the exponent
         delta_y->exp = c->midpt->exp - p;
 
+        // This is the same as arb:
+        // rad_t dy;
+        // dy->exp = c->rad->exp - 32;
+        // dy->mant = 0x8000000000000001; // bit pattern: 1000...001
+
+        //apbar_t t;
+        //rad_add(t->rad, c->rad, dy);
 
         // Add delta y to the current radius
         apfp_t rad;
