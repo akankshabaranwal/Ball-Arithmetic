@@ -60,6 +60,7 @@ void apfp_print(apfp_srcptr value)
 int apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     apint_size_t is_not_exact;
+    is_not_exact=0;
     // After swap, `a` is guaranteed to have largest exponent
     if (b->exp > a->exp)
     {
@@ -70,7 +71,7 @@ int apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     // Align `b` mantissa to `a` given exponent difference
     apfp_exp_t factor = a->exp - b->exp;
     apint_copy(x->mant, a->mant);
-    apint_copy(b_new->mant, a->mant);
+    apint_copy(b_new->mant, b->mant);
 
     apint_size_t nlimbs_new = apint_shiftl(x->mant, factor);
 
@@ -87,19 +88,19 @@ int apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
         carry = apint_plus(x->mant, x->mant, b_new->mant);
         apint_shiftr(x->mant, carry);
         x->exp = b->exp + carry;
-
+        x->mant->sign=a->mant->sign;
         // Set the msb on the mantissa
         // To-do: Check for 0, +inf, -inf.
         if (carry) apint_setmsb(x->mant);
     }
     else // either a -b or b-a
     {
-        apint_sub(x->mant, a->mant, b_new->mant);
+        apint_sub(x->mant, a->mant, b_new->mant); //x->mant->sign is set here.
         x->exp = b->exp;
     }
     if(is_not_exact)
     {
-        x->exp = x->exp + (nlimbs_new*APINT_LIMB_BITS);
+        x->exp = x->exp + (nlimbs_new*APINT_LIMB_BITS);//TODO: Verify this
         reduceprecision(x->mant, nlimbs_new);
     }
     return is_not_exact;
@@ -108,39 +109,51 @@ int apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 //a-b
 int apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
-    int is_not_exact;
+    apint_size_t is_not_exact;
+    is_not_exact=0;
     // After swap, `a` is guaranteed to have largest exponent
     if (b->exp > a->exp)
     {
         apfp_srcptr t = a; a = b; b = t;
     }
 
-
+    apfp_ptr b_new; //b reprecisioned
     // Align `b` mantissa to `a` given exponent difference
     apfp_exp_t factor = a->exp - b->exp;
     apint_copy(x->mant, a->mant);
-    apint_shiftl(x->mant, factor);
+    apint_copy(b_new->mant, b->mant);
+
+    apint_size_t nlimbs_new = apint_shiftl(x->mant, factor);
+
+    if(!nlimbs_new)
+    {
+        increaseprecision(b_new->mant, nlimbs_new);
+        is_not_exact=1;
+    }
 
     char carry;
-    if(a->mant->sign==b->mant->sign ) // if both have the same sign then simple add
+    if(a->mant->sign==b->mant->sign ) // if both have the same sign then subtract
     {
-        apint_sub(x->mant, a->mant, b->mant); //x->mant->sign is set here
+        apint_sub(x->mant, a->mant, b_new->mant); //x->mant->sign is set here
         x->exp = b->exp;
-        is_not_exact = 0;
     }
     else
     {
         x->mant->sign = a->mant->sign;
         // Add mantissa, shift by carry and update exponent
-        carry = apint_plus(x->mant, x->mant, b->mant);
-        apint_shiftr(x->mant, is_not_exact);
-        x->exp = b->exp + is_not_exact;
+        carry = apint_plus(x->mant, x->mant, b_new->mant);
+        apint_shiftr(x->mant, carry);
+        x->exp = b->exp + carry;
 
         // Set the msb on the mantissa
         // To-do: Check for 0, +inf, -inf.
-        if (is_not_exact) apint_setmsb(x->mant);
+        if (carry) apint_setmsb(x->mant);
     }
-
+    if(is_not_exact)
+    {
+        x->exp = x->exp + (nlimbs_new*APINT_LIMB_BITS); //TODO: Verify this
+        reduceprecision(x->mant, nlimbs_new);
+    }
     return is_not_exact;
 }
 
