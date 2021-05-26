@@ -53,6 +53,7 @@ void apint_copy(apint_ptr dst, apint_srcptr src)
 // right shift
 void apint_shiftr(apint_ptr x, unsigned int shift)
 {
+    //TODO: Need to add code to detect inexactness here
     assert(x->limbs);
 
     if (!shift)
@@ -98,9 +99,11 @@ void reduceprecision(apint_ptr x, apint_size_t extralimbs) //reduce precision by
     apint_t x_new;
     apint_init(x_new, x->length - extralimbs);
     apint_size_t i;
+    int j = x->length-1;
     for(i=x_new->length-1; i>=0; i--)
     {
-        apint_setlimb(x_new, i, x->limbs[i]);
+        apint_setlimb(x_new, i, x->limbs[j]);
+        j--;
     }
     apint_ptr tmp;
     tmp = x;
