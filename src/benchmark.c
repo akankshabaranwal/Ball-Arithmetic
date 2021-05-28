@@ -118,6 +118,21 @@ static void int_cleanup(uint prec)
     apint_free(out);
 }
 
+static void int_plus(uint prec)
+{
+    for (size_t i = 0; i < BENCHMARK_ITER; ++i) {
+        apint_plus(out, in1, in2);
+    }
+}
+
+static void int_plus_portable(uint prec)
+{
+    for (size_t i = 0; i < BENCHMARK_ITER; ++i) {
+        apint_plus_portable(out, in1, in2);
+    }
+}
+
+
 static void int_mul(uint prec)
 {
     for (size_t i = 0; i < BENCHMARK_ITER; ++i) {
@@ -125,10 +140,20 @@ static void int_mul(uint prec)
     }
 }
 
+static void int_mul_portable(uint prec)
+{
+    for (size_t i = 0; i < BENCHMARK_ITER; ++i) {
+        apint_mul_portable(out, in1, in2);
+    }
+}
+
 BENCHMARK_BEGIN_TABLE()
-    BENCHMARK_FUNCTION(arblib_add, arblib_init, arblib_deinit, 4.0, 8, 17)
-    BENCHMARK_FUNCTION(barith_add, barith_init, barith_deinit, 4.0, 8, 17)
+    // BENCHMARK_FUNCTION(arblib_add, arblib_init, arblib_deinit, 4.0, 8, 17)
+    // BENCHMARK_FUNCTION(barith_add, barith_init, barith_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(int_plus, int_init, int_cleanup, 1.0, 8, 17)
+    BENCHMARK_FUNCTION(int_plus_portable, int_init, int_cleanup, 1.0, 8, 17)
     BENCHMARK_FUNCTION(int_mul, int_init, int_cleanup, 1.0, 8, 17)
+    BENCHMARK_FUNCTION(int_mul_portable, int_init, int_cleanup, 1.0, 8, 17)
 BENCHMARK_END_TABLE()
 
 int main(int argc, char const *argv[])
