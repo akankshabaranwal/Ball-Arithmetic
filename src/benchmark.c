@@ -13,7 +13,7 @@ static double bench(benchmark_fun_t f, unsigned int prec)
         f(prec);
     }
 
-    /* Start the benchmark. */
+    /* Start the logs. */
     double start = start_tsc();
     f(prec);
     double cycles = stop_tsc(start);
@@ -150,8 +150,8 @@ static void int_mul_portable(uint prec)
 BENCHMARK_BEGIN_TABLE()
     // BENCHMARK_FUNCTION(arblib_add, arblib_init, arblib_deinit, 4.0, 8, 17)
     // BENCHMARK_FUNCTION(barith_add, barith_init, barith_deinit, 4.0, 8, 17)
-    BENCHMARK_FUNCTION(int_plus, int_init, int_cleanup, 1.0, 8, 17)
-    BENCHMARK_FUNCTION(int_plus_portable, int_init, int_cleanup, 1.0, 8, 17)
+    // BENCHMARK_FUNCTION(int_plus, int_init, int_cleanup, 1.0, 8, 17)
+    // BENCHMARK_FUNCTION(int_plus_portable, int_init, int_cleanup, 1.0, 8, 17)
     BENCHMARK_FUNCTION(int_mul, int_init, int_cleanup, 1.0, 8, 17)
     BENCHMARK_FUNCTION(int_mul_portable, int_init, int_cleanup, 1.0, 8, 17)
 BENCHMARK_END_TABLE()
