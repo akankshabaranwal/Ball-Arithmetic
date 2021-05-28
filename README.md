@@ -27,22 +27,25 @@ There are convenience wrappers for:
    highest sustained frequency your CPU can handle.
 
 2. Running benchmarks:  
-   $ `./run-benchmarks.sh {iterations} {out}`  
-   This will run our benchmarking code $iterations times (default is 5) and saves
-   it to $out (default is benchmark.log). You do need to supply to file extension.
+   $ `./run-benchmarks.sh {suite} {iterations}`  
+   This will run our benchmarking code with $suite (default is def), $iterations times (default is 5) and saves
+   it to ./logs/$suite.log.
    Please keep in mind that these are positional arguments and should be used as such.
-   BE AWARE it truncates the file it will output to before running, so make sure you don't 
-   point it to important files.
+   BE AWARE it truncates the file it will output to before running.
    This script also assumes that your benchmarking binary is ./benchmark.bin.
    I personally created a symlink to my actual binary so that I can have my builds wherever I want them to be. :)  
    $ `ln -s your/build/target benchmark.bin`  
-   Example: $ `./run-benchmark.sh 10 ./logs/portable_mul`  
+   Example: $ `./run-benchmark.sh int_plus 10`  
    will run the benchmarking code 10 times and save the results in ./logs/portable_mul.log.
 
 3. Plotting:  
-   $ `python3 plot_benchmark.py {in}`  
+   $ `python3 plot_benchmark.py {in}`
    This will create plots from the file given in $in will output a plot to $in.png. 
    The default file is again benchmark.log and will produce a benchmark.png.  
-   Example: $ `python3 plot_benchmark.py ./logs/portable_mul`  
+   Example: $ `python3 plot_benchmark.py ./logs/int_plus`  
    will generate a plot from the benchmark file we generated in the previous step 
-   and put it into ./logs/portable_mul
+   and put it into ./logs/int_plus.png
+   
+Steps 2 and 3 can be done at the same time with yet another wrapper:  
+   $ `./bench_plot.sh $suite`  
+   This will run the benchmark $suite (default is def) and plot the results at the same time.
