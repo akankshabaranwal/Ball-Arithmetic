@@ -233,8 +233,8 @@ TEST_GROUP(apfp, {
 
         ASSERT_EQUAL_L(apfp_test[0]->exp, -51l);
         ASSERT_EQUAL_UL(apfp_test[0]->mant->limbs[0], 0x15BF0995AAF790ull);
-    });
-    /*
+    })
+
     TEST_CASE(apfp_add addition with positive numbers, {
             // Check mantissa first
             // Then check expected exponent
@@ -260,7 +260,7 @@ TEST_GROUP(apfp, {
             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 3ull);
             ASSERT_EQUAL_I(apint_test[2]->sign, 1);
   */
-    //});
+    });
 
 })
 

@@ -46,9 +46,17 @@ void apint_free(apint_t x)
 
 void apint_copy(apint_ptr dst, apint_srcptr src)
 {
+    assert(dst->length == src->length);
+    /*
     dst->length = src->length;
     dst->limbs = realloc(dst->limbs, src->length * APINT_LIMB_BYTES);
     memcpy(dst->limbs, src->limbs, src->length * APINT_LIMB_BYTES);
+    */
+    int i;
+    for(i =0;i<src->length;i++)
+    {
+        dst->limbs[i]=src->limbs[i];
+    }
 }
 
 // detect the position of first 1
