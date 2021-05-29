@@ -120,24 +120,19 @@ void apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
     }
 }
 
-void apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
+unsigned char apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
+    unsigned char overflow;
     if(a->sign == b->sign)
     {
-        if (a->sign == 1) //both are positive
-        {
-            x->sign = apint_minus(x, a, b);
-        }
-        else //both are negative
-        {
-            x->sign = apint_minus(x, a, b);
-        }
+        overflow= apint_minus(x, a, b);
     }
     else
     {
         apint_plus(x, a, b);
         x->sign = a->sign;
     }
+    return overflow;
 }
 
 char apint_plus_portable(apint_ptr x, apint_srcptr a, apint_srcptr b)
@@ -158,13 +153,13 @@ char apint_plus_portable(apint_ptr x, apint_srcptr a, apint_srcptr b)
     return carry;
 }
 
-char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
+unsigned char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length);
     assert(a->length <= x->length);
 
-    char carry = 0;
+    unsigned char carry = 0;
 
     for (apint_size_t i = 0; i < a->length; i++)
     {
@@ -184,7 +179,7 @@ sign_t apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
 
     if(apint_is_greater(a, b)) // a > b so a-b
     {
-        result_sign=1;
+        x->sign = a->sign;
         for (apint_size_t i = 0; i < a->length; i++)
         {
             borrow = _subborrow_u64(borrow, a->limbs[i], b->limbs[i], &x->limbs[i]);
@@ -192,13 +187,13 @@ sign_t apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
     }
     else // b > a so -(b-a)
     {
-        result_sign=-1;
+        x->sign = b->sign;
         for (apint_size_t i = 0; i < a->length; i++)
         {
             borrow = _subborrow_u64(borrow, b->limbs[i], a->limbs[i], &x->limbs[i]);
         }
     }
-    return result_sign;
+    return borrow;
 }
 
 

@@ -73,28 +73,28 @@ char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 
     // Align `b` mantissa to `a` given exponent difference
     apfp_exp_t factor = a->exp - b->exp;
-    apint_copy(x->mant, a->mant);
-    apint_shiftl(x->mant, factor);
+    apint_copy(x->mant, b->mant);
+    apint_shiftr(x->mant, factor);
 
     //For handling negative numbers
-    char carry;
+    char overflow;
     if(a->mant->sign==b->mant->sign ) // if both have the same sign then simple add
     {
         // Add mantissa, shift by carry and update exponent
-        carry = apint_plus(x->mant, x->mant, b->mant);
-        apint_shiftr(x->mant, carry);
-        x->exp = b->exp + carry;
+        overflow = apint_plus(x->mant, x->mant, b->mant);
+        apint_shiftr(x->mant, overflow);
+        x->exp = b->exp + overflow;
 
         // Set the msb on the mantissa
         // To-do: Check for 0, +inf, -inf.
-        if (carry) apint_setmsb(x->mant);
+        if (overflow) apint_setmsb(x->mant);
     }
     else // either a -b or b-a
     {
-        apint_sub(x->mant, a->mant, b->mant);
-        carry = 0;
+        overflow = apint_sub(x->mant, a->mant, b->mant);
+        if (overflow) apint_setmsb(x->mant);
     }
-    return carry;
+    return overflow;
 }
 
 //a-b
