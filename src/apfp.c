@@ -135,10 +135,10 @@ char apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     return is_inexact;
 }
 
-void apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+int apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     x->exp = a->exp + b->exp;
-    apint_mul(x->mant, a->mant, b->mant);
+    int is_exact = apint_mul(x->mant, a->mant, b->mant);
     if(a->mant->sign == b->mant->sign)
     {
         x->mant->sign = a->mant->sign;
@@ -147,4 +147,6 @@ void apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     {
         x->mant->sign = -1;
     }
+
+    return is_exact;
 }

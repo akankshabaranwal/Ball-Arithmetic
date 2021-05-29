@@ -29,6 +29,6 @@ void apfp_print_msg(const char *msg, apfp_srcptr value);
 
 char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
 char apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
-void apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
+int apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
 
 #endif /* !APFP_H */
