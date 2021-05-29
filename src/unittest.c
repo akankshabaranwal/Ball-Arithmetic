@@ -161,7 +161,7 @@ TEST_GROUP(apint, {
             ASSERT_EQUAL_I(carry, 1);
     });
 
-    TEST_CASE(multiply, {
+    TEST_CASE(apint multiply, {
             apint_setlimb(apint_test[0], 0, 1);
             apint_setlimb(apint_test[0], 1, 1);
             apint_setlimb(apint_test[0], 2, 1);
@@ -185,7 +185,7 @@ TEST_GROUP(apint, {
             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0ull);
     })
 
-    TEST_CASE(portable multiply, {
+    TEST_CASE(portable apint multiply, {
             apint_setlimb(apint_test[0], 0, 1);
             apint_setlimb(apint_test[0], 1, 1);
             apint_setlimb(apint_test[0], 2, 1);
@@ -207,7 +207,7 @@ TEST_GROUP(apint, {
             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 5), 4ull);
             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 6), 2ull);
             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0ull);
-    })
+    });
 });
 
 apfp_t apfp_test[3];
@@ -234,6 +234,34 @@ TEST_GROUP(apfp, {
         ASSERT_EQUAL_L(apfp_test[0]->exp, -51l);
         ASSERT_EQUAL_UL(apfp_test[0]->mant->limbs[0], 0x15BF0995AAF790ull);
     });
+    /*
+    TEST_CASE(apfp_add addition with positive numbers, {
+            // Check mantissa first
+            // Then check expected exponent
+            apfp_set_mant(apfp_test[0], 0, 0);
+            apfp_set_mant(apfp_test[0], 1, 0);
+            apfp_set_mant(apfp_test[0], 2, 0);
+            apfp_set_mant(apfp_test[0], 3, 2^63);
+            apfp_test[0]->mant->sign = 1;
+            apfp_test[0]->exp = 10;
+
+            apfp_set_mant(apfp_test[1], 0, 0);
+            apfp_set_mant(apfp_test[1], 1, 0);
+            apfp_set_mant(apfp_test[1], 2, 0);
+            apfp_set_mant(apfp_test[1], 3, 2^63);
+            apfp_test[1]->mant->sign = 1;
+            apfp_test[1]->exp = 10;
+
+            apfp_add(apfp_test[2], apfp_test[0], apfp_test[1]);
+/*
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 3ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 3ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 3ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 3ull);
+            ASSERT_EQUAL_I(apint_test[2]->sign, 1);
+  */
+    //});
+
 })
 
 void run_test_suite() {
