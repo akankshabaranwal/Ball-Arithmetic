@@ -92,8 +92,13 @@ unsigned char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     }
     else // either a -b or b-a
     {
-        overflow = apint_sub(x->mant, a->mant, b->mant);
-        if (overflow) apint_setmsb(x->mant); // TODO: Check this
+        apint_sub(x->mant, a->mant, b->mant);
+        overflow = apint_detectfirst1(x->mant);
+        if (overflow>0)
+        {
+            apint_shiftl(x->mant, overflow-1);
+            x->exp = a->exp - overflow;
+        }
     }
     return overflow;
 }
@@ -110,12 +115,18 @@ unsigned char apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     // Align `b` mantissa to `a` given exponent difference
     apfp_exp_t factor = a->exp - b->exp;
     apint_copy(x->mant, b->mant);
-    apint_shiftl(x->mant, factor);
+    apint_shiftr(x->mant, factor);
 
     if(a->mant->sign==b->mant->sign ) // if both have the same sign then simple add
     {
-        overflow = apint_sub(x->mant, a->mant, b->mant); //x->mant->sign is set here
-        if (overflow) apint_setmsb(x->mant); // TODO: Check this
+        apint_sub(x->mant, a->mant, b->mant); //x->mant->sign is set here
+        overflow = apint_detectfirst1(x->mant);//technically this is underflow
+        if(overflow>0)
+        {
+            apint_shiftl(x->mant, overflow-1);
+            x->exp = a->exp - overflow;
+        }
+        //if (overflow) apint_setmsb(x->mant); // TODO: Check this
     }
     else
     {

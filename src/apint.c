@@ -51,6 +51,34 @@ void apint_copy(apint_ptr dst, apint_srcptr src)
     memcpy(dst->limbs, src->limbs, src->length * APINT_LIMB_BYTES);
 }
 
+// detect the position of first 1
+// naive method
+int apint_detectfirst1(apint_ptr x)
+{
+    //Iterate over the limbs
+    int i;
+    int pos;
+    apint_limb_t number;
+    pos = 0;
+    for(i = x->length-1; i>=0;i--)
+    {
+        if(x->limbs[i]&(1ull<<(APINT_LIMB_BITS-1)))//means there's a 1 somewhere here
+        {
+            // Detect the position of first 1 here.
+            number = x->limbs[i];
+            while(number != 0){
+                if ((number & 0x01) != 0) {
+                    pos++;
+                    return pos;
+                }
+                number >>=1;
+            }
+        }
+        pos = pos+APINT_LIMB_BITS;
+    }
+ //   return pos;
+}
+
 // right shift
 void apint_shiftr(apint_ptr x, unsigned int shift)
 {
