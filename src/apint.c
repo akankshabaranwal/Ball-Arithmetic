@@ -101,10 +101,10 @@ void apint_shiftl(apint_ptr x, unsigned int shift){
 
 void apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
-    //sign_t borrow;
+    unsigned char overflow;
     if(a->sign == b->sign)
     {
-        apint_plus(x,a,b);
+        overflow = apint_plus(x,a,b);
         x->sign = a->sign;
     }
     else
@@ -149,7 +149,6 @@ char apint_plus_portable(apint_ptr x, apint_srcptr a, apint_srcptr b)
         x->limbs[i] += a->limbs[i] + b->limbs[i];
         carry = (a->limbs[i] > UINT64_MAX - b->limbs[i]) ? 1 : 0;
     }
-
     return carry;
 }
 
@@ -169,12 +168,11 @@ unsigned char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
 }
 
 // |a| - |b|. Do not handle sign here.
-sign_t apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
+unsigned char apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length); // only handle same lengths for now
     assert(a->length <= x->length);
-    sign_t result_sign;
     unsigned char borrow = 0;
 
     if(apint_is_greater(a, b)) // a > b so a-b
@@ -195,7 +193,6 @@ sign_t apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
     }
     return borrow;
 }
-
 
 int apint_is_greater(apint_srcptr a, apint_srcptr b)
 {
