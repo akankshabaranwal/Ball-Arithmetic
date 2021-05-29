@@ -78,6 +78,7 @@ unsigned char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 
     //For handling negative numbers
     unsigned char overflow;
+
     if(a->mant->sign==b->mant->sign ) // if both have the same sign then simple add
     {
         x->mant->sign=a->mant->sign;

@@ -183,7 +183,7 @@ TEST_GROUP(apint, {
             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 5), 4ull);
             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 6), 2ull);
             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0ull);
-    })
+    });
 
     TEST_CASE(portable apint multiply, {
             apint_setlimb(apint_test[0], 0, 1);
@@ -213,9 +213,9 @@ TEST_GROUP(apint, {
 apfp_t apfp_test[3];
 
 static void apfp_test_setup() {
-    apfp_init(apfp_test[0], 128);
-    apfp_init(apfp_test[1], 128);
-    apfp_init(apfp_test[2], 128);
+    apfp_init(apfp_test[0], 256);
+    apfp_init(apfp_test[1], 256);
+    apfp_init(apfp_test[2], 256);
 }
 
 static void apfp_test_teardown() {
@@ -233,7 +233,7 @@ TEST_GROUP(apfp, {
 
         ASSERT_EQUAL_L(apfp_test[0]->exp, -51l);
         ASSERT_EQUAL_UL(apfp_test[0]->mant->limbs[0], 0x15BF0995AAF790ull);
-    })
+    });
 
     TEST_CASE(apfp_add addition with positive numbers, {
             // Check mantissa first
@@ -253,13 +253,13 @@ TEST_GROUP(apfp, {
             apfp_test[1]->exp = 10;
 
             apfp_add(apfp_test[2], apfp_test[0], apfp_test[1]);
-/*
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 3ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 3ull);
+
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 0), 3ull);
+/*            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 3ull);
             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 3ull);
             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 3ull);
             ASSERT_EQUAL_I(apint_test[2]->sign, 1);
-  */
+*/
     });
 
 })
