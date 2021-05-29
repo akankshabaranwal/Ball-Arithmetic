@@ -111,12 +111,10 @@ void reduceprecision(apint_ptr x, apint_size_t extralimbs) //reduce precision by
     apint_free(tmp); //free the old x
 }
 
-int apint_shiftl(apint_ptr x, unsigned int shift){
-    assert(x->limbs);
-    if (shift == 0) return 0;
-
+int detectoverflowshiftl(apint_ptr x, unsigned int shift)
+{
+    //Left shift. Detect overflow.
     apint_limb_t overflow;
-
     apint_size_t nlimbs_new; //additional limbs that are being added
     nlimbs_new = (apint_size_t)(shift/APINT_LIMB_BITS);
 
@@ -132,8 +130,14 @@ int apint_shiftl(apint_ptr x, unsigned int shift){
     {
         nlimbs_new++;
     }
+}
 
-    increaseprecision(x, nlimbs_new);
+int apint_shiftl(apint_ptr x, unsigned int shift)
+{
+    assert(x->limbs);
+    if (shift == 0) return 0;
+
+    //increaseprecision(x, nlimbs_new);
 
     uint full_limbs_shifted = shift / APINT_LIMB_BITS;
     shift -= full_limbs_shifted * APINT_LIMB_BITS;

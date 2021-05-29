@@ -61,11 +61,13 @@ int apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     apint_size_t is_not_exact;
     is_not_exact=0;
+
     // After swap, `a` is guaranteed to have largest exponent
     if (b->exp > a->exp)
     {
         apfp_srcptr t = a; a = b; b = t;
     }
+
 
     apfp_ptr b_new; //new b reprecisioned
     // Align `b` mantissa to `a` given exponent difference
