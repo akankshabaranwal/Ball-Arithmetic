@@ -241,26 +241,28 @@ TEST_GROUP(apfp, {
             apfp_set_mant(apfp_test[0], 0, 0);
             apfp_set_mant(apfp_test[0], 1, 0);
             apfp_set_mant(apfp_test[0], 2, 0);
-            apfp_set_mant(apfp_test[0], 3, 9223372036854775808);
+            apfp_set_mant(apfp_test[0], 3, 9223372036854775808llu);
             apfp_test[0]->mant->sign = 1;
             apfp_test[0]->exp = 10;
 
             apfp_set_mant(apfp_test[1], 0, 0);
             apfp_set_mant(apfp_test[1], 1, 0);
             apfp_set_mant(apfp_test[1], 2, 0);
-            apfp_set_mant(apfp_test[1], 3, 9223372036854775808);
+            apfp_set_mant(apfp_test[1], 3, 9223372036854775808llu);
             apfp_test[1]->mant->sign = 1;
             apfp_test[1]->exp = 10;
 
             apfp_add(apfp_test[2], apfp_test[0], apfp_test[1]);
 
-            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 0), 0);
+            //Check value of mantissa
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 3), 9223372036854775808llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 2), 0llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 2), 0llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 2), 0llu);
 
-/*            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 3ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 3ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 3ull);
-            ASSERT_EQUAL_I(apint_test[2]->sign, 1);
-*/
+            //Check value of exponent and sign
+            ASSERT_EQUAL_L(apfp_test[2]->exp, 11lu);
+            ASSERT_EQUAL_I(apfp_test[2]->mant->sign, 1);
     });
 
 })
