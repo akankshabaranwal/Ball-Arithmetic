@@ -33,7 +33,7 @@ void apint_to_fmpz(fmpz_t res, apint_srcptr src);
 
 static inline apint_limb_t apint_getlimb(apint_ptr x, apint_size_t offset);
 
-void apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b);
+unsigned char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b);
 unsigned char apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b);
 char apint_plus_portable(apint_ptr x, apint_srcptr a, apint_srcptr b);
 unsigned char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b);

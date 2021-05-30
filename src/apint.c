@@ -135,7 +135,7 @@ void apint_shiftl(apint_ptr x, unsigned int shift){
     x->limbs[0] <<= shift;
 }
 
-void apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
+unsigned char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     unsigned char overflow;
     if(a->sign == b->sign)
@@ -154,6 +154,7 @@ void apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
             x->sign = apint_minus(x, a, b);
         }
     }
+    return overflow;
 }
 
 unsigned char apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
@@ -221,7 +222,7 @@ unsigned char apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
     }
     else // b > a so -(b-a)
     {
-        x->sign = b->sign;
+        x->sign = -b->sign;
         for (apint_size_t i = 0; i < a->length; i++)
         {
             borrow = _subborrow_u64(borrow, b->limbs[i], a->limbs[i], &x->limbs[i]);

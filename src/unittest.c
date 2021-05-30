@@ -55,7 +55,7 @@ TEST_GROUP(apint, {
             ASSERT_EQUAL_UL(apint_test[0]->limbs[0], 1ull);
     });
 
-    TEST_CASE(apint_add addition with positive numbers, {
+    TEST_CASE( addition with positive numbers, {
             apint_setlimb(apint_test[0], 0, 1);
             apint_setlimb(apint_test[0], 1, 1);
             apint_setlimb(apint_test[0], 2, 1);
@@ -76,7 +76,7 @@ TEST_GROUP(apint, {
             ASSERT_EQUAL_I(apint_test[2]->sign, 1);
     });
 
-    TEST_CASE(apint_add addition with both numbers negative, {
+    TEST_CASE(addition with both numbers negative, {
             apint_setlimb(apint_test[0], 0, 1);
             apint_setlimb(apint_test[0], 1, 1);
             apint_setlimb(apint_test[0], 2, 1);
@@ -97,27 +97,115 @@ TEST_GROUP(apint, {
             ASSERT_EQUAL_I(apint_test[2]->sign, -1);
     });
 
-    TEST_CASE(apint_add addition with positive numbers and overflow, {
-            apint_setlimb(apint_test[0], 0, UINT64_MAX);
+    TEST_CASE(subtraction with positive numbers a-b a>b, {
+            apint_setlimb(apint_test[0], 3, 4);
+            apint_setlimb(apint_test[0], 2, 6);
+            apint_setlimb(apint_test[0], 1, 2);
+            apint_setlimb(apint_test[0], 0, 5);
+            apint_test[0]->sign = 1;
+
+            apint_setlimb(apint_test[1], 3, 3);
+            apint_setlimb(apint_test[1], 2, 2);
+            apint_setlimb(apint_test[1], 1, 1);
+            apint_setlimb(apint_test[1], 0, 0);
+            apint_test[1]->sign = 1;
+
+            apint_sub(apint_test[2], apint_test[0], apint_test[1]);
+
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 1ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 4ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 1ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 5ull);
+            ASSERT_EQUAL_I(apint_test[2]->sign, 1);
+    });
+
+    TEST_CASE(subtraction with positive numbers a-b a<b, {
+
+            apint_setlimb(apint_test[0], 3, 3);
+            apint_setlimb(apint_test[0], 2, 2);
             apint_setlimb(apint_test[0], 1, 1);
-            apint_setlimb(apint_test[0], 2, UINT64_MAX);
-            apint_setlimb(apint_test[0], 3, UINT64_MAX - 1);
+            apint_setlimb(apint_test[0], 0, 0);
+            apint_test[0]->sign = 1;
+
+            apint_setlimb(apint_test[1], 3, 4);
+            apint_setlimb(apint_test[1], 2, 6);
+            apint_setlimb(apint_test[1], 1, 2);
+            apint_setlimb(apint_test[1], 0, 5);
+            apint_test[1]->sign = 1;
+
+            apint_sub(apint_test[2], apint_test[0], apint_test[1]);
+
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 1ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 4ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 1ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 5ull);
+            ASSERT_EQUAL_I(apint_test[2]->sign, -1);
+    });
+
+    TEST_CASE(subtraction with positive - negative number a-b a>b, {
+            apint_setlimb(apint_test[0], 3, 4);
+            apint_setlimb(apint_test[0], 2, 6);
+            apint_setlimb(apint_test[0], 1, 2);
+            apint_setlimb(apint_test[0], 0, 5);
+            apint_test[0]->sign = 1;
+
+            apint_setlimb(apint_test[1], 3, 3);
+            apint_setlimb(apint_test[1], 2, 2);
+            apint_setlimb(apint_test[1], 1, 1);
+            apint_setlimb(apint_test[1], 0, 0);
+            apint_test[1]->sign = -1;
+
+            apint_sub(apint_test[2], apint_test[0], apint_test[1]);
+
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 7ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 8ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 3ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 5ull);
+            ASSERT_EQUAL_I(apint_test[2]->sign, 1);
+    });
+
+    TEST_CASE(subtraction with negative - positive number a-b a>b, {
+            apint_setlimb(apint_test[0], 3, 4);
+            apint_setlimb(apint_test[0], 2, 6);
+            apint_setlimb(apint_test[0], 1, 2);
+            apint_setlimb(apint_test[0], 0, 5);
+            apint_test[0]->sign = -1;
+
+            apint_setlimb(apint_test[1], 3, 3);
+            apint_setlimb(apint_test[1], 2, 2);
+            apint_setlimb(apint_test[1], 1, 1);
+            apint_setlimb(apint_test[1], 0, 0);
+            apint_test[1]->sign = 1;
+
+            apint_sub(apint_test[2], apint_test[0], apint_test[1]);
+
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 7ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 8ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 3ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 5ull);
+            ASSERT_EQUAL_I(apint_test[2]->sign, -1);
+    });
+
+
+    TEST_CASE(addition with positive numbers, {
+            apint_setlimb(apint_test[0], 0, 1);
+            apint_setlimb(apint_test[0], 1, 1);
+            apint_setlimb(apint_test[0], 2, 1);
+            apint_setlimb(apint_test[0], 3, 1);
             apint_test[0]->sign = 1;
 
             apint_setlimb(apint_test[1], 0, 2);
             apint_setlimb(apint_test[1], 1, 2);
-            apint_setlimb(apint_test[1], 2, 3);
-            apint_setlimb(apint_test[1], 3, 3);
-            apint_test[0]->sign = 1;
+            apint_setlimb(apint_test[1], 2, 2);
+            apint_setlimb(apint_test[1], 3, 2);
+            apint_test[1]->sign = 1;
+            apint_add(apint_test[2], apint_test[0], apint_test[1]);
 
-            char carry = apint_plus(apint_test[2], apint_test[0], apint_test[1]);
-
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 1ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 4ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 2ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 2ull);
-
-            ASSERT_EQUAL_I(carry, 1);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 3ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 3ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 3ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 3ull);
+            ASSERT_EQUAL_I(apint_test[2]->sign, 1);
     });
 
 
@@ -161,7 +249,7 @@ TEST_GROUP(apint, {
             ASSERT_EQUAL_I(carry, 1);
     });
 
-    TEST_CASE(apint multiply, {
+    TEST_CASE( multiply, {
             apint_setlimb(apint_test[0], 0, 1);
             apint_setlimb(apint_test[0], 1, 1);
             apint_setlimb(apint_test[0], 2, 1);
@@ -185,7 +273,7 @@ TEST_GROUP(apint, {
             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0ull);
     });
 
-    TEST_CASE(portable apint multiply, {
+    TEST_CASE(portable multiply, {
             apint_setlimb(apint_test[0], 0, 1);
             apint_setlimb(apint_test[0], 1, 1);
             apint_setlimb(apint_test[0], 2, 1);
