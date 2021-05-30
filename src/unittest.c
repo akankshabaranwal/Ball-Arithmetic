@@ -28,7 +28,7 @@ TEST_GROUP(apint, {
             apint_setlimb(apint_test[0], 1, 0);
             apint_shiftl(apint_test[0], 1);
 
-            ASSERT_EQUAL_UL(apint_test[0]->limbs[1], 1ull);
+            ASSERT_EQUAL_UL(apint_test[0]->limbs[1], 1llu);
     });
 
     TEST_CASE(shift left by more than 64 bits, {
@@ -36,7 +36,7 @@ TEST_GROUP(apint, {
             apint_setlimb(apint_test[0], 1, 0);
             apint_shiftl(apint_test[0], 65);
 
-            ASSERT_EQUAL_UL(apint_test[0]->limbs[1], 2ull);
+            ASSERT_EQUAL_UL(apint_test[0]->limbs[1], 2llu);
     });
 
     TEST_CASE(shift right less than 64 bits, {
@@ -44,7 +44,7 @@ TEST_GROUP(apint, {
             apint_setlimb(apint_test[0], 1, 1);
             apint_shiftr(apint_test[0], 1);
 
-            ASSERT_EQUAL_UL(apint_test[0]->limbs[0], 0x8000000000000000ull);
+            ASSERT_EQUAL_UL(apint_test[0]->limbs[0], 0x8000000000000000llu);
     });
 
     TEST_CASE(shift right by more than 64 bits, {
@@ -52,7 +52,7 @@ TEST_GROUP(apint, {
             apint_setlimb(apint_test[0], 1, 2);
             apint_shiftr(apint_test[0], 65);
 
-            ASSERT_EQUAL_UL(apint_test[0]->limbs[0], 1ull);
+            ASSERT_EQUAL_UL(apint_test[0]->limbs[0], 1llu);
     });
 
     TEST_CASE( addition with positive numbers, {
@@ -69,10 +69,10 @@ TEST_GROUP(apint, {
             apint_test[1]->sign = 1;
             apint_add(apint_test[2], apint_test[0], apint_test[1]);
 
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 3ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 3ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 3ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 3ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 3llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 3llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 3llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 3llu);
             ASSERT_EQUAL_I(apint_test[2]->sign, 1);
     });
 
@@ -90,10 +90,10 @@ TEST_GROUP(apint, {
             apint_test[1]->sign = -1;
             apint_add(apint_test[2], apint_test[0], apint_test[1]);
 
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 3ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 3ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 3ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 3ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 3llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 3llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 3llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 3llu);
             ASSERT_EQUAL_I(apint_test[2]->sign, -1);
     });
 
@@ -112,10 +112,10 @@ TEST_GROUP(apint, {
 
             apint_sub(apint_test[2], apint_test[0], apint_test[1]);
 
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 1ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 4ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 1ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 5ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 1llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 4llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 1llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 5llu);
             ASSERT_EQUAL_I(apint_test[2]->sign, 1);
     });
 
@@ -135,10 +135,10 @@ TEST_GROUP(apint, {
 
             apint_sub(apint_test[2], apint_test[0], apint_test[1]);
 
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 1ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 4ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 1ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 5ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 1llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 4llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 1llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 5llu);
             ASSERT_EQUAL_I(apint_test[2]->sign, -1);
     });
 
@@ -157,10 +157,10 @@ TEST_GROUP(apint, {
 
             apint_sub(apint_test[2], apint_test[0], apint_test[1]);
 
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 7ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 8ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 3ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 5ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 7llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 8llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 3llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 5llu);
             ASSERT_EQUAL_I(apint_test[2]->sign, 1);
     });
 
@@ -179,13 +179,36 @@ TEST_GROUP(apint, {
 
             apint_sub(apint_test[2], apint_test[0], apint_test[1]);
 
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 7ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 8ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 3ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 5ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 7llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 8llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 3llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 5llu);
             ASSERT_EQUAL_I(apint_test[2]->sign, -1);
     });
 
+    TEST_CASE(subtraction with borrow, {
+            apint_setlimb(apint_test[0], 3, 1);
+            apint_setlimb(apint_test[0], 2, 0);
+            apint_setlimb(apint_test[0], 1, 0);
+            apint_setlimb(apint_test[0], 0, 0);
+            apint_test[0]->sign = 1;
+
+            apint_setlimb(apint_test[1], 3, 0);
+            apint_setlimb(apint_test[1], 2, 0);
+            apint_setlimb(apint_test[1], 1, 0);
+            apint_setlimb(apint_test[1], 0, 1);
+            apint_test[1]->sign = 1;
+
+            unsigned char borrow = apint_sub(apint_test[2], apint_test[0], apint_test[1]);
+            //apint_minus(apint_test[2], apint_test[0], apint_test[1]);
+
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 0llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 18446744073709551615llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 18446744073709551615llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 18446744073709551615llu);
+            ASSERT_EQUAL_I(apint_test[2]->sign, 1);
+            ASSERT_EQUAL_I(borrow, 0);
+    });
 
     TEST_CASE(addition with positive numbers, {
             apint_setlimb(apint_test[0], 0, 1);
@@ -201,10 +224,10 @@ TEST_GROUP(apint, {
             apint_test[1]->sign = 1;
             apint_add(apint_test[2], apint_test[0], apint_test[1]);
 
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 3ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 3ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 3ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 3ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 3llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 3llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 3llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 3llu);
             ASSERT_EQUAL_I(apint_test[2]->sign, 1);
     });
 
@@ -222,10 +245,10 @@ TEST_GROUP(apint, {
 
             apint_plus_portable(apint_test[2], apint_test[0], apint_test[1]);
 
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 3ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 3ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 3ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 3ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 3llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 3llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 3llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 3llu);
     });
 
     TEST_CASE(portable addition with positive numbers and overflow, {
@@ -241,10 +264,10 @@ TEST_GROUP(apint, {
 
             char carry = apint_plus_portable(apint_test[2], apint_test[0], apint_test[1]);
 
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 1ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 4ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 2ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 2ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 1llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 4llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 2llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 2llu);
 
             ASSERT_EQUAL_I(carry, 1);
     });
@@ -263,14 +286,14 @@ TEST_GROUP(apint, {
             apint_mul(apint_test[2], apint_test[0], apint_test[1]);
 
             // Calculated with: https://defuse.ca/big-number-calculator.htm
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 2ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 4ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 6ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 8ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 4), 6ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 5), 4ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 6), 2ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 2llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 4llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 6llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 8llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 4), 6llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 5), 4llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 6), 2llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0llu);
     });
 
     TEST_CASE(portable multiply, {
@@ -287,14 +310,14 @@ TEST_GROUP(apint, {
             apint_mul_portable(apint_test[2], apint_test[0], apint_test[1]);
 
             // Calculated with: https://defuse.ca/big-number-calculator.htm
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 2ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 4ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 6ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 8ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 4), 6ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 5), 4ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 6), 2ull);
-            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 2llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 4llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 6llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 8llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 4), 6llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 5), 4llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 6), 2llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0llu);
     });
 });
 
@@ -320,7 +343,7 @@ TEST_GROUP(apfp, {
         apfp_set_d(apfp_test[0], 2.71828);
 
         ASSERT_EQUAL_L(apfp_test[0]->exp, -51l);
-        ASSERT_EQUAL_UL(apfp_test[0]->mant->limbs[0], 0x15BF0995AAF790ull);
+        ASSERT_EQUAL_UL(apfp_test[0]->mant->limbs[0], 0x15BF0995AAF790llu);
     });
 
     TEST_CASE(apfp_add addition with positive numbers 1.000...00 X 2^10 + 1.000...00 X 2^10, {

@@ -147,11 +147,11 @@ unsigned char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
     {
         if(a->sign == -1)//only a is negative. so equivalent to b-a.
         {
-            x->sign = apint_minus(x, b, a);
+            overflow = apint_minus(x, b, a);
         }
         else
         { //only b is negative.
-            x->sign = apint_minus(x, a, b);
+            overflow = apint_minus(x, a, b);
         }
     }
     return overflow;
@@ -162,7 +162,7 @@ unsigned char apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
     unsigned char overflow;
     if(a->sign == b->sign)
     {
-        overflow= apint_minus(x, a, b);
+        overflow = apint_minus(x, a, b);
     }
     else
     {
@@ -234,11 +234,9 @@ unsigned char apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
 int apint_is_greater(apint_srcptr a, apint_srcptr b)
 {
     //Works only for same length a, b
-    //TODO: Check if there's a vector intrinsic for the comparison
-    //TODO: Verify that the most significant limb understanding is correct
-    for (apint_size_t i = 0; i < (a->length - 1); i++)
+    for (int i = (a->length - 1); i >= 0; i--)
     {
-        if(a->limbs[i] > b->limbs[i])
+        if(apint_getlimb(a,i) > apint_getlimb(b,i))
             return 1;
     }
     return 0;
