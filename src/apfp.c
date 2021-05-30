@@ -75,7 +75,9 @@ unsigned char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     apfp_exp_t factor = a->exp - b->exp;
     apint_copy(x->mant, b->mant);
     apint_shiftr(x->mant, factor); // right shift mantissa of b
-
+    //printf("a is %llu\n", apint_getlimb(a->mant, 3));
+    //printf("b is %llu\n", apint_getlimb(b->mant, 3));
+    //printf("x is %llu\n", apint_getlimb(x->mant, 3));
     //For handling negative numbers
     unsigned char overflow;
 
@@ -85,11 +87,13 @@ unsigned char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
         // Add mantissa, shift by carry and update exponent
         overflow = apint_plus(x->mant, x->mant, a->mant); //overflow would be either 0 or 1
         apint_shiftr(x->mant, overflow);
+        //printf("x is %llu, overflow is %d\n", apint_getlimb(x->mant, 3), overflow);
         x->exp = a->exp + overflow;
 
         // Set the msb on the mantissa
         // To-do: Check for 0, +inf, -inf.
         if (overflow) apint_setmsb(x->mant);
+        //printf("x is %llu, overflow is %d\n", apint_getlimb(x->mant, 3), overflow);
     }
     else // either a -b or b-a
     {

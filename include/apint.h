@@ -47,7 +47,7 @@ int apint_detectfirst1(apint_ptr x);
 
 static inline void apint_setmsb(apint_ptr x)
 {
-    x->limbs[x->length - 1] |= 1ull << (APINT_LIMB_BITS - 1);
+    x->limbs[x->length - 1] |= 1llu << (APINT_LIMB_BITS - 1);
 }
 
 // To-do: Deprecate and remove this, we should have a better API for setting apint values.

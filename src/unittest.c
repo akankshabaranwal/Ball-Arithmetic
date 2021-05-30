@@ -241,20 +241,21 @@ TEST_GROUP(apfp, {
             apfp_set_mant(apfp_test[0], 0, 0);
             apfp_set_mant(apfp_test[0], 1, 0);
             apfp_set_mant(apfp_test[0], 2, 0);
-            apfp_set_mant(apfp_test[0], 3, 2^63);
+            apfp_set_mant(apfp_test[0], 3, 9223372036854775808);
             apfp_test[0]->mant->sign = 1;
             apfp_test[0]->exp = 10;
 
             apfp_set_mant(apfp_test[1], 0, 0);
             apfp_set_mant(apfp_test[1], 1, 0);
             apfp_set_mant(apfp_test[1], 2, 0);
-            apfp_set_mant(apfp_test[1], 3, 2^63);
+            apfp_set_mant(apfp_test[1], 3, 9223372036854775808);
             apfp_test[1]->mant->sign = 1;
             apfp_test[1]->exp = 10;
 
             apfp_add(apfp_test[2], apfp_test[0], apfp_test[1]);
 
-            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 0), 3ull);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 0), 0);
+
 /*            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 3ull);
             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 3ull);
             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 3ull);
