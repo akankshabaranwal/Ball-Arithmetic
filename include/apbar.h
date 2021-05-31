@@ -42,5 +42,6 @@ void apbar_print_msg(const char *msg, apbar_srcptr value);
 
 void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
 void apbar_sub(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
+void apbar_mul(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
 
 #endif //APBAR_H

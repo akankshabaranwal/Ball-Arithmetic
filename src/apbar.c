@@ -85,17 +85,20 @@ void apbar_set_d(apbar_t x, double val)
     apfp_set_d(x->midpt, val);
 }
 
-uint narrow_to_rad(apfp_srcptr x, rad_ptr rad)
+uint narrow_to_rad(apfp_ptr x, rad_ptr rad)
 {
     // Essentially shift right enough so that mantissa fits into 64 bits
     uint i = x->mant->length - 1;
     for (; i >= 0; i--) {
         if (x->mant->limbs[i] != 0) {
-            i = i * APINT_LIMB_BITS + APINT_LIMB_BITS - __builtin_clzl(x->mant->limbs[i]);
+            int leading_bits = __builtin_clzl(x->mant->limbs[i]);
+            i = (i * APINT_LIMB_BITS - 1) + APINT_LIMB_BITS - leading_bits;
             break;
         }
     }
 
+    apint_shiftr(x->mant, i);
+    rad->mant = x->mant->limbs[0] + 1;
     rad->exp = x->exp + i;
 }
 
@@ -106,13 +109,14 @@ static inline void add_error_bound(apbar_ptr res, apint_size_t prec)
     // y = resulting midpoint (I think)
     // n = smallest representable number
     // e = machine accuracy
+    apint_size_t res_length = res->midpt->mant->length * APINT_LIMB_BITS;
     apfp_t delta_y;
-    apfp_init(delta_y, prec);
+    apfp_init(delta_y, res_length);
 
     // Add n. This is always just adding one to the mantissa since we are
     // rounding towards +inf.
     apint_t one;
-    apint_init(one, prec);
+    apint_init(one, res_length);
     apint_setlimb(one, 0, 1);
 
     apint_add(delta_y->mant, res->midpt->mant, one);
@@ -131,16 +135,20 @@ static inline void add_error_bound(apbar_ptr res, apint_size_t prec)
 
     // Add delta y to the current radius
     apfp_t rad;
-    apfp_init(rad, prec);
+    apfp_init(rad, res_length);
     apfp_set_mant(rad, 0, res->rad->mant);
     apfp_set_exp(rad, res->rad->exp);
 
     apfp_t new_rad;
-    apfp_init(new_rad, prec);
+    apfp_init(new_rad, res_length);
     apfp_add(new_rad, delta_y, rad);
 
     // Narrow from apfp to fixed precision
     narrow_to_rad(new_rad, res->rad);
+
+    apfp_free(rad);
+    apfp_free(new_rad);
+    apfp_free(delta_y);
 }
 
 //assumes that c, a, b are already allocated
@@ -151,7 +159,7 @@ void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
     assert(c);
 
     // midpoint computation (should round towards 0)
-    char is_not_exact = apfp_add(c->midpt, a->midpt, b->midpt);
+    unsigned char is_not_exact = apfp_add(c->midpt, a->midpt, b->midpt);
 
     // radius computation (should round towards +inf)
     rad_add(c->rad, a->rad, b->rad);
@@ -161,7 +169,7 @@ void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 }
 
 
-void apbar_mult(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+void apbar_mul(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 {
     assert(a);
     assert(b);
@@ -202,10 +210,10 @@ void apbar_mult(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
     // TODO: Can we add numbers and have an output as one of the inputs?
     // TODO: round
     // |x| + r
-    char carry = apfp_add(x_abs, x_abs, r);
+    unsigned char carry = apfp_add(x_abs, x_abs, r);
     // (|x| + r) * s
     apfp_t res;
-    apfp_init(res, 2*p);
+    apfp_init(res, 2 * p);
     apfp_mul(res, x_abs, s);
 
     //r * |y|
@@ -217,6 +225,13 @@ void apbar_mult(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 
     // narrow back to rad
     narrow_to_rad(res, c->rad);
+
+    apfp_free(res_2);
+    apfp_free(res);
+    apfp_free(s);
+    apfp_free(y_abs);
+    apfp_free(r);
+    apfp_free(x_abs);
 
     // error bound computation (should round towards +inf)
     if (is_not_exact) add_error_bound(c, p);

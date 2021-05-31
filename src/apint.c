@@ -46,7 +46,7 @@ void apint_free(apint_t x)
 
 void apint_copy(apint_ptr dst, apint_srcptr src)
 {
-    assert(dst->length == src->length);
+    assert(dst->length >= src->length);
     /*
     dst->length = src->length;
     dst->limbs = realloc(dst->limbs, src->length * APINT_LIMB_BYTES);

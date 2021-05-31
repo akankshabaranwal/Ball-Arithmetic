@@ -58,7 +58,7 @@ void apfp_print(apfp_srcptr value)
 }
 
 void apfp_print_msg(const char *msg, apfp_srcptr value){
-    printf("%s", msg);
+    printf("%s ", msg);
     apfp_print(value);
     printf("\n");
 }

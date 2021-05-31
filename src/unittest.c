@@ -553,14 +553,48 @@ TEST_GROUP(apfp, {
             ASSERT_EQUAL_I(apfp_test[2]->mant->sign, -1);
     });
 
+    TEST_CASE(pi * pi, {
+            apfp_set_mant(apfp_test[0], 3, 0x6487ED5110B4611A);
+            apfp_set_mant(apfp_test[0], 2, 0x62633145C06E0E68);
+            apfp_set_mant(apfp_test[0], 1, 0x948127044533E63A);
+            apfp_set_mant(apfp_test[0], 0, 0x0105DF531D89CD91);
+            apfp_test[0]->mant->sign = 1;
+            apfp_test[0]->exp = -253;
+
+            apfp_set_mant(apfp_test[1], 3, 0x6487ED5110B4611A);
+            apfp_set_mant(apfp_test[1], 2, 0x62633145C06E0E68);
+            apfp_set_mant(apfp_test[1], 1, 0x948127044533E63A);
+            apfp_set_mant(apfp_test[1], 0, 0x0105DF531D89CD91);
+            apfp_test[1]->mant->sign = 1;
+            apfp_test[1]->exp = -253;
+
+            apfp_print_msg("pi is:", apfp_test[0]);
+
+            // Have to reinit result holder
+            apfp_free(apfp_test[2]);
+            apfp_init(apfp_test[2], 512);
+            apfp_mul(apfp_test[2], apfp_test[1], apfp_test[0]);
+
+            apfp_print_msg("pi * pi =", apfp_test[2]);
+            ASSERT_EQUAL_L(apfp_test[2]->exp, -506l);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 7), 0x277A79937C8BBCB4llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 6), 0x95B89B36602306B1llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 5), 0xC2159A8FF834288Allu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 4), 0x19A0884094F1CDA3llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 3), 0xBC5658F0D63B5677llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 2), 0xE42CA89707EA23AEllu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 1), 0x8A103EDE33E3D523llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 0), 0x68906CC684438C21llu);
+    });
+
 });
 
 apbar_t apbar_test[3];
 
 static void apbar_test_setup() {
-    apbar_init(apbar_test[0], 256);
-    apbar_init(apbar_test[1], 256);
-    apbar_init(apbar_test[2], 256);
+    apbar_init(apbar_test[0], 128);
+    apbar_init(apbar_test[1], 128);
+    apbar_init(apbar_test[2], 128);
 }
 
 static void apbar_test_teardown() {
@@ -589,6 +623,28 @@ TEST_GROUP(ball_arithmetic, {
             apbar_add(apbar_test[2], apbar_test[1], apbar_test[0], 128);
 
             apbar_print_msg("pi + pi is:", apbar_test[2]);
+
+            // Expected value (128 bit): 267257146016241686964920093290467695825 * 2^-125) +/- (536870913 * 2^-154)
+    });
+
+    TEST_CASE(mul pi with pi, {
+            apbar_set_midpt_mant(apbar_test[0], 0, 0xC4C6628B80DC1CD1);
+            apbar_set_midpt_mant(apbar_test[0], 1, 0xC90FDAA22168C234);
+            apbar_set_midpt_exp(apbar_test[0], -126);
+            apbar_set_rad(apbar_test[0], 536870912, -156);
+
+            apbar_set_midpt_mant(apbar_test[1], 0, 0xC4C6628B80DC1CD1);
+            apbar_set_midpt_mant(apbar_test[1], 1, 0xC90FDAA22168C234);
+            apbar_set_midpt_exp(apbar_test[1], -126);
+            apbar_set_rad(apbar_test[1], 536870912, -156);
+
+            // reinitialize result holder, because it needs to be twice as large
+            apbar_free(apbar_test[2]);
+            apbar_init(apbar_test[2], 256);
+
+            apbar_mul(apbar_test[2], apbar_test[1], apbar_test[0], 128);
+
+            apbar_print_msg("pi * pi is:", apbar_test[2]);
     });
 });
 
