@@ -31,26 +31,25 @@ void apint_free(apint_t x);
 void apint_copy(apint_ptr dst, apint_srcptr src);
 void apint_to_fmpz(fmpz_t res, apint_srcptr src);
 
-static inline apint_limb_t apint_getlimb(apint_ptr x, apint_size_t offset);
-
-void apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b);
-void apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b);
+unsigned char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b);
+unsigned char apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b);
 char apint_plus_portable(apint_ptr x, apint_srcptr a, apint_srcptr b);
-char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b);
-sign_t apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b);
+unsigned char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b);
+unsigned char apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b);
 int apint_is_greater(apint_srcptr a, apint_srcptr b);
 void apint_mul_portable(apint_ptr x, apint_srcptr a, apint_srcptr b);
 int apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b);
 void apint_shiftr(apint_ptr x, unsigned int shift);
 void apint_shiftl(apint_ptr x, unsigned int shift);
+int apint_detectfirst1(apint_ptr x);
 
 static inline void apint_setmsb(apint_ptr x)
 {
-    x->limbs[x->length - 1] |= 1ull << (APINT_LIMB_BITS - 1);
+    x->limbs[x->length - 1] |= 1llu << (APINT_LIMB_BITS - 1);
 }
 
 // To-do: Deprecate and remove this, we should have a better API for setting apint values.
-static inline apint_limb_t apint_getlimb(apint_ptr x, apint_size_t offset)
+static inline apint_limb_t apint_getlimb(apint_srcptr x, apint_size_t offset)
 {
     return x->limbs[offset];
 }

@@ -46,9 +46,45 @@ void apint_free(apint_t x)
 
 void apint_copy(apint_ptr dst, apint_srcptr src)
 {
+    assert(dst->length == src->length);
+    /*
     dst->length = src->length;
     dst->limbs = realloc(dst->limbs, src->length * APINT_LIMB_BYTES);
     memcpy(dst->limbs, src->limbs, src->length * APINT_LIMB_BYTES);
+    */
+    int i;
+    for(i =0;i<src->length;i++)
+    {
+        dst->limbs[i]=src->limbs[i];
+    }
+}
+
+// detect the position of first 1
+// naive method
+int apint_detectfirst1(apint_ptr x)
+{
+    //Iterate over the limbs
+    int i;
+    int pos;
+    apint_limb_t number;
+    pos = 0;
+    for(i = x->length-1; i>=0;i--)
+    {
+        if(x->limbs[i]&UINT64_MAX)//means there's a 1 somewhere here
+        {
+            // Detect the position of first 1 here.
+            number = x->limbs[i];
+            while(number != 0){
+                if ((number & 0x01) != 0) {
+                    pos++;
+                    return pos;
+                }
+                number >>=1;
+            }
+        }
+        pos = pos+APINT_LIMB_BITS;
+    }
+    return pos;
 }
 
 // right shift
@@ -61,9 +97,12 @@ void apint_shiftr(apint_ptr x, unsigned int shift)
 
     uint full_limbs_shifted = shift / APINT_LIMB_BITS;
     shift -= full_limbs_shifted * APINT_LIMB_BITS;
+
+    //printf("shift is %d \n", shift);
     for (int i = 0; i < x->length; ++i) {
         if (i + full_limbs_shifted < x->length) {
             x->limbs[i] = x->limbs[i+full_limbs_shifted];
+            //printf("assign full limb here %d \n", full_limbs_shifted);
         }
         else {
             x->limbs[i] = 0;
@@ -71,10 +110,13 @@ void apint_shiftr(apint_ptr x, unsigned int shift)
     }
 
     for (int i = 0; i < x->length - 1; ++i) {
+    if (!shift)
+        return;
         x->limbs[i] = (x->limbs[i] >> shift) + (x->limbs[i+1] << (APINT_LIMB_BITS - shift));
     }
 
     x->limbs[x->length-1] >>= shift;
+
 }
 
 void apint_shiftl(apint_ptr x, unsigned int shift){
@@ -83,6 +125,7 @@ void apint_shiftl(apint_ptr x, unsigned int shift){
 
     uint full_limbs_shifted = shift / APINT_LIMB_BITS;
     shift -= full_limbs_shifted * APINT_LIMB_BITS;
+
     for (int i = x->length - 1; i >= 0; i--) {
         if (i-(int)full_limbs_shifted >= 0) {
             x->limbs[i] = x->limbs[i-full_limbs_shifted];
@@ -93,51 +136,51 @@ void apint_shiftl(apint_ptr x, unsigned int shift){
         }
     }
 
+    if (!shift)
+        return;
+
     for (int i = x->length - 1; i > 0 ; i--) {
         x->limbs[i] = (x->limbs[i] << shift) + (x->limbs[i-1] >> (APINT_LIMB_BITS - shift));
     }
+
     x->limbs[0] <<= shift;
 }
 
-void apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
+unsigned char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
-    //sign_t borrow;
+    unsigned char overflow;
     if(a->sign == b->sign)
     {
-        apint_plus(x,a,b);
+        overflow = apint_plus(x,a,b);
         x->sign = a->sign;
     }
     else
     {
         if(a->sign == -1)//only a is negative. so equivalent to b-a.
         {
-            x->sign = apint_minus(x, b, a);
+            overflow = apint_minus(x, b, a);
         }
         else
         { //only b is negative.
-            x->sign = apint_minus(x, a, b);
+            overflow = apint_minus(x, a, b);
         }
     }
+    return overflow;
 }
 
-void apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
+unsigned char apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
+    unsigned char overflow;
     if(a->sign == b->sign)
     {
-        if (a->sign == 1) //both are positive
-        {
-            x->sign = apint_minus(x, a, b);
-        }
-        else //both are negative
-        {
-            x->sign = apint_minus(x, a, b);
-        }
+        overflow = apint_minus(x, a, b); //sign is set here
     }
     else
     {
         apint_plus(x, a, b);
         x->sign = a->sign;
     }
+    return overflow;
 }
 
 char apint_plus_portable(apint_ptr x, apint_srcptr a, apint_srcptr b)
@@ -154,17 +197,16 @@ char apint_plus_portable(apint_ptr x, apint_srcptr a, apint_srcptr b)
         x->limbs[i] += a->limbs[i] + b->limbs[i];
         carry = (a->limbs[i] > UINT64_MAX - b->limbs[i]) ? 1 : 0;
     }
-
     return carry;
 }
 
-char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
+unsigned char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length);
     assert(a->length <= x->length);
 
-    char carry = 0;
+    unsigned char carry = 0;
 
     for (apint_size_t i = 0; i < a->length; i++)
     {
@@ -174,17 +216,16 @@ char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
 }
 
 // |a| - |b|. Do not handle sign here.
-sign_t apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
+unsigned char apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length); // only handle same lengths for now
     assert(a->length <= x->length);
-    sign_t result_sign;
     unsigned char borrow = 0;
 
     if(apint_is_greater(a, b)) // a > b so a-b
     {
-        result_sign=1;
+        x->sign = a->sign;
         for (apint_size_t i = 0; i < a->length; i++)
         {
             borrow = _subborrow_u64(borrow, a->limbs[i], b->limbs[i], &x->limbs[i]);
@@ -192,24 +233,21 @@ sign_t apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
     }
     else // b > a so -(b-a)
     {
-        result_sign=-1;
+        x->sign = -b->sign;
         for (apint_size_t i = 0; i < a->length; i++)
         {
             borrow = _subborrow_u64(borrow, b->limbs[i], a->limbs[i], &x->limbs[i]);
         }
     }
-    return result_sign;
+    return borrow;
 }
-
 
 int apint_is_greater(apint_srcptr a, apint_srcptr b)
 {
     //Works only for same length a, b
-    //TODO: Check if there's a vector intrinsic for the comparison
-    //TODO: Verify that the most significant limb understanding is correct
-    for (apint_size_t i = 0; i < (a->length - 1); i++)
+    for (int i = (a->length - 1); i >= 0; i--)
     {
-        if(a->limbs[i] > b->limbs[i])
+        if(apint_getlimb(a,i) > apint_getlimb(b,i))
             return 1;
     }
     return 0;
