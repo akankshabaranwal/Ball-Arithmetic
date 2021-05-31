@@ -13,7 +13,7 @@ static double bench(benchmark_fun_t f, unsigned int prec)
         f(prec);
     }
 
-    /* Start the benchmark. */
+    /* Start the logs. */
     double start = start_tsc();
     f(prec);
     double cycles = stop_tsc(start);
@@ -147,18 +147,33 @@ static void int_mul_portable(uint prec)
     }
 }
 
-BENCHMARK_BEGIN_TABLE()
-    // BENCHMARK_FUNCTION(arblib_add, arblib_init, arblib_deinit, 4.0, 8, 17)
-    // BENCHMARK_FUNCTION(barith_add, barith_init, barith_deinit, 4.0, 8, 17)
+BENCHMARK_BEGIN_SUITE()
+BENCHMARK_BEGIN_TABLE(def)
+    BENCHMARK_FUNCTION(arblib_add, arblib_init, arblib_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith_add, barith_init, barith_deinit, 4.0, 8, 17)
+BENCHMARK_END_TABLE(def)
+
+BENCHMARK_BEGIN_TABLE(int_plus)
     BENCHMARK_FUNCTION(int_plus, int_init, int_cleanup, 1.0, 8, 17)
     BENCHMARK_FUNCTION(int_plus_portable, int_init, int_cleanup, 1.0, 8, 17)
+BENCHMARK_END_TABLE(int_plus)
+
+BENCHMARK_BEGIN_TABLE(int_mul)
     BENCHMARK_FUNCTION(int_mul, int_init, int_cleanup, 1.0, 8, 17)
     BENCHMARK_FUNCTION(int_mul_portable, int_init, int_cleanup, 1.0, 8, 17)
-BENCHMARK_END_TABLE()
+BENCHMARK_END_TABLE(int_mul)
+BENCHMARK_END_SUITE()
 
 int main(int argc, char const *argv[])
 {
-    BENCHMARK_FOREACH(current)
+    const char *suite_name;
+    if (argc < 2) {
+        suite_name = "def";
+    }
+    else {
+        suite_name = argv[1];
+    }
+    BENCHMARK_FOREACH(current, suite_name)
     {
         for (unsigned int p = current->prec_start; p < current->prec_stop; p++)
         {
