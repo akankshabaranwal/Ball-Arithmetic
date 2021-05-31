@@ -19,11 +19,6 @@ set(BALL_ARITH_SRC
         src/apbar.c
 )
 
-add_executable(ball-test
-        ${BALL_ARITH_SRC}
-        src/example.c
-)
-
 add_executable(benchmark
         ${BALL_ARITH_SRC}
         src/benchmark.c)
@@ -33,6 +28,5 @@ add_executable(unit-test
         src/unittest.c
 )
 
-target_link_libraries(ball-test flint gmp arb)
 target_link_libraries(benchmark flint gmp arb)
 target_link_libraries(unit-test flint gmp arb)
