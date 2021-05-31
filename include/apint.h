@@ -31,8 +31,6 @@ void apint_free(apint_t x);
 void apint_copy(apint_ptr dst, apint_srcptr src);
 void apint_to_fmpz(fmpz_t res, apint_srcptr src);
 
-static inline apint_limb_t apint_getlimb(apint_ptr x, apint_size_t offset);
-
 unsigned char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b);
 unsigned char apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b);
 char apint_plus_portable(apint_ptr x, apint_srcptr a, apint_srcptr b);
@@ -51,7 +49,7 @@ static inline void apint_setmsb(apint_ptr x)
 }
 
 // To-do: Deprecate and remove this, we should have a better API for setting apint values.
-static inline apint_limb_t apint_getlimb(apint_ptr x, apint_size_t offset)
+static inline apint_limb_t apint_getlimb(apint_srcptr x, apint_size_t offset)
 {
     return x->limbs[offset];
 }
