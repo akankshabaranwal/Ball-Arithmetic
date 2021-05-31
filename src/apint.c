@@ -84,28 +84,8 @@ int apint_detectfirst1(apint_ptr x)
         }
         pos = pos+APINT_LIMB_BITS;
     }
- //   return pos;
+    return pos;
 }
-/*
-void apint_shiftr(apint_ptr x, unsigned int shift)
-{
-    assert(x->limbs);
-
-    if (!shift)
-        return;
-
-    size_t sl, sr;
-    for (apint_size_t i = 0; i < (x->length - 1); i++)
-    {
-        sr = shift;
-        sl = APINT_LIMB_BITS - shift;
-
-        x->limbs[i] = (x->limbs[i + 1] << sl) | (x->limbs[i] >> sr);
-    }
-
-    x->limbs[x->length - 1] >>= shift;
-}
-*/
 
 // right shift
 void apint_shiftr(apint_ptr x, unsigned int shift)
@@ -114,15 +94,12 @@ void apint_shiftr(apint_ptr x, unsigned int shift)
 
     if (!shift)
         return;
-    printf("input x is %llu\n", apint_getlimb(x, 3));
-    printf("input x is %llu\n", apint_getlimb(x, 2));
-    printf("input x is %llu\n", apint_getlimb(x, 1));
-    printf("input x is %llu\n", apint_getlimb(x, 0));
-    printf("shift is %d \n", shift);
+
     uint full_limbs_shifted = shift / APINT_LIMB_BITS;
     shift -= full_limbs_shifted * APINT_LIMB_BITS;
+
     //printf("shift is %d \n", shift);
-    for (int i = 0; i < x->length; i++) {
+    for (int i = 0; i < x->length; ++i) {
         if (i + full_limbs_shifted < x->length) {
             x->limbs[i] = x->limbs[i+full_limbs_shifted];
             //printf("assign full limb here %d \n", full_limbs_shifted);
@@ -132,12 +109,9 @@ void apint_shiftr(apint_ptr x, unsigned int shift)
         }
     }
 
-    printf("right shifted x is %llu\n", apint_getlimb(x, 3));
-    printf("right shifted x is %llu\n", apint_getlimb(x, 2));
-    printf("right shifted x is %llu\n", apint_getlimb(x, 1));
-    printf("right shifted x is %llu\n", apint_getlimb(x, 0));
-
-    for (int i = 0; i < x->length - 1; i++) {
+    for (int i = 0; i < x->length - 1; ++i) {
+    if (!shift)
+        return;
         x->limbs[i] = (x->limbs[i] >> shift) + (x->limbs[i+1] << (APINT_LIMB_BITS - shift));
     }
 
@@ -155,6 +129,7 @@ void apint_shiftl(apint_ptr x, unsigned int shift){
 
     uint full_limbs_shifted = shift / APINT_LIMB_BITS;
     shift -= full_limbs_shifted * APINT_LIMB_BITS;
+
     for (int i = x->length - 1; i >= 0; i--) {
         if (i-(int)full_limbs_shifted >= 0) {
             x->limbs[i] = x->limbs[i-full_limbs_shifted];
@@ -165,9 +140,13 @@ void apint_shiftl(apint_ptr x, unsigned int shift){
         }
     }
 
+    if (!shift)
+        return;
+
     for (int i = x->length - 1; i > 0 ; i--) {
         x->limbs[i] = (x->limbs[i] << shift) + (x->limbs[i-1] >> (APINT_LIMB_BITS - shift));
     }
+
     x->limbs[0] <<= shift;
 }
 
