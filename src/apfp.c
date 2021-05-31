@@ -126,7 +126,7 @@ unsigned char apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     if(a->mant->sign==b->mant->sign ) // if both have the same sign then simple add
     {
 
-        printf("a is %llu\n", apint_getlimb(a->mant, 3));
+        /*printf("a is %llu\n", apint_getlimb(a->mant, 3));
         printf("a is %llu\n", apint_getlimb(a->mant, 2));
         printf("a is %llu\n", apint_getlimb(a->mant, 1));
         printf("a is %llu\n", apint_getlimb(a->mant, 0));
@@ -135,26 +135,28 @@ unsigned char apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
         printf("input x is %llu\n", apint_getlimb(x->mant, 2));
         printf("input x is %llu\n", apint_getlimb(x->mant, 1));
         printf("input x is %llu\n", apint_getlimb(x->mant, 0));
-
+        */
         apint_sub(x->mant, a->mant, x->mant); //x->mant->sign is set here
 
+        /*
         printf("result x is %llu\n", apint_getlimb(x->mant, 3));
         printf("result x is %llu\n", apint_getlimb(x->mant, 2));
         printf("result x is %llu\n", apint_getlimb(x->mant, 1));
-        printf("result x is %llu\n", apint_getlimb(x->mant, 0));
+        printf("result x is %llu\n", apint_getlimb(x->mant, 0));*/
         overflow = apint_detectfirst1(x->mant);//technically this is underflow
-        printf("overflow is %d\n", overflow);
+        //printf("overflow is %d\n", overflow);
         if(overflow>0)
         {
             apint_shiftl(x->mant, overflow);
             x->exp = a->exp - overflow;
         }
+        /*
         printf("x is %llu\n", apint_getlimb(x->mant, 3));
         printf("x is %llu\n", apint_getlimb(x->mant, 2));
         printf("x is %llu\n", apint_getlimb(x->mant, 1));
         printf("x is %llu\n", apint_getlimb(x->mant, 0));
-
-        if (overflow) apint_setmsb(x->mant); // TODO: Check this
+        */
+        if (overflow) apint_setmsb(x->mant); //Most likely here it is not required.
     }
     else
     {

@@ -70,7 +70,7 @@ int apint_detectfirst1(apint_ptr x)
     pos = 0;
     for(i = x->length-1; i>=0;i--)
     {
-        if(x->limbs[i]&(1ull<<(APINT_LIMB_BITS-1)))//means there's a 1 somewhere here
+        if(x->limbs[i]&UINT64_MAX)//means there's a 1 somewhere here
         {
             // Detect the position of first 1 here.
             number = x->limbs[i];
@@ -117,10 +117,6 @@ void apint_shiftr(apint_ptr x, unsigned int shift)
 
     x->limbs[x->length-1] >>= shift;
 
-    printf("final right shifted x is %llu\n", apint_getlimb(x, 3));
-    printf("final right shifted x is %llu\n", apint_getlimb(x, 2));
-    printf("final right shifted x is %llu\n", apint_getlimb(x, 1));
-    printf("final right shifted x is %llu\n", apint_getlimb(x, 0));
 }
 
 void apint_shiftl(apint_ptr x, unsigned int shift){
