@@ -75,10 +75,7 @@ unsigned char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     apfp_exp_t factor = a->exp - b->exp;
     apint_copy(x->mant, b->mant);
     apint_shiftr(x->mant, factor); // right shift mantissa of b
-    //printf("a is %llu\n", apint_getlimb(a->mant, 3));
-    //printf("b is %llu\n", apint_getlimb(b->mant, 3));
-    //printf("x is %llu\n", apint_getlimb(x->mant, 3));
-    //For handling negative numbers
+
     unsigned char overflow;
 
     if(a->mant->sign==b->mant->sign ) // if both have the same sign then simple add
@@ -87,13 +84,11 @@ unsigned char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
         // Add mantissa, shift by carry and update exponent
         overflow = apint_plus(x->mant, x->mant, a->mant); //overflow would be either 0 or 1
         apint_shiftr(x->mant, overflow);
-        //printf("x is %llu, overflow is %d\n", apint_getlimb(x->mant, 3), overflow);
         x->exp = a->exp + overflow;
 
         // Set the msb on the mantissa
         // To-do: Check for 0, +inf, -inf.
         if (overflow) apint_setmsb(x->mant);
-        //printf("x is %llu, overflow is %d\n", apint_getlimb(x->mant, 3), overflow);
     }
     else // either a -b or b-a
     {
@@ -112,26 +107,35 @@ unsigned char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 unsigned char apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     // After swap, `a` is guaranteed to have largest exponent
+    int swapped;
+    swapped = 0;
     if (b->exp > a->exp)
     {
         apfp_srcptr t = a; a = b; b = t;
+        swapped=1;
     }
     unsigned char overflow;
     // Align `b` mantissa to `a` given exponent difference
+
     apfp_exp_t factor = a->exp - b->exp;
     apint_copy(x->mant, b->mant);
     apint_shiftr(x->mant, factor);
 
     if(a->mant->sign==b->mant->sign ) // if both have the same sign then simple add
     {
-        apint_sub(x->mant, a->mant, b->mant); //x->mant->sign is set here
+        apint_sub(x->mant, a->mant, x->mant); //x->mant->sign is set here
         overflow = apint_detectfirst1(x->mant);//technically this is underflow
         if(overflow>0)
         {
-            apint_shiftl(x->mant, overflow-1);
+            apint_shiftl(x->mant, overflow);
             x->exp = a->exp - overflow;
         }
-        //if (overflow) apint_setmsb(x->mant); // TODO: Check this
+
+        if (overflow) apint_setmsb(x->mant); //Most likely here it is not required.
+        if(swapped)
+        {
+            x->mant->sign = -x->mant->sign;
+        }
     }
     else
     {
@@ -160,4 +164,5 @@ void apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     {
         x->mant->sign = -1;
     }
+    //TODO: move back to left align code is left
 }

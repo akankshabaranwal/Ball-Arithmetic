@@ -200,7 +200,6 @@ TEST_GROUP(apint, {
             apint_test[1]->sign = 1;
 
             unsigned char borrow = apint_sub(apint_test[2], apint_test[0], apint_test[1]);
-            //apint_minus(apint_test[2], apint_test[0], apint_test[1]);
 
             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 0llu);
             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 18446744073709551615llu);
@@ -434,6 +433,123 @@ TEST_GROUP(apfp, {
             //Check value of exponent and sign
             ASSERT_EQUAL_L(apfp_test[2]->exp, 256lu);
             ASSERT_EQUAL_I(apfp_test[2]->mant->sign, 1);
+    });
+
+    //Subtraction code
+    TEST_CASE(subtraction with positive numbers a-b a>b, {
+            // Check mantissa first
+            // Then check expected exponent
+            apfp_set_mant(apfp_test[0], 3, 9223372036854775808llu);
+            apfp_set_mant(apfp_test[0], 2, 0);
+            apfp_set_mant(apfp_test[0], 1, 0);
+            apfp_set_mant(apfp_test[0], 0, 0);
+            apfp_test[0]->mant->sign = 1;
+            apfp_test[0]->exp = 256;
+
+            apfp_set_mant(apfp_test[1], 3, 9223372036854775808llu);
+            apfp_set_mant(apfp_test[1], 2, 0);
+            apfp_set_mant(apfp_test[1], 1, 0);
+            apfp_set_mant(apfp_test[1], 0, 0);
+            apfp_test[1]->mant->sign = 1;
+            apfp_test[1]->exp = 192;
+
+            apfp_sub(apfp_test[2], apfp_test[0], apfp_test[1]);
+
+            //Check value of mantissa
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 3), 18446744073709551615llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 2), 0llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 1), 0llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 0), 0llu);
+
+            //Check value of exponent and sign
+            ASSERT_EQUAL_L(apfp_test[2]->exp, 255lu);
+            ASSERT_EQUAL_I(apfp_test[2]->mant->sign, 1);
+    });
+
+    TEST_CASE(subtraction with positive numbers a-b a<b, {
+
+            apfp_set_mant(apfp_test[0], 3, 9223372036854775808llu);
+            apfp_set_mant(apfp_test[0], 2, 0);
+            apfp_set_mant(apfp_test[0], 1, 0);
+            apfp_set_mant(apfp_test[0], 0, 0);
+            apfp_test[0]->mant->sign = 1;
+            apfp_test[0]->exp = 192;
+
+            apfp_set_mant(apfp_test[1], 3, 9223372036854775808llu);
+            apfp_set_mant(apfp_test[1], 2, 0);
+            apfp_set_mant(apfp_test[1], 1, 0);
+            apfp_set_mant(apfp_test[1], 0, 0);
+            apfp_test[1]->mant->sign = 1;
+            apfp_test[1]->exp = 256;
+
+            apfp_sub(apfp_test[2], apfp_test[0], apfp_test[1]);
+
+            //Check value of mantissa
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 3), 18446744073709551615llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 2), 0llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 1), 0llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 0), 0llu);
+
+            //Check value of exponent and sign
+            ASSERT_EQUAL_L(apfp_test[2]->exp, 255lu);
+            ASSERT_EQUAL_I(apfp_test[2]->mant->sign, -1);
+    });
+
+    TEST_CASE(subtraction with positive - negative number a-b a>b, {
+            apfp_set_mant(apfp_test[0], 3, 9223372036854775808llu);
+            apfp_set_mant(apfp_test[0], 2, 0);
+            apfp_set_mant(apfp_test[0], 1, 0);
+            apfp_set_mant(apfp_test[0], 0, 1);
+            apfp_test[0]->mant->sign = 1;
+            apfp_test[0]->exp = 256;
+
+            apfp_set_mant(apfp_test[1], 3, 9223372036854775808llu);
+            apfp_set_mant(apfp_test[1], 2, 0);
+            apfp_set_mant(apfp_test[1], 1, 0);
+            apfp_set_mant(apfp_test[1], 0, 0);
+            apfp_test[1]->mant->sign = -1;
+            apfp_test[1]->exp = 1;
+
+            apfp_sub(apfp_test[2], apfp_test[0], apfp_test[1]);
+
+            //Check value of mantissa
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 3), 9223372036854775808llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 2), 0llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 1), 0llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 0), 2llu);
+
+            //Check value of exponent and sign
+            ASSERT_EQUAL_L(apfp_test[2]->exp, 256lu);
+            ASSERT_EQUAL_I(apfp_test[2]->mant->sign, 1);
+    });
+
+
+    TEST_CASE(subtraction with negative - positive number a-b a>b, {
+            apfp_set_mant(apfp_test[0], 3, 9223372036854775808llu);
+            apfp_set_mant(apfp_test[0], 2, 0);
+            apfp_set_mant(apfp_test[0], 1, 0);
+            apfp_set_mant(apfp_test[0], 0, 1);
+            apfp_test[0]->mant->sign = -1;
+            apfp_test[0]->exp = 256;
+
+            apfp_set_mant(apfp_test[1], 3, 9223372036854775808llu);
+            apfp_set_mant(apfp_test[1], 2, 0);
+            apfp_set_mant(apfp_test[1], 1, 0);
+            apfp_set_mant(apfp_test[1], 0, 0);
+            apfp_test[1]->mant->sign = 1;
+            apfp_test[1]->exp = 1;
+
+            apfp_sub(apfp_test[2], apfp_test[0], apfp_test[1]);
+
+            //Check value of mantissa
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 3), 9223372036854775808llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 2), 0llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 1), 0llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 0), 2llu);
+
+            //Check value of exponent and sign
+            ASSERT_EQUAL_L(apfp_test[2]->exp, 256lu);
+            ASSERT_EQUAL_I(apfp_test[2]->mant->sign, -1);
     });
 
 })

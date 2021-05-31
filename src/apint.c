@@ -70,7 +70,7 @@ int apint_detectfirst1(apint_ptr x)
     pos = 0;
     for(i = x->length-1; i>=0;i--)
     {
-        if(x->limbs[i]&(1ull<<(APINT_LIMB_BITS-1)))//means there's a 1 somewhere here
+        if(x->limbs[i]&UINT64_MAX)//means there's a 1 somewhere here
         {
             // Detect the position of first 1 here.
             number = x->limbs[i];
@@ -84,7 +84,7 @@ int apint_detectfirst1(apint_ptr x)
         }
         pos = pos+APINT_LIMB_BITS;
     }
- //   return pos;
+    return pos;
 }
 
 // right shift
@@ -98,23 +98,25 @@ void apint_shiftr(apint_ptr x, unsigned int shift)
     uint full_limbs_shifted = shift / APINT_LIMB_BITS;
     shift -= full_limbs_shifted * APINT_LIMB_BITS;
 
+    //printf("shift is %d \n", shift);
     for (int i = 0; i < x->length; ++i) {
         if (i + full_limbs_shifted < x->length) {
             x->limbs[i] = x->limbs[i+full_limbs_shifted];
+            //printf("assign full limb here %d \n", full_limbs_shifted);
         }
         else {
             x->limbs[i] = 0;
         }
     }
 
+    for (int i = 0; i < x->length - 1; ++i) {
     if (!shift)
         return;
-
-    for (int i = 0; i < x->length - 1; ++i) {
         x->limbs[i] = (x->limbs[i] >> shift) + (x->limbs[i+1] << (APINT_LIMB_BITS - shift));
     }
 
     x->limbs[x->length-1] >>= shift;
+
 }
 
 void apint_shiftl(apint_ptr x, unsigned int shift){
@@ -171,7 +173,7 @@ unsigned char apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
     unsigned char overflow;
     if(a->sign == b->sign)
     {
-        overflow = apint_minus(x, a, b);
+        overflow = apint_minus(x, a, b); //sign is set here
     }
     else
     {
