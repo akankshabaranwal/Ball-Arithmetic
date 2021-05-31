@@ -97,6 +97,7 @@ void apint_shiftr(apint_ptr x, unsigned int shift)
 
     uint full_limbs_shifted = shift / APINT_LIMB_BITS;
     shift -= full_limbs_shifted * APINT_LIMB_BITS;
+
     for (int i = 0; i < x->length; ++i) {
         if (i + full_limbs_shifted < x->length) {
             x->limbs[i] = x->limbs[i+full_limbs_shifted];
@@ -105,6 +106,9 @@ void apint_shiftr(apint_ptr x, unsigned int shift)
             x->limbs[i] = 0;
         }
     }
+
+    if (!shift)
+        return;
 
     for (int i = 0; i < x->length - 1; ++i) {
         x->limbs[i] = (x->limbs[i] >> shift) + (x->limbs[i+1] << (APINT_LIMB_BITS - shift));
@@ -119,6 +123,7 @@ void apint_shiftl(apint_ptr x, unsigned int shift){
 
     uint full_limbs_shifted = shift / APINT_LIMB_BITS;
     shift -= full_limbs_shifted * APINT_LIMB_BITS;
+
     for (int i = x->length - 1; i >= 0; i--) {
         if (i-(int)full_limbs_shifted >= 0) {
             x->limbs[i] = x->limbs[i-full_limbs_shifted];
@@ -129,9 +134,13 @@ void apint_shiftl(apint_ptr x, unsigned int shift){
         }
     }
 
+    if (!shift)
+        return;
+
     for (int i = x->length - 1; i > 0 ; i--) {
         x->limbs[i] = (x->limbs[i] << shift) + (x->limbs[i-1] >> (APINT_LIMB_BITS - shift));
     }
+
     x->limbs[0] <<= shift;
 }
 
