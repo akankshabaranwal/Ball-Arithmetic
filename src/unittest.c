@@ -4,6 +4,7 @@
 #include <test.h>
 #include <apint.h>
 #include <apfp.h>
+#include <apbar.h>
 
 apint_t apint_test[3];
 
@@ -552,11 +553,49 @@ TEST_GROUP(apfp, {
             ASSERT_EQUAL_I(apfp_test[2]->mant->sign, -1);
     });
 
-})
+});
+
+apbar_t apbar_test[3];
+
+static void apbar_test_setup() {
+    apbar_init(apbar_test[0], 256);
+    apbar_init(apbar_test[1], 256);
+    apbar_init(apbar_test[2], 256);
+}
+
+static void apbar_test_teardown() {
+    apbar_free(apbar_test[0]);
+    apbar_free(apbar_test[1]);
+    apbar_free(apbar_test[2]);
+}
+
+TEST_GROUP(ball_arithmetic, {
+    WITH_SETUP(apbar_test_setup);
+    WITH_TEARDOWN(apbar_test_teardown);
+
+    TEST_CASE(add pi and pi, {
+            apbar_set_midpt_mant(apbar_test[0], 0, 0xC4C6628B80DC1CD1);
+            apbar_set_midpt_mant(apbar_test[0], 1, 0xC90FDAA22168C234);
+            apbar_set_midpt_exp(apbar_test[0], -126);
+            apbar_set_rad(apbar_test[0], 536870912, -156);
+
+            apbar_set_midpt_mant(apbar_test[1], 0, 0xC4C6628B80DC1CD1);
+            apbar_set_midpt_mant(apbar_test[1], 1, 0xC90FDAA22168C234);
+            apbar_set_midpt_exp(apbar_test[1], -126);
+            apbar_set_rad(apbar_test[1], 536870912, -156);
+
+            apbar_print_msg("pi is:", apbar_test[0]);
+
+            apbar_add(apbar_test[2], apbar_test[1], apbar_test[0], 128);
+
+            apbar_print_msg("pi + pi is:", apbar_test[2]);
+    });
+});
 
 void run_test_suite() {
     RUN_TEST_GROUP(apint);
     RUN_TEST_GROUP(apfp);
+    RUN_TEST_GROUP(ball_arithmetic);
 }
 
 int main(int argc, char *argv[]) {

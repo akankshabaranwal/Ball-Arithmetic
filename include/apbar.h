@@ -38,6 +38,7 @@ void apbar_set_midpt_mant(apbar_ptr x, apint_size_t offset, apint_limb_t limb);
 void apbar_set_d(apbar_ptr x, double val);
 
 void apbar_print(apbar_srcptr value);
+void apbar_print_msg(const char *msg, apbar_srcptr value);
 
 void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
 void apbar_sub(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);

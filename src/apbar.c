@@ -51,6 +51,12 @@ void apbar_print(apbar_srcptr value) {
     print_rad(value);
 }
 
+void apbar_print_msg(const char *msg, apbar_srcptr value) {
+    printf("%s ", msg);
+    apbar_print(value);
+    printf("\n");
+}
+
 void apbar_free(apbar_t x)
 {
     apfp_free(x->midpt);
