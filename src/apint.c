@@ -173,7 +173,7 @@ unsigned char apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
     unsigned char overflow;
     if(a->sign == b->sign)
     {
-        overflow = apint_minus(x, a, b);
+        overflow = apint_minus(x, a, b); //sign is set here
     }
     else
     {
