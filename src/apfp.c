@@ -18,6 +18,11 @@ void apfp_set_mant(apfp_ptr x, apint_size_t offset, apint_limb_t limb)
     apint_setlimb(x->mant, offset, limb);
 }
 
+apint_limb_t apfp_get_mant(apfp_srcptr x, apint_size_t offset)
+{
+    return apint_getlimb(x->mant, offset);
+}
+
 void apfp_set_exp(apfp_ptr x, apfp_exp_t exp)
 {
     x->exp = exp;

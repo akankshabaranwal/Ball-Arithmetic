@@ -346,6 +346,33 @@ TEST_GROUP(apfp, {
         ASSERT_EQUAL_UL(apfp_test[0]->mant->limbs[0], 0x15BF0995AAF790llu);
     });
 
+    TEST_CASE(Add two numbers, {
+            // Need to re-precision
+            apfp_free(apfp_test[0]);
+            apfp_free(apfp_test[1]);
+            apfp_free(apfp_test[2]);
+
+            apfp_init(apfp_test[0], 128);
+            apfp_init(apfp_test[1], 128);
+            apfp_init(apfp_test[2], 128);
+
+            // 1 * 2^-127
+            apint_setmsb(apfp_test[0]->mant);
+            apfp_set_exp(apfp_test[0], -254);
+
+            // 16703571626015105435307505830654230989 * 2^-249
+            apfp_set_exp(apfp_test[1], -253);
+            apfp_set_mant(apfp_test[1], 1, 0xc90fdaa22168c234);
+            apfp_set_mant(apfp_test[1], 0, 0xc4c6628b80dc1cd0);
+
+            apfp_add(apfp_test[2], apfp_test[1], apfp_test[0]);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 1), 0x8487ed5110b4611allu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 0), 0x62633145c06e0e68llu);
+
+            //Check value of exponent and sign
+            ASSERT_EQUAL_L(apfp_test[2]->exp, -252l);
+    });
+
     TEST_CASE(apfp_add addition with positive numbers 1.000...00 X 2^10 + 1.000...00 X 2^10, {
             // Check mantissa first
             // Then check expected exponent
@@ -625,6 +652,12 @@ TEST_GROUP(ball_arithmetic, {
             apbar_print_msg("pi + pi is:", apbar_test[2]);
 
             // Expected value (128 bit): 267257146016241686964920093290467695825 * 2^-125) +/- (536870913 * 2^-154)
+            ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 1), 0xC90FDAA22168C234llu);
+            ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 0), 0xC4C6628B80DC1CD1llu);
+            ASSERT_EQUAL_L(apbar_get_midpt_exp(apbar_test[2]), -125l);
+
+            ASSERT_EQUAL_UL(apbar_test[2]->rad->mant, 2llu);
+            ASSERT_EQUAL_L(apbar_test[2]->rad->exp, -126l);
     });
 
     TEST_CASE(mul pi with pi, {

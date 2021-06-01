@@ -74,9 +74,19 @@ void apbar_set_midpt_exp(apbar_ptr x, apfp_exp_t exp)
     apfp_set_exp(x->midpt, exp);
 }
 
+apfp_exp_t apbar_get_midpt_exp(apbar_srcptr x)
+{
+    return x->midpt->exp;
+}
+
 void apbar_set_midpt_mant(apbar_ptr x, apint_size_t offset, apint_limb_t limb)
 {
     apfp_set_mant(x->midpt, offset, limb);
+}
+
+apint_limb_t apbar_get_midpt_mant(apbar_srcptr x, apint_size_t offset)
+{
+    return apfp_get_mant(x->midpt, offset);
 }
 
 void apbar_set_d(apbar_t x, double val)
@@ -85,7 +95,7 @@ void apbar_set_d(apbar_t x, double val)
     apfp_set_d(x->midpt, val);
 }
 
-uint narrow_to_rad(apfp_ptr x, rad_ptr rad)
+void narrow_to_rad(apfp_ptr x, rad_ptr rad)
 {
     // Essentially shift right enough so that mantissa fits into 64 bits
     uint i = x->mant->length - 1;
@@ -99,9 +109,17 @@ uint narrow_to_rad(apfp_ptr x, rad_ptr rad)
 
     apint_shiftr(x->mant, i);
     rad->mant = x->mant->limbs[0] + 1;
-    rad->exp = x->exp + i;
+    rad->exp = x->exp + i - 1;
 }
 
+static inline void expand_rad(apfp_ptr fp, rad_srcptr rad)
+{
+    uint leading_zeros = __builtin_clzl(rad->mant);
+    fp->mant->limbs[fp->mant->length - 1] = rad->mant << leading_zeros;
+
+    fp->exp = rad->exp - (fp->mant->length - 1) * APINT_LIMB_BITS - leading_zeros - 1;
+    fp->mant->sign = 0;
+}
 
 static inline void add_error_bound(apbar_ptr res, apint_size_t prec)
 {
@@ -119,25 +137,29 @@ static inline void add_error_bound(apbar_ptr res, apint_size_t prec)
     apint_init(one, res_length);
     apint_setlimb(one, 0, 1);
 
-    apint_add(delta_y->mant, res->midpt->mant, one);
+    unsigned char carry = apint_add(delta_y->mant, res->midpt->mant, one);
 
-    // Multiply be e.
+    // Multiply by e.
     // e is 2^-p so we essentially just need to subtract p from the exponent
-    delta_y->exp = res->midpt->exp - prec;
+    delta_y->exp = res->midpt->exp - prec - carry;
+    if (carry) apint_setmsb(delta_y->mant);
+    delta_y->mant->sign = 0;
 
-    // This is the same as arb:
+    /* // This is almost the same as arb:
     // rad_t dy;
     // dy->exp = c->rad->exp - 32;
     // dy->mant = 0x8000000000000001; // bit pattern: 1000...001
 
     //apbar_t t;
     //rad_add(t->rad, c->rad, dy);
+    */
 
     // Add delta y to the current radius
     apfp_t rad;
     apfp_init(rad, res_length);
-    apfp_set_mant(rad, 0, res->rad->mant);
-    apfp_set_exp(rad, res->rad->exp);
+    // apfp_set_mant(rad, 0, res->rad->mant);
+    // apfp_set_exp(rad, res->rad->exp);
+    expand_rad(rad, res->rad);
 
     apfp_t new_rad;
     apfp_init(new_rad, res_length);

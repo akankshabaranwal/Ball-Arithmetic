@@ -34,7 +34,9 @@ void apbar_free(apbar_t x);
 
 void apbar_set_rad(apbar_ptr x, apint_limb_t mant, apfp_exp_t exp);
 void apbar_set_midpt_exp(apbar_ptr x, apfp_exp_t exp);
+apfp_exp_t apbar_get_midpt_exp(apbar_srcptr x);
 void apbar_set_midpt_mant(apbar_ptr x, apint_size_t offset, apint_limb_t limb);
+apint_limb_t apbar_get_midpt_mant(apbar_srcptr x, apint_size_t offset);
 void apbar_set_d(apbar_ptr x, double val);
 
 void apbar_print(apbar_srcptr value);
