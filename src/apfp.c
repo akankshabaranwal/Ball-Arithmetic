@@ -18,6 +18,11 @@ void apfp_set_mant(apfp_ptr x, apint_size_t offset, apint_limb_t limb)
     apint_setlimb(x->mant, offset, limb);
 }
 
+apint_limb_t apfp_get_mant(apfp_srcptr x, apint_size_t offset)
+{
+    return apint_getlimb(x->mant, offset);
+}
+
 void apfp_set_exp(apfp_ptr x, apfp_exp_t exp)
 {
     x->exp = exp;
@@ -58,7 +63,7 @@ void apfp_print(apfp_srcptr value)
 }
 
 void apfp_print_msg(const char *msg, apfp_srcptr value){
-    printf("%s", msg);
+    printf("%s ", msg);
     apfp_print(value);
     printf("\n");
 }
@@ -152,10 +157,10 @@ unsigned char apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     return overflow;
 }
 
-void apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+int apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     x->exp = a->exp + b->exp;
-    apint_mul(x->mant, a->mant, b->mant);
+    int is_exact = apint_mul(x->mant, a->mant, b->mant);
     if(a->mant->sign == b->mant->sign)
     {
         x->mant->sign = a->mant->sign;
@@ -164,5 +169,8 @@ void apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     {
         x->mant->sign = -1;
     }
+
     //TODO: move back to left align code is left
+
+    return is_exact;
 }

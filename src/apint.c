@@ -46,7 +46,7 @@ void apint_free(apint_t x)
 
 void apint_copy(apint_ptr dst, apint_srcptr src)
 {
-    assert(dst->length == src->length);
+    assert(dst->length >= src->length);
     /*
     dst->length = src->length;
     dst->limbs = realloc(dst->limbs, src->length * APINT_LIMB_BYTES);
@@ -253,14 +253,14 @@ int apint_is_greater(apint_srcptr a, apint_srcptr b)
     return 0;
 }
 
-void apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
+int apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     //TODO: check if these checks are needed anywhere else in the code.
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length); // only handle same lengths for now
     assert(a->length + b->length <= x->length);
 
-    unsigned long long overflow = 0;
+    unsigned long long overflow;
     if(a->sign == b->sign)
         x->sign = 1;
     else
@@ -268,13 +268,14 @@ void apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
 
     for (apint_size_t i = 0; i < b->length; i++)
     {
+        overflow = 0;
         for (apint_size_t j = 0; j < a->length; j++)
         {
             x->limbs[i + j] += overflow;
             x->limbs[i + j] += _mulx_u64(a->limbs[j], b->limbs[i], &overflow);
         }
-        overflow = 0;
     }
+    return (int) overflow;
 }
 
 void apint_mul_portable(apint_ptr x, apint_srcptr a, apint_srcptr b)
