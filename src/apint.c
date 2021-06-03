@@ -268,11 +268,13 @@ uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b
     apint_shiftl_by_d(z2_, z2, 2 * d);
     apint_shiftl_by_d(z1_, z1_z2_z0, d);
 
-    printf("z2_ before shift: 0x%llx 0x%llx\n", apint_getlimb(z2_, 1), apint_getlimb(z2_, 0));
-    printf("z1_ before shift: 0x%llx 0x%llx\n", apint_getlimb(z1_, 1), apint_getlimb(z1_, 0));
+    printf("z2_ after shift: 0x%llx 0x%llx\n", apint_getlimb(z2_, 1), apint_getlimb(z2_, 0));
+    printf("z1_ after shift: 0x%llx 0x%llx\n", apint_getlimb(z1_, 1), apint_getlimb(z1_, 0));
 
     apint_t x_;
     apint_init(x_, (x->length) * 64);
+    printf("z1_: 0x%llx 0x%llx 0x%llx 0x%llx\n", apint_getlimb(z1_, 3), apint_getlimb(z1_, 2), apint_getlimb(z1_, 1), apint_getlimb(z1_, 0));
+    printf("z2_: 0x%llx 0x%llx 0x%llx 0x%llx\n", apint_getlimb(z2_, 3), apint_getlimb(z2_, 2), apint_getlimb(z2_, 1), apint_getlimb(z2_, 0));
     apint_add_karatsuba(x_, z2_, z1_);
     apint_add_karatsuba(x, x_, z0);
     // x = z2 * 2 ^ (2 * d) + (z1 - z2 - z0) * 2 ^ (d) + z0;

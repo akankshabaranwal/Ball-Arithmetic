@@ -89,23 +89,29 @@ void apint_mult_test()
 {
     apint_t x, a, b;
 
-    apint_init(x, 128); // the number of bits for x needs to be the sum of real bits in a and b
-    apint_init(a, 128);
-    apint_init(b, 128);
+    apint_init(x, 256); // the number of bits for x needs to be the sum of real bits in a and b
+    apint_init(a, 256);
+    apint_init(b, 256);
 
     apint_setlimb(x, 0, 0);
     apint_setlimb(x, 1, 0);
+    apint_setlimb(x, 2, 0);
+    apint_setlimb(x, 3, 0);
 
-    apint_setlimb(a, 0, 0x3);
-    apint_setlimb(a, 1, 0x0); // 0x8 0x0 * 0x0 0x2 = 0x10 0x0
+    apint_setlimb(a, 0, 0x0);
+    apint_setlimb(a, 1, 0x4); // 0x8 0x0 * 0x0 0x2 = 0x10 0x0
+    apint_setlimb(a, 2, 0x0);
+    apint_setlimb(a, 3, 0x0);
 
     apint_setlimb(b, 0, 0x2);
     apint_setlimb(b, 1, 0x0);
+    apint_setlimb(b, 2, 0x0);
+    apint_setlimb(b, 3, 0x0);
 
     apint_mul_karatsuba(x, a, b);
     // apint_mul(x, a, b);
 
-    printf("0x%llx 0x%llx\n", apint_getlimb(x, 1), apint_getlimb(x, 0));
+    printf("0x%llx 0x%llx 0x%llx 0x%llx\n", apint_getlimb(x, 3), apint_getlimb(x, 2), apint_getlimb(x, 1), apint_getlimb(x, 0));
     printf("Final length of x: %d\n", x->length);
 
     apint_free(x);
