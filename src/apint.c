@@ -110,6 +110,7 @@ char apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
 }
 
 // YOU can'T JUst SpeCIFY WhatEVEr THe fuCK PreciSion YOu WANt FOR THe OutpuT??????!!!!!!!!!
+// also we have to handle negatives, but I think that's more important in fp
 uint64_t apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
 { // Commented below because it was erroring out.
     // To-do: Implement multiplication.
@@ -137,23 +138,19 @@ uint64_t apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
         if ((i + a->length) < x->length)
             x->limbs[i + a->length] += overflow;
     }
-    return overflow; // This overflow doesn't actually mean anything then if we drop the higher bits of the result anyways
+    return overflow; // This overflow doesn't actually mean anything because we give x enough space in the beginning anyways
 }
 
 uint64_t apint_mul_karatsuba(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
-    // printf("Length a: %d\n", a->length);
-    // printf("Length b: %d\n", b->length);
-    // printf("Length x: %d\n", x->length);
-
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length); // only handle same lengths of input
-    assert(a->length == x->length); // assuming that output has same precision as both inputs
+    assert(a->length == x->length); // assuming that output has enough space to store necessary result
 
     // if a < 10 or b < 10, return a*b
     if (a->length <= 1 || b->length <= 1)
     {
-        // printf("Small enough size, returning\n");
+        // printf("Small enough size to begin with, returning\n");
         return apint_mul_karatsuba_base_case(x, a, b);
     }
 
@@ -176,6 +173,7 @@ uint64_t apint_mul_karatsuba(apint_ptr x, apint_srcptr a, apint_srcptr b)
 
 /*
 This is a recursive method
+Make sure we don't stack explode.
 */
 uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {

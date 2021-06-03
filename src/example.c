@@ -28,7 +28,7 @@ int main(int argc, char const *argv[])
     apint_free(a->mant);
     apint_free(b->mant);
 
-    // This is kinda jank but I'm testing sub - Julia
+    // This is kinda jank but I'm testing some apint functions - Julia
     // apint_add_test();
     // apint_sub_test();
     apint_mult_test();
@@ -89,7 +89,7 @@ void apint_mult_test()
 {
     apint_t x, a, b;
 
-    apint_init(x, 128); // the number of bits for x needs to be the sum of bits for a and b
+    apint_init(x, 128); // the number of bits for x needs to be the sum of real bits in a and b
     apint_init(a, 128);
     apint_init(b, 128);
 
@@ -99,13 +99,13 @@ void apint_mult_test()
     apint_setlimb(a, 0, 0x3);
     apint_setlimb(a, 1, 0x0); // 0x8 0x0 * 0x0 0x2 = 0x10 0x0
 
-    apint_setlimb(b, 0, 0x1);
+    apint_setlimb(b, 0, 0x2);
     apint_setlimb(b, 1, 0x0);
 
     apint_mul_karatsuba(x, a, b);
     // apint_mul(x, a, b);
 
-    printf("0x%llx 0x%llx 0x%llx 0x%llx\n", apint_getlimb(x, 3), apint_getlimb(x, 2), apint_getlimb(x, 1), apint_getlimb(x, 0));
+    printf("0x%llx 0x%llx\n", apint_getlimb(x, 1), apint_getlimb(x, 0));
     printf("Final length of x: %d\n", x->length);
 
     apint_free(x);
