@@ -42,10 +42,17 @@ int apint_is_greater(apint_srcptr a, apint_srcptr b);
 void apint_mul_portable(apint_ptr x, apint_srcptr a, apint_srcptr b);
 int apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b);
 
+// Karatsuba helper methods
 char apint_add_karatsuba(apint_ptr x, apint_srcptr a, apint_srcptr b);
-uint64_t apint_mul_karatsuba(apint_ptr x, apint_srcptr a, apint_srcptr b);
-uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b);
 uint64_t apint_mul_karatsuba_base_case(apint_ptr x, apint_srcptr a, apint_srcptr b);
+
+// Karatsuba main methods
+uint64_t apint_mul_karatsuba(apint_ptr x, apint_srcptr a, apint_srcptr b);
+uint64_t apint_mul_karatsuba_extend_basecase(apint_ptr x, apint_srcptr a, apint_srcptr b);
+
+// Karatsuba recursive methods
+uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b);
+uint64_t apint_mul_karatsuba_recurse_extend_basecase(apint_ptr x, apint_srcptr a, apint_srcptr b);
 
 void apint_shiftr(apint_ptr x, unsigned int shift);
 void apint_shiftl(apint_ptr x, unsigned int shift);
