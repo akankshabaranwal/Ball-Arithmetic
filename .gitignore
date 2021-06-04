@@ -1,7 +1,8 @@
-arb
+#arb
 cmake-build-debug
 build
 bin
 *.out
 *.bin
 *.so
+*.png

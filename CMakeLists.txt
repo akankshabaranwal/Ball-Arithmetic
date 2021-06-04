@@ -11,12 +11,28 @@ include_directories(include)
 add_executable(arblib-test
         src/arb-test.c
 )
+
 target_link_libraries(arblib-test arb flint)
 
-add_executable(ball-test
+set(BALL_ARITH_SRC
         src/apint.c
         src/apfp.c
         src/apbar.c
-        src/example.c
 )
-target_link_libraries(ball-test flint gmp)
+
+add_executable(benchmark
+        ${BALL_ARITH_SRC}
+        src/benchmark.c)
+
+add_executable(unit-test
+        ${BALL_ARITH_SRC}
+        src/unittest.c
+)
+
+add_executable(karatsuba
+        ${BALL_ARITH_SRC}
+        src/karatsuba.c)
+
+target_link_libraries(benchmark flint gmp arb)
+target_link_libraries(unit-test flint gmp arb)
+target_link_libraries(karatsuba flint gmp arb)
