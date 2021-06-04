@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(ball_arithmetic C)
 
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -madx -mbmi2")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -madx -mbmi2 -pg")
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build)
 
@@ -33,6 +33,13 @@ add_executable(karatsuba
         ${BALL_ARITH_SRC}
         src/karatsuba.c)
 
+add_executable(profile-apbar
+        ${BALL_ARITH_SRC}
+        src/profile_apbar.c
+        )
+
 target_link_libraries(benchmark flint gmp arb)
 target_link_libraries(unit-test flint gmp arb)
 target_link_libraries(karatsuba flint gmp arb)
+target_compile_options(profile-apbar PUBLIC "-g" "-pg")
+target_link_libraries(profile-apbar flint gmp arb)
