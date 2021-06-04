@@ -49,3 +49,9 @@ There are convenience wrappers for:
 Steps 2 and 3 can be done at the same time with yet another wrapper:  
    $ `./bench_plot.sh $suite`  
    This will run the benchmark $suite (default is def) and plot the results at the same time.
+
+## Profiling
+Example: profile-sub
+1. Build the project. Run it once. The file gmon.out should be generated.
+2. gprof ./build/profile-sub > apbar_subprofile.log
+3. Reference: https://sourceware.org/binutils/docs/gprof/Compiling.html

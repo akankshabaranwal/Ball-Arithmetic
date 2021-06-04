@@ -2,6 +2,8 @@
 #include <apfp.h>
 #include <apbar.h>
 
+static const int NUM_RUNS = 500000;
+
 int main()
 {
     apbar_t apbar_test[3];
@@ -22,9 +24,11 @@ int main()
     apbar_test[1]->midpt->mant->sign=-1;
 
     apbar_print_msg("pi is:", apbar_test[0]);
-
-    apbar_sub(apbar_test[2], apbar_test[1], apbar_test[0], 128);
-
+    for(int i=0; i<NUM_RUNS; i++)
+    {
+        apbar_sub(apbar_test[2], apbar_test[1], apbar_test[0], 128);
+        apbar_sub(apbar_test[0], apbar_test[1], apbar_test[2], 128);
+    }
     apbar_print_msg("pi - -pi is:", apbar_test[2]);
 
     apbar_free(apbar_test[0]);
