@@ -30,7 +30,7 @@ add_executable(unit-test
 
 add_executable(profile-sub
         ${BALL_ARITH_SRC}
-        src/profile_apbar_sub.c
+        src/profile_apbar.c
         )
 
 target_compile_options(profile-sub PUBLIC "-g" "-pg")
