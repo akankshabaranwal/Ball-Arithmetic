@@ -11,8 +11,6 @@ int main(int argc, char const *argv[])
 
 void apint_mult_test()
 {
-    // Testing shifting
-
     apint_t x, a, b;
 
     apint_init(x, 128); // the number of bits for x needs to be the sum of bits for a and b
