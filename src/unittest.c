@@ -733,7 +733,7 @@ TEST_GROUP(ball_arithmetic, {
 
             apbar_add(apbar_test[2], apbar_test[1], apbar_test[0], 128);
 
-            apbar_print_msg("pi + pi is:", apbar_test[2]);
+            apbar_print_msg("pi - sqrt2 is:", apbar_test[2]);
 
             // Expected value (128 bit): 267257146016241686964920093290467695825 * 2^-125) +/- (536870913 * 2^-154)
             ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 1), 0xC90FDAA22168C234llu);
