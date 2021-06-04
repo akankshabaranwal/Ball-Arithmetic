@@ -364,54 +364,18 @@ char apint_add_karatsuba(apint_ptr x, apint_srcptr a, apint_srcptr b)
     return carry;
 }
 
-// // YOU can'T JUst SpeCIFY WhatEVEr THe fuCK PreciSion YOu WANt FOR THe OutpuT??????!!!!!!!!!
-// // also we have to handle negatives, but I think that's more important in fp
-// uint64_t apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
-// { // Commented below because it was erroring out.
-//     // To-do: Implement multiplication.
-//     assert(x->limbs && a->limbs && b->limbs);
-//     assert(a->length == b->length); // only handle same lengths for now
-//     assert(a->length == x->length); // makes sense for the precision of the output to be the same as the input
-
-//     // I don't think there would be an overflow for multiplication because
-//     // the biggest possible number takes up bits equal to the sum of bits
-//     // in a and b
-//     uint64_t overflow = 0;
-
-//     // Handling sign?
-
-//     for (apint_size_t i = 0; i < b->length; i++)
-//     {
-//         for (apint_size_t j = 0; j < a->length; j++)
-//         {
-//             if ((i + j) < x->length) // I wasn't sure how else to make sure we don't update a limb in x that doesn't exist
-//             {
-//                 x->limbs[i + j] += overflow;
-//                 x->limbs[i + j] += _mulx_u64(a->limbs[j], b->limbs[i], &overflow);
-//             }
-//         }
-//         if ((i + a->length) < x->length)
-//             x->limbs[i + a->length] += overflow;
-//     }
-//     return overflow; // This overflow doesn't actually mean anything because we give x enough space in the beginning anyways
-// }
-
 uint64_t apint_mul_karatsuba(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length); // only handle same lengths of input
     assert(a->length == x->length); // assuming that output has same precision as both inputs
 
-    // TODO: - Make sure to keep track of the sign, but pass everything in as positive
-    //       - Does everything in Karatsuba break if we assume all positive?
+    // Make sure to keep track of the sign, but pass everything in as positive
     x->sign = a->sign * b->sign;
 
-    // if a < 10 or b < 10, return a*b
+    // if lengths small enough, return a*b
     if (a->length <= 1 || b->length <= 1) // they have to be the same length anyways
-    {
-        // printf("Small enough size, returning\n");
         return apint_mul(x, a, b);
-    }
 
     uint64_t overflow = apint_mul_karatsuba_recurse(x, a, b); // Although I don't think there will be overflow here
     return overflow;                                          // this returns a unit64_t
@@ -422,12 +386,10 @@ This is a recursive method
 */
 uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
-    // if a < 10 or b < 10, return a*b
+    // if lengths small enough, return a*b
+    // karatsuba_base_case handles different precision input and output because it is needed
     if (a->length == 1 || b->length == 1)
-    {
-        printf("Small enough size, returning\n");
         return apint_mul_karatsuba_base_case(x, a, b);
-    }
 
     // d = floor(max(length(a), length(b)) / 2)
     apint_size_t d = floor(max(a->length, b->length) / 2); // They're the same length anyways
@@ -453,17 +415,12 @@ uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b
     apint_copyover(b_high, b, d);
 
     apint_t z0, z1, z2;
-    // apint_init(z0, (a_high->length + b_high->length) * 64);
-    // apint_init(z1, ((max(a_high->length, a_low->length)) + (max(b_high->length, b_low->length))) * 64);
-    // apint_init(z2, (a_low->length + b_low->length) * 64);
     z0->sign = 1;
     z1->sign = 1;
     z2->sign = 1;
     apint_init(z0, x->length * 64); // Padding it to oblivion, trade off between performance and precision
     apint_init(z1, x->length * 64);
     apint_init(z2, x->length * 64);
-
-    // printf("z0: 0x%llx 0x%llx 0x%llx 0x%llx\n", apint_getlimb(z0, 3), apint_getlimb(z0, 2), apint_getlimb(z0, 1), apint_getlimb(z0, 0));
 
     apint_t a_add, b_add;
     a_add->sign = 1;
@@ -479,58 +436,31 @@ uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b
     apint_mul_karatsuba_recurse(z1, a_add, b_add);   // THE LENGTH NEVER DECREASES, ok now it decreases, so its fine
     apint_mul_karatsuba_recurse(z2, a_high, b_high); // There should be an overflow but I don't think I need to do anything with it
 
-    // printf("z0 after recursion: 0x%llx 0x%llx\n", apint_getlimb(z0, 1), apint_getlimb(z0, 0));
-    // printf("z1 after recursion: 0x%llx 0x%llx\n", apint_getlimb(z1, 1), apint_getlimb(z1, 0));
-    // printf("z2 after recursion: 0x%llx 0x%llx\n", apint_getlimb(z2, 1), apint_getlimb(z2, 0));
-
-    // printf("z0 size after recursion: %d\n", z0->length);
-    // printf("z1 size after recursion: %d\n", z1->length);
-    // printf("z2 size after recursion: %d\n", z2->length);
-    // apint_t z2_, z1_;
-    // apint_init(z2_, (x->length) * 64);
-    // apint_init(z1_, (x->length) * 64);
-
     apint_t first_operand; // z2 + z0
     first_operand->sign = 1;
     apint_init(first_operand, (z2->length) * 64);
     apint_add(first_operand, z2, z0);
-
-    // printf("z2 + z0 = 0x%llx 0x%llx\n", apint_getlimb(first_operand, 1), apint_getlimb(first_operand, 0));
 
     apint_t second_operand; // z1 - (z2 + z0)
     second_operand->sign = 1;
     apint_init(second_operand, (z1->length) * 64);
     apint_sub(second_operand, z1, first_operand);
 
-    // printf("z1 sign: %d\n", z1->sign);
-    // printf("first_operand sign: %d\n", first_operand->sign);
-
-    // printf("z1 = 0x%llx 0x%llx\n", apint_getlimb(z1, 1), apint_getlimb(z1, 0));
-    // printf("z1 - (z2 + z0) = 0x%llx 0x%llx\n", apint_getlimb(second_operand, 1), apint_getlimb(second_operand, 0));
-
-    // printf("z2 before shift: 0x%llx 0x%llx\n", apint_getlimb(z2, 1), apint_getlimb(z2, 0));
-    // printf("z1 - (z2 + z0) before shift: 0x%llx 0x%llx\n", apint_getlimb(second_operand, 1), apint_getlimb(second_operand, 0));
-
-    // Shift results appropriately, should be stored in z2_ and z1_
-    printf("shifting by %d\n", d);
+    // Shift results appropriately, should be stored in z2 and second_operand
     d = d * 64;                // in the beginning we split by d, but d is a limb, which is 64 bits
     apint_shiftl(z2, (2 * d)); // multiply by 2 because of Karatsuba algorithm
     apint_shiftl(second_operand, d);
 
-    // printf("z2 after shift: 0x%llx 0x%llx\n", apint_getlimb(z2, 1), apint_getlimb(z2, 0));
-    // printf("z1 - (z2 + z0) after shift: 0x%llx 0x%llx\n", apint_getlimb(second_operand, 1), apint_getlimb(second_operand, 0));
-
+    // x = z2 * 2 ^ (2 * d) + (z1 - z2 - z0) * 2 ^ (d) + z0;
     apint_t temp_x;
     apint_init(temp_x, (x->length) * 64);
     apint_add_karatsuba(temp_x, z2, second_operand);
     apint_add_karatsuba(x, temp_x, z0);
-    // x = z2 * 2 ^ (2 * d) + (z1 - z2 - z0) * 2 ^ (d) + z0;
 
     uint64_t result; // not used yet
     return result;
 }
 
-// YOU can'T JUst SpeCIFY WhatEVEr THe fuCK PreciSion YOu WANt FOR THe OutpuT??????!!!!!!!!!
 uint64_t apint_mul_karatsuba_base_case(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
@@ -539,8 +469,6 @@ uint64_t apint_mul_karatsuba_base_case(apint_ptr x, apint_srcptr a, apint_srcptr
 
     // I don't think there would be an overflow for multiplication because the biggest possible number takes up bits equal to the sum of bits in a and b
     uint64_t overflow = 0;
-
-    // Handling sign?
 
     for (apint_size_t i = 0; i < b->length; i++)
     {
