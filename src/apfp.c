@@ -70,10 +70,13 @@ void apfp_print_msg(const char *msg, apfp_srcptr value){
 
 unsigned char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
+    int swapped;
+    swapped=0;
     // After swap, `a` is guaranteed to have largest exponent
     if (b->exp > a->exp)
     {
         apfp_srcptr t = a; a = b; b = t;
+        swapped=1;
     }
 
     // Align `b` mantissa to `a` given exponent difference
@@ -97,12 +100,18 @@ unsigned char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     }
     else // either a -b or b-a
     {
-        apint_sub(x->mant, a->mant, b->mant);
-        overflow = apint_detectfirst1(x->mant);
-        if (overflow>0)
+        apint_sub(x->mant, a->mant, x->mant); //x->mant->sign is set here
+        overflow = apint_detectfirst1(x->mant);//technically this is underflow
+        if(overflow>0)
         {
-            apint_shiftl(x->mant, overflow-1);
+            apint_shiftl(x->mant, overflow);
             x->exp = a->exp - overflow;
+        }
+
+        if (overflow) apint_setmsb(x->mant); //Most likely here it is not required.
+        if(swapped)
+        {
+            x->mant->sign = -x->mant->sign;
         }
     }
     return overflow;

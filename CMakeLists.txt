@@ -28,12 +28,12 @@ add_executable(unit-test
         src/unittest.c
 )
 
-add_executable(profile-sub
+add_executable(profile-apbar
         ${BALL_ARITH_SRC}
         src/profile_apbar.c
         )
 
-target_compile_options(profile-sub PUBLIC "-g" "-pg")
+target_compile_options(profile-apbar PUBLIC "-g" "-pg")
 target_link_libraries(benchmark flint gmp arb)
 target_link_libraries(unit-test flint gmp arb)
-target_link_libraries(profile-sub flint gmp arb)
+target_link_libraries(profile-apbar flint gmp arb)
