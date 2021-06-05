@@ -41,5 +41,28 @@ int main()
 
     arb_clear(x); arb_clear(y); arb_clear(z); arb_clear(double_pi);
 
+    //subtract test 2pi - pi
+    arb_t xpi, xpi2, const2, sub_res;
+    arb_init(xpi);
+    arb_init(xpi2);
+    arb_init(const2);
+    arb_init(sub_res);
+
+    arb_const_pi(xpi, 128);   /* y = pi, to 128 bits */
+    printf("pi is:\t\t"); arb_print(xpi); printf("\n");
+
+    arb_set_ui(const2, 2);       /* x = 3 */
+    printf("2 is:\t\t"); arb_print(const2); printf("\n");
+
+    arb_mul(xpi2, xpi, const2, 128);
+    printf("2pi is: \t\t"); arb_print(xpi2); printf("\n");
+    arb_sub(sub_res, xpi2, xpi, 128);
+    printf("result pi is: \t\t"); arb_print(sub_res); printf("\n");
+
+    arb_clear(xpi);
+    arb_clear(xpi2);
+    arb_clear(const2);
+    arb_clear(sub_res);
+
     return 0;
 }
