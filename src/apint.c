@@ -8,6 +8,8 @@
 #include <apint.h>
 #include <flint/fmpz.h>
 
+#define APINT_MSB ((apint_limb_t)1 << (sizeof(apint_limb_t) * 8 - 1))
+
 void apint_init(apint_t x, apint_size_t p)
 {
     x->length = (p / APINT_LIMB_BITS) + ((p % APINT_LIMB_BITS) > 0);
@@ -34,8 +36,18 @@ void apint_print(apint_srcptr value)
     fmpz_t number;
     apint_to_fmpz(number, value);
 
+    if (value->sign < 0) {
+        printf("-");
+    }
     fmpz_print(number);
     fmpz_clear(number);
+}
+
+void apint_print_msg(const char *msg, apint_srcptr value)
+{
+    printf("%s ", msg);
+    apint_print(value);
+    printf("\n");
 }
 
 void apint_free(apint_t x)
@@ -59,36 +71,33 @@ void apint_copy(apint_ptr dst, apint_srcptr src)
     {
         dst->limbs[i] = src->limbs[i];
     }
+    dst->sign = src->sign;
 }
 
 // detect the position of first 1
 // naive method
-int apint_detectfirst1(apint_ptr x)
+size_t apint_detectfirst1(apint_ptr x)
 {
     //Iterate over the limbs
-    int i;
-    int pos;
+    size_t i;
+    size_t pos;
     apint_limb_t number;
     pos = 0;
-    for (i = x->length - 1; i >= 0; i--)
-    {
-        if (x->limbs[i] & UINT64_MAX) //means there's a 1 somewhere here
-        {
-            // Detect the position of first 1 here.
+    for(i = x->length - 1; i >= 0; i--) {
+        if(x->limbs[i] > 0) {
+            // There's a 1 somewhere here
             number = x->limbs[i];
-            while (number != 0)
-            {
-                if ((number & 0x01) != 0)
-                {
-                    pos++;
-                    return pos;
+            while(1) {
+                if (number & APINT_MSB) {
+                    return x->length * APINT_LIMB_BITS - pos;
                 }
-                number >>= 1;
+                number <<= 1;
+                pos++;
             }
         }
-        pos = pos + APINT_LIMB_BITS;
+        pos += APINT_LIMB_BITS;
     }
-    return pos;
+    return x->length * APINT_LIMB_BITS - pos;
 }
 
 // right shift
@@ -184,12 +193,16 @@ unsigned char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
 unsigned char apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     unsigned char overflow;
-    if (a->sign == b->sign)
+
+    if(a->sign == b->sign)
     {
+        //printf("calling apint_sub\n");
+        //printf("in apint_sub calling apint minus\n");
         overflow = apint_minus(x, a, b); //sign is set here
     }
     else
     {
+       // printf("in apint_sub calling apint plus\n");
         apint_plus(x, a, b);
         x->sign = a->sign;
     }
@@ -220,7 +233,7 @@ unsigned char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
     assert(a->length <= x->length);
 
     unsigned char carry = 0;
-
+    //printf("AB: called apint_plus\n");
     for (apint_size_t i = 0; i < a->length; i++)
     {
         carry = _addcarryx_u64(carry, a->limbs[i], b->limbs[i], &x->limbs[i]);
@@ -238,6 +251,7 @@ unsigned char apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
 
     if (apint_is_greater(a, b)) // a > b so a-b
     {
+        //printf("Yes is greater\n");
         x->sign = a->sign;
         for (apint_size_t i = 0; i < a->length; i++)
         {
@@ -246,6 +260,7 @@ unsigned char apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
     }
     else // b > a so -(b-a)
     {
+        //printf("No swapped it\n");
         x->sign = -b->sign;
         for (apint_size_t i = 0; i < a->length; i++)
         {

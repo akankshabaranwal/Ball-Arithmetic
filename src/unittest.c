@@ -5,6 +5,7 @@
 #include <apint.h>
 #include <apfp.h>
 #include <apbar.h>
+#include <apbar2.h>
 
 apint_t apint_test[3];
 
@@ -339,13 +340,6 @@ TEST_GROUP(apfp, {
     WITH_SETUP(apfp_test_setup);
     WITH_TEARDOWN(apfp_test_teardown);
 
-    TEST_CASE(set to double, {
-        apfp_set_d(apfp_test[0], 2.71828);
-
-        ASSERT_EQUAL_L(apfp_test[0]->exp, -51l);
-        ASSERT_EQUAL_UL(apfp_test[0]->mant->limbs[0], 0x15BF0995AAF790llu);
-    });
-
     TEST_CASE(Add two numbers, {
             // Need to re-precision
             apfp_free(apfp_test[0]);
@@ -357,7 +351,7 @@ TEST_GROUP(apfp, {
             apfp_init(apfp_test[2], 128);
 
             // 1 * 2^-127
-            apint_setmsb(apfp_test[0]->mant);
+            apfp_set_mant_msb(apfp_test[0]);
             apfp_set_exp(apfp_test[0], -254);
 
             // 16703571626015105435307505830654230989 * 2^-249
@@ -463,20 +457,14 @@ TEST_GROUP(apfp, {
             ASSERT_EQUAL_I(apfp_test[2]->mant->sign, 1);
     });
 
-    TEST_CASE(apfp_add addition with positive and negative number 1.000...01 X 2^256 + 1.000...00 X 2^1, {
+    TEST_CASE(apfp_add addition with positive and negative number 1.000...00 X 2^256 + -1.000...00 X 2^192, {
             // Check mantissa first
             // Then check expected exponent
-            apfp_set_mant(apfp_test[0], 3, 9223372036854775808llu);
-            apfp_set_mant(apfp_test[0], 2, 0);
-            apfp_set_mant(apfp_test[0], 1, 0);
-            apfp_set_mant(apfp_test[0], 0, 0);
+            apfp_set_mant_msb(apfp_test[0]);
             apfp_test[0]->mant->sign = 1;
             apfp_test[0]->exp = 256;
 
-            apfp_set_mant(apfp_test[1], 3, 9223372036854775808llu);
-            apfp_set_mant(apfp_test[1], 2, 0);
-            apfp_set_mant(apfp_test[1], 1, 0);
-            apfp_set_mant(apfp_test[1], 0, 0);
+            apfp_set_mant_msb(apfp_test[1]);
             apfp_test[1]->mant->sign = -1;
             apfp_test[1]->exp = 192;
 
@@ -491,24 +479,17 @@ TEST_GROUP(apfp, {
             //Check value of exponent and sign
             ASSERT_EQUAL_L(apfp_test[2]->exp, 255lu);
             ASSERT_EQUAL_I(apfp_test[2]->mant->sign, 1);
-
     });
 
     //Subtraction code
     TEST_CASE(subtraction with positive numbers a-b a>b, {
             // Check mantissa first
             // Then check expected exponent
-            apfp_set_mant(apfp_test[0], 3, 9223372036854775808llu);
-            apfp_set_mant(apfp_test[0], 2, 0);
-            apfp_set_mant(apfp_test[0], 1, 0);
-            apfp_set_mant(apfp_test[0], 0, 0);
+            apfp_set_mant_msb(apfp_test[0]);
             apfp_test[0]->mant->sign = 1;
             apfp_test[0]->exp = 256;
 
-            apfp_set_mant(apfp_test[1], 3, 9223372036854775808llu);
-            apfp_set_mant(apfp_test[1], 2, 0);
-            apfp_set_mant(apfp_test[1], 1, 0);
-            apfp_set_mant(apfp_test[1], 0, 0);
+            apfp_set_mant_msb(apfp_test[1]);
             apfp_test[1]->mant->sign = 1;
             apfp_test[1]->exp = 192;
 
@@ -553,6 +534,36 @@ TEST_GROUP(apfp, {
             ASSERT_EQUAL_L(apfp_test[2]->exp, 255lu);
             ASSERT_EQUAL_I(apfp_test[2]->mant->sign, -1);
     });
+
+    TEST_CASE(subtraction with positive numbers a-b a>b 2pi - pi, {
+
+            apfp_set_mant(apfp_test[0], 3, 0xC90FDAA22168C234);
+            apfp_set_mant(apfp_test[0], 2, 0xC4C6628B80DC1CD1);
+            apfp_set_mant(apfp_test[0], 1, 0);
+            apfp_set_mant(apfp_test[0], 0, 0);
+            apfp_test[0]->mant->sign = 1;
+            apfp_test[0]->exp = -125;
+
+            apfp_set_mant(apfp_test[1], 3, 0xC90FDAA22168C234);
+            apfp_set_mant(apfp_test[1], 2, 0xC4C6628B80DC1CD1);
+            apfp_set_mant(apfp_test[1], 1, 0);
+            apfp_set_mant(apfp_test[1], 0, 0);
+            apfp_test[1]->mant->sign = 1;
+            apfp_test[1]->exp = -126;
+
+            apfp_sub(apfp_test[2], apfp_test[0], apfp_test[1]);
+
+            //Check value of mantissa
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 3), 0xC90FDAA22168C234llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 2), 0xC4C6628B80DC1CD1llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 1), 0llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 0), 0llu);
+
+            //Check value of exponent and sign
+            ASSERT_EQUAL_L(apfp_test[2]->exp, -126l);
+            ASSERT_EQUAL_I(apfp_test[2]->mant->sign, 1);
+    });
+
 
     TEST_CASE(subtraction with positive - negative number a-b a>b, {
             apfp_set_mant(apfp_test[0], 3, 9223372036854775808llu);
@@ -611,6 +622,27 @@ TEST_GROUP(apfp, {
             ASSERT_EQUAL_I(apfp_test[2]->mant->sign, -1);
     });
 
+    TEST_CASE(subtract with differing signs and overflow, {
+            apfp_set_mant(apfp_test[0], 3, 0xFFFFFFFFFFFFFFFF);
+            apfp_set_exp(apfp_test[0], 255);
+            apfp_set_pos(apfp_test[0]);
+
+            apfp_set_mant_msb(apfp_test[1]);
+            apfp_set_exp(apfp_test[1], 192);
+            apfp_set_neg(apfp_test[1]);
+
+            apfp_sub(apfp_test[2], apfp_test[0], apfp_test[1]);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 3), 9223372036854775808llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 2), 0llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 1), 0llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 0), 0llu);
+
+            //Check value of exponent and sign
+            ASSERT_EQUAL_L(apfp_test[2]->exp, 256lu);
+            ASSERT_EQUAL_I(apfp_test[2]->mant->sign, 1);
+
+    });
+
     TEST_CASE(pi * pi, {
             apfp_set_mant(apfp_test[0], 3, 0x6487ED5110B4611A);
             apfp_set_mant(apfp_test[0], 2, 0x62633145C06E0E68);
@@ -666,14 +698,14 @@ TEST_GROUP(ball_arithmetic, {
     WITH_TEARDOWN(apbar_test_teardown);
 
     TEST_CASE(add pi and pi, {
-            apbar_set_midpt_mant(apbar_test[0], 0, 0xC4C6628B80DC1CD1);
             apbar_set_midpt_mant(apbar_test[0], 1, 0xC90FDAA22168C234);
+            apbar_set_midpt_mant(apbar_test[0], 0, 0xC4C6628B80DC1CD1);
             apbar_set_midpt_exp(apbar_test[0], -126);
             apbar_set_rad(apbar_test[0], 536870912, -156);
             apbar_test[0]->midpt->mant->sign=1;
 
-            apbar_set_midpt_mant(apbar_test[1], 0, 0xC4C6628B80DC1CD1);
             apbar_set_midpt_mant(apbar_test[1], 1, 0xC90FDAA22168C234);
+            apbar_set_midpt_mant(apbar_test[1], 0, 0xC4C6628B80DC1CD1);
             apbar_set_midpt_exp(apbar_test[1], -126);
             apbar_set_rad(apbar_test[1], 536870912, -156);
             apbar_test[1]->midpt->mant->sign=1;
@@ -723,56 +755,35 @@ TEST_GROUP(ball_arithmetic, {
             ASSERT_EQUAL_I(apfp_test[2]->mant->sign, 1);
     });
 
-    TEST_CASE(add pi and -pi, {
-            apbar_set_midpt_mant(apbar_test[0], 0, 0xC4C6628B80DC1CD1);
-            apbar_set_midpt_mant(apbar_test[0], 1, 0xC90FDAA22168C234);
-            apbar_set_midpt_exp(apbar_test[0], -126);
-            apbar_set_rad(apbar_test[0], 536870912, -156);
+//TODO: Ask if the difference of 1 bit in mantissa is okay.
+    TEST_CASE(subtract 2*pi and pi, {
+            apbar_set_midpt_mant(apbar_test[0], 1, 0xC90FDAA22168C234llu);
+            apbar_set_midpt_mant(apbar_test[0], 0, 0xC4C6628B80DC1CD1llu);
+            apbar_set_midpt_exp(apbar_test[0], -125l);
+            apbar_set_rad(apbar_test[0], 536870912, -155);
+            apbar_test[0]->midpt->mant->sign = 1;
 
-            apbar_set_midpt_mant(apbar_test[1], 0, 0xC4C6628B80DC1CD1);
-            apbar_set_midpt_mant(apbar_test[1], 1, 0xC90FDAA22168C234);
-            apbar_set_midpt_exp(apbar_test[1], -126);
-            apbar_set_rad(apbar_test[1], 536870912, -156);
+            apbar_set_midpt_mant(apbar_test[1], 1, 0xC90FDAA22168C234llu);
+            apbar_set_midpt_mant(apbar_test[1], 0, 0xC4C6628B80DC1CD1llu);
+            apbar_set_midpt_exp(apbar_test[1], -126l);
+            apbar_set_rad(apbar_test[1], 536870912, -156l);
+            apbar_test[1]->midpt->mant->sign = 1;
 
-            apbar_print_msg("pi is:", apbar_test[0]);
+            apbar_print_msg("2*pi is:", apbar_test[0]);
+            apbar_print_msg("pi is:", apbar_test[1]);
 
-            apbar_add(apbar_test[2], apbar_test[1], apbar_test[0], 128);
+            apbar_sub(apbar_test[2], apbar_test[0], apbar_test[1], 128);
 
-            apbar_print_msg("pi + pi is:", apbar_test[2]);
-
+            apbar_print_msg("2*pi - pi is:", apbar_test[2]);
+            //printf("\n done with apbar subtract \n");
             // Expected value (128 bit): 267257146016241686964920093290467695825 * 2^-125) +/- (536870913 * 2^-154)
             ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 1), 0xC90FDAA22168C234llu);
-            ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 0), 0xC4C6628B80DC1CD1llu);
-            ASSERT_EQUAL_L(apbar_get_midpt_exp(apbar_test[2]), -125l);
+            ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 0), 0xC4C6628B80DC1CD2llu);
+            ASSERT_EQUAL_L(apbar_get_midpt_exp(apbar_test[2]), -126l);
 
-            ASSERT_EQUAL_UL(apbar_test[2]->rad->mant, 2llu);
-            ASSERT_EQUAL_L(apbar_test[2]->rad->exp, -126l);
-    });
-
-    TEST_CASE(subtract pi and sqrt 2, {
-            apbar_set_midpt_mant(apbar_test[0], 0, 0xC4C6628B80DC1CD1);
-            apbar_set_midpt_mant(apbar_test[0], 1, 0xC90FDAA22168C234);
-            apbar_set_midpt_exp(apbar_test[0], -126);
-            apbar_set_rad(apbar_test[0], 536870912, -156);
-
-            apbar_set_midpt_mant(apbar_test[1], 0, 0xC4C6628B80DC1CD1);
-            apbar_set_midpt_mant(apbar_test[1], 1, 0xC90FDAA22168C234);
-            apbar_set_midpt_exp(apbar_test[1], -126);
-            apbar_set_rad(apbar_test[1], 536870912, -156);
-
-            apbar_print_msg("pi is:", apbar_test[0]);
-
-            apbar_add(apbar_test[2], apbar_test[1], apbar_test[0], 128);
-
-            apbar_print_msg("pi - sqrt2 is:", apbar_test[2]);
-
-            // Expected value (128 bit): 267257146016241686964920093290467695825 * 2^-125) +/- (536870913 * 2^-154)
-            ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 1), 0xC90FDAA22168C234llu);
-            ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 0), 0xC4C6628B80DC1CD1llu);
-            ASSERT_EQUAL_L(apbar_get_midpt_exp(apbar_test[2]), -125l);
-
-            ASSERT_EQUAL_UL(apbar_test[2]->rad->mant, 2llu);
-            ASSERT_EQUAL_L(apbar_test[2]->rad->exp, -126l);
+            ASSERT_EQUAL_UL(apbar_test[2]->rad->mant, 1610612736llu);
+            ASSERT_EQUAL_L(apbar_test[2]->rad->exp, -156l);
+            //printf("\n done with apbar subtract");
     });
 
     TEST_CASE(mul pi with pi, {
@@ -796,10 +807,64 @@ TEST_GROUP(ball_arithmetic, {
     });
 });
 
+apbar2_t apbar2_test[3];
+
+static void apbar2_test_setup() {
+    apbar2_init(apbar2_test[0], 256);
+    apbar2_init(apbar2_test[1], 256);
+    apbar2_init(apbar2_test[2], 256);
+}
+
+static void apbar2_test_teardown() {
+    apbar2_free(apbar2_test[0]);
+    apbar2_free(apbar2_test[1]);
+    apbar2_free(apbar2_test[2]);
+}
+
+TEST_GROUP(apbar2, {
+    WITH_SETUP(apbar2_test_setup);
+    WITH_TEARDOWN(apbar2_test_teardown);
+
+    TEST_CASE(set to double, {
+        apbar2_set_d(apbar2_test[0], 2.71828);
+
+        ASSERT_EQUAL_L(apbar2_get_midpt_exp(apbar2_test[0]), 1l);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[0], 3) >> 11, 0x15BF0995AAF790llu);
+    });
+
+    TEST_CASE(add two numbers, {
+        // Need to re-precision
+        apbar2_free(apbar2_test[0]);
+        apbar2_free(apbar2_test[1]);
+        apbar2_free(apbar2_test[2]);
+
+        apbar2_init(apbar2_test[0], 128);
+        apbar2_init(apbar2_test[1], 128);
+        apbar2_init(apbar2_test[2], 128);
+
+        // 1 * 2^-127
+        apbar2_set_midpt_limb(apbar2_test[0], 1, APBAR2_LIMB_MSBMASK);
+        apbar2_set_midpt_exp(apbar2_test[0], -127);
+
+        // 16703571626015105435307505830654230989 * 2^-249
+        apbar2_set_midpt_limb(apbar2_test[1], 1, 0xc90fdaa22168c234);
+        apbar2_set_midpt_limb(apbar2_test[1], 0, 0xc4c6628b80dc1cd0);
+        apbar2_set_midpt_exp(apbar2_test[1], -126);
+
+        apbar2_add(apbar2_test[2], apbar2_test[1], apbar2_test[0], 128);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 1), 0x8487ed5110b4611allu);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 0), 0x62633145c06e0e68llu);
+
+        //Check value of exponent and sign
+        ASSERT_EQUAL_L(apbar2_get_midpt_exp(apbar2_test[2]), -125l);
+    });
+});
+
 void run_test_suite() {
     RUN_TEST_GROUP(apint);
     RUN_TEST_GROUP(apfp);
     RUN_TEST_GROUP(ball_arithmetic);
+    RUN_TEST_GROUP(apbar2);
 }
 
 int main(int argc, char *argv[]) {
