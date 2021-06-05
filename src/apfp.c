@@ -161,11 +161,20 @@ bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     apint_copy(x->mant, b->mant);
     apint_shiftr(x->mant, factor);
 
+   /* printf("x3 %llu \n", apint_getlimb(x->mant,3));
+    printf("x2 %llu \n", apint_getlimb(x->mant,2));
+    printf("x1 %llu \n", apint_getlimb(x->mant,1));
+    printf("x0 %llu \n", apint_getlimb(x->mant,0));
+*/
     if(x->mant->sign == b->mant->sign ) // if both have the same sign then simple add
     {
         // Subtract the two mantissas
         apint_sub(x->mant, a->mant, x->mant); //x->mant->sign is set here
-
+  /*      printf("result x3 %llu \n", apint_getlimb(x->mant,3));
+        printf("result x2 %llu \n", apint_getlimb(x->mant,2));
+        printf("result x1 %llu \n", apint_getlimb(x->mant,1));
+        printf("result x0 %llu \n", apint_getlimb(x->mant,0));
+*/
         if(swapped)
         {
             x->mant->sign = -x->mant->sign;
