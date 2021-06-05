@@ -161,7 +161,7 @@ bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     apint_copy(x->mant, b->mant);
     apint_shiftr(x->mant, factor);
 
-    if(a->mant->sign == b->mant->sign ) // if both have the same sign then simple add
+    if(x->mant->sign == b->mant->sign ) // if both have the same sign then simple add
     {
         // Subtract the two mantissas
         apint_sub(x->mant, a->mant, x->mant); //x->mant->sign is set here

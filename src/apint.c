@@ -69,6 +69,7 @@ void apint_copy(apint_ptr dst, apint_srcptr src)
     {
         dst->limbs[i]=src->limbs[i];
     }
+    dst->sign = src->sign;
 }
 
 // detect the position of first 1
@@ -184,13 +185,13 @@ unsigned char apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
 
     if(a->sign == b->sign)
     {
-        printf("calling apint_sub\n");
-        printf("in apint_sub calling apint minus\n");
+        //printf("calling apint_sub\n");
+        //printf("in apint_sub calling apint minus\n");
         overflow = apint_minus(x, a, b); //sign is set here
     }
     else
     {
-        printf("in apint_sub calling apint plus\n");
+       // printf("in apint_sub calling apint plus\n");
         apint_plus(x, a, b);
         x->sign = a->sign;
     }
@@ -221,7 +222,7 @@ unsigned char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
     assert(a->length <= x->length);
 
     unsigned char carry = 0;
-    printf("AB: called apint_plus\n");
+    //printf("AB: called apint_plus\n");
     for (apint_size_t i = 0; i < a->length; i++)
     {
         carry = _addcarryx_u64(carry, a->limbs[i], b->limbs[i], &x->limbs[i]);
@@ -239,7 +240,7 @@ unsigned char apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
 
     if(apint_is_greater(a, b)) // a > b so a-b
     {
-        printf("Yes is greater\n");
+        //printf("Yes is greater\n");
         x->sign = a->sign;
         for (apint_size_t i = 0; i < a->length; i++)
         {
@@ -248,7 +249,7 @@ unsigned char apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
     }
     else // b > a so -(b-a)
     {
-        printf("No swapped it\n");
+        //printf("No swapped it\n");
         x->sign = -b->sign;
         for (apint_size_t i = 0; i < a->length; i++)
         {
