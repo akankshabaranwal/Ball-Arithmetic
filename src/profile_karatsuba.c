@@ -26,7 +26,7 @@ int main()
 
     for (int i = 0; i < NUM_RUNS; i++)
     {
-        apint_mul_karatsuba_OPT1(x, a, b);
+        apint_mul_karatsuba_extend_basecase(x, a, b);
     }
 
     apint_free(x);

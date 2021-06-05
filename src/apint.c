@@ -505,8 +505,8 @@ uint64_t apint_mul_karatsuba_base_case(apint_ptr x, apint_srcptr a, apint_srcptr
     // printf("b->length = %d\n", b->length);
     // printf("x->length = %d\n", x->length);
     assert(x->limbs && a->limbs && b->limbs);
-    assert(a->length == b->length);               // only handle same lengths for now
-    assert((a->length + b->length) <= x->length); // output can be different precision than input due to recursion and not wanting to lose precision during recursion
+    assert(a->length == b->length); // only handle same lengths for now
+    // assert((a->length + b->length) <= x->length); // output can be different precision than input due to recursion and not wanting to lose precision during recursion
 
     // I don't think there would be an overflow for multiplication because the biggest possible number takes up bits equal to the sum of bits in a and b
     uint64_t overflow = 0;
@@ -553,7 +553,7 @@ uint64_t apint_mul_karatsuba_recurse_extend_basecase(apint_ptr x, apint_srcptr a
     // if lengths small enough, return a*b
     // karatsuba_base_case handles different precision input and output because it is needed
     // 10 saw improvements
-    if (a->length == 10 || b->length == 10)
+    if (a->length <= 8 || b->length <= 8)
         return apint_mul_karatsuba_base_case(x, a, b);
 
     // d = floor(max(length(a), length(b)) / 2)
@@ -597,9 +597,9 @@ uint64_t apint_mul_karatsuba_recurse_extend_basecase(apint_ptr x, apint_srcptr a
     a_add_overflow = apint_add_karatsuba(a_add, a_high, a_low); // a_high and a_low have to be the same length for now ASSUMPTION
     b_add_overflow = apint_add_karatsuba(b_add, b_high, b_low); // a_high and a_low have to be the same length for now
 
-    apint_mul_karatsuba_recurse(z0, a_low, b_low);
-    apint_mul_karatsuba_recurse(z1, a_add, b_add);   // THE LENGTH NEVER DECREASES, ok now it decreases, so its fine
-    apint_mul_karatsuba_recurse(z2, a_high, b_high); // There should be an overflow but I don't think I need to do anything with it
+    apint_mul_karatsuba_recurse_extend_basecase(z0, a_low, b_low);
+    apint_mul_karatsuba_recurse_extend_basecase(z1, a_add, b_add);   // THE LENGTH NEVER DECREASES, ok now it decreases, so its fine
+    apint_mul_karatsuba_recurse_extend_basecase(z2, a_high, b_high); // There should be an overflow but I don't think I need to do anything with it
 
     // FREE THINGS
     apint_free(a_high);
@@ -667,7 +667,7 @@ uint64_t apint_mul_karatsuba_recurse_OPT1(apint_ptr x, apint_srcptr a, apint_src
 {
     // if lengths small enough, return a*b
     // karatsuba_base_case handles different precision input and output because it is needed
-    if (a->length == 1 || b->length == 1)
+    if (a->length <= 8 || b->length <= 8)
         return apint_mul_karatsuba_base_case(x, a, b);
 
     // d = floor(max(length(a), length(b)) / 2)
@@ -693,7 +693,7 @@ uint64_t apint_mul_karatsuba_recurse_OPT1(apint_ptr x, apint_srcptr a, apint_src
     // apint_copyover(b_low, b, 0); // INLINE BELOW
     // apint_copyover(b_high, b, d);
     int i;
-    for (i = 0; i < a_low->length; i++)
+    for (i = 0; i < a_low->length; i++) // INLINE for apint_copyover
     {
         a_low->limbs[i] = a->limbs[i];
         a_high->limbs[i] = a->limbs[i + d];
@@ -725,9 +725,9 @@ uint64_t apint_mul_karatsuba_recurse_OPT1(apint_ptr x, apint_srcptr a, apint_src
     a_add_overflow = apint_add_karatsuba(a_add, a_high, a_low); // a_high and a_low have to be the same length for now ASSUMPTION
     b_add_overflow = apint_add_karatsuba(b_add, b_high, b_low); // a_high and a_low have to be the same length for now
 
-    apint_mul_karatsuba_recurse(z0, a_low, b_low);
-    apint_mul_karatsuba_recurse(z1, a_add, b_add);   // THE LENGTH NEVER DECREASES, ok now it decreases, so its fine
-    apint_mul_karatsuba_recurse(z2, a_high, b_high); // There should be an overflow but I don't think I need to do anything with it
+    apint_mul_karatsuba_recurse_OPT1(z0, a_low, b_low);
+    apint_mul_karatsuba_recurse_OPT1(z1, a_add, b_add);   // THE LENGTH NEVER DECREASES, ok now it decreases, so its fine
+    apint_mul_karatsuba_recurse_OPT1(z2, a_high, b_high); // There should be an overflow but I don't think I need to do anything with it
 
     // FREE THINGS
     apint_free(a_high);
