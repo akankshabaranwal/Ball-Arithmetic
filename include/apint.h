@@ -27,6 +27,7 @@ typedef const __apint_struct *apint_srcptr;
 
 void apint_init(apint_t x, apint_size_t p);
 void apint_print(apint_srcptr value);
+void apint_print_msg(const char *msg, apint_srcptr value);
 void apint_free(apint_t x);
 void apint_copy(apint_ptr dst, apint_srcptr src);
 void apint_to_fmpz(fmpz_t res, apint_srcptr src);
@@ -41,7 +42,7 @@ void apint_mul_portable(apint_ptr x, apint_srcptr a, apint_srcptr b);
 int apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b);
 void apint_shiftr(apint_ptr x, unsigned int shift);
 void apint_shiftl(apint_ptr x, unsigned int shift);
-int apint_detectfirst1(apint_ptr x);
+size_t apint_detectfirst1(apint_ptr x);
 
 static inline void apint_setmsb(apint_ptr x)
 {

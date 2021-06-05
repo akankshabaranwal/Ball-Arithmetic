@@ -115,9 +115,10 @@ void narrow_to_rad(apfp_ptr x, rad_ptr rad)
 static inline void expand_rad(apfp_ptr fp, rad_srcptr rad)
 {
     uint leading_zeros = __builtin_clzl(rad->mant);
-    fp->mant->limbs[fp->mant->length - 1] = rad->mant << leading_zeros;
+    uint limb_pos = fp->mant->length / 2 - 1;
+    fp->mant->limbs[limb_pos] = rad->mant << leading_zeros;
 
-    fp->exp = rad->exp - (fp->mant->length - 1) * APINT_LIMB_BITS - leading_zeros - 1;
+    fp->exp = rad->exp - (limb_pos) * APINT_LIMB_BITS - leading_zeros - 1;
     fp->mant->sign = 0;
 }
 
