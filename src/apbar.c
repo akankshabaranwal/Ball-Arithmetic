@@ -187,7 +187,9 @@ void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
     rad_add(c->rad, a->rad, b->rad);
 
     // error bound computation (should round towards +inf)
+
     if (is_not_exact) add_error_bound(c, p);
+
 }
 
 //assumes that c, a, b are already allocated
@@ -199,12 +201,19 @@ void apbar_sub(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 
     // midpoint computation (should round towards 0)
     unsigned char is_not_exact = apfp_sub(c->midpt, a->midpt, b->midpt);
+    printf("AB: computed midpt is \n");
+    printf("result is %llu \n", apint_getlimb(c->midpt->mant,1));
+    printf("result is %llu \n", apint_getlimb(c->midpt->mant,0));
 
+    printf("calling radius add\n");
     // radius computation (should round towards +inf)
     rad_add(c->rad, a->rad, b->rad);
+    printf("done calling radius add\n");
 
     // error bound computation (should round towards +inf)
+    printf("calculating error bound\n");
     if (is_not_exact) add_error_bound(c, p);
+    printf("done calculating error bound\n");
 }
 
 void apbar_mul(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)

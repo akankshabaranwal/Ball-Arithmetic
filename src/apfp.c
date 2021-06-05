@@ -131,14 +131,10 @@ unsigned char apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     unsigned char overflow;
     // Align `b` mantissa to `a` given exponent difference
 
-    printf("a %llu \n", apint_getlimb(a->mant,3));
-    printf("a %llu \n", apint_getlimb(a->mant,2));
     printf("a %llu \n", apint_getlimb(a->mant,1));
     printf("a %llu \n", apint_getlimb(a->mant,0));
     printf("a sign %d \n", a->mant->sign);
 
-    printf("b %llu \n", apint_getlimb(b->mant,3));
-    printf("b %llu \n", apint_getlimb(b->mant,2));
     printf("b %llu \n", apint_getlimb(b->mant,1));
     printf("b %llu \n", apint_getlimb(b->mant,0));
     printf("b sign is %d \n", b->mant->sign);
@@ -147,8 +143,7 @@ unsigned char apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     apint_copy(x->mant, b->mant);
     apint_shiftr(x->mant, factor);
     x->mant->sign = b->mant->sign;
-    printf("x shifted %llu \n", apint_getlimb(x->mant,3));
-    printf("x shifted %llu \n", apint_getlimb(x->mant,2));
+
     printf("x shifted %llu \n", apint_getlimb(x->mant,1));
     printf("x shifted %llu \n", apint_getlimb(x->mant,0));
 
@@ -156,19 +151,21 @@ unsigned char apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     {
         printf("AB: signs are equal so sub \n");
         apint_sub(x->mant, a->mant, x->mant); //x->mant->sign is set here
-        printf("result x %llu \n", apint_getlimb(x->mant,3));
-        printf("result x %llu \n", apint_getlimb(x->mant,2));
         printf("result x %llu \n", apint_getlimb(x->mant,1));
         printf("result x %llu \n", apint_getlimb(x->mant,0));
 
         overflow = apint_detectfirst1(x->mant);//technically this is underflow
+        printf("AB: detected overflow \n");
+
         if(overflow>0)
         {
             apint_shiftl(x->mant, overflow);
+            printf("AB: done shift left \n");
             x->exp = a->exp - overflow;
         }
 
         if (overflow) apint_setmsb(x->mant); //Most likely here it is not required.
+        printf("AB: done setting msb\n");
         if(swapped)
         {
             x->mant->sign = -x->mant->sign;

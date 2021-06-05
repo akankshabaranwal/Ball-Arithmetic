@@ -786,13 +786,13 @@ TEST_GROUP(ball_arithmetic, {
             apbar_set_midpt_mant(apbar_test[0], 0, 0xC4C6628B80DC1CD1llu);
             apbar_set_midpt_exp(apbar_test[0], -125l);
             apbar_set_rad(apbar_test[0], 536870912, -155);
-            apfp_test[0]->mant->sign = 1;
+            apbar_test[0]->midpt->mant->sign = 1;
 
             apbar_set_midpt_mant(apbar_test[1], 1, 0xC90FDAA22168C234llu);
             apbar_set_midpt_mant(apbar_test[1], 0, 0xC4C6628B80DC1CD1llu);
             apbar_set_midpt_exp(apbar_test[1], -126l);
             apbar_set_rad(apbar_test[1], 536870912, -156l);
-            apfp_test[1]->mant->sign = 1;
+            apbar_test[1]->midpt->mant->sign = 1;
 
             apbar_print_msg("2*pi is:", apbar_test[0]);
             apbar_print_msg("pi is:", apbar_test[1]);
@@ -800,7 +800,7 @@ TEST_GROUP(ball_arithmetic, {
             apbar_sub(apbar_test[2], apbar_test[0], apbar_test[1], 128);
 
             apbar_print_msg("2*pi - pi is:", apbar_test[2]);
-
+            printf("\n done with apbar subtract \n");
             // Expected value (128 bit): 267257146016241686964920093290467695825 * 2^-125) +/- (536870913 * 2^-154)
             ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 1), 0xC90FDAA22168C234llu);
             ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 0), 0xC4C6628B80DC1CD1llu);
@@ -808,8 +808,9 @@ TEST_GROUP(ball_arithmetic, {
 
             ASSERT_EQUAL_UL(apbar_test[2]->rad->mant, 2llu);
             ASSERT_EQUAL_L(apbar_test[2]->rad->exp, -126l);
+            printf("\n done with apbar subtract");
     });
-
+/*
     TEST_CASE(mul pi with pi, {
             apbar_set_midpt_mant(apbar_test[0], 0, 0xC4C6628B80DC1CD1);
             apbar_set_midpt_mant(apbar_test[0], 1, 0xC90FDAA22168C234);
@@ -828,7 +829,7 @@ TEST_GROUP(ball_arithmetic, {
             apbar_mul(apbar_test[2], apbar_test[1], apbar_test[0], 128);
 
             apbar_print_msg("pi * pi is:", apbar_test[2]);
-    });
+    });*/
 });
 
 void run_test_suite() {

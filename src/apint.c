@@ -174,10 +174,13 @@ unsigned char apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
 
     if(a->sign == b->sign)
     {
+        printf("calling apint_sub\n");
+        printf("in apint_sub calling apint minus\n");
         overflow = apint_minus(x, a, b); //sign is set here
     }
     else
     {
+        printf("in apint_sub calling apint plus\n");
         apint_plus(x, a, b);
         x->sign = a->sign;
     }
