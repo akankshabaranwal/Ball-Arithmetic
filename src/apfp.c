@@ -5,7 +5,10 @@
 
 void apfp_init(apfp_t x, apint_size_t p)
 {
-    apint_init(x->mant, p);
+    assert(p % APINT_LIMB_BITS == 0);
+
+    // Initialized to 2x precision for middle alignment
+    apint_init(x->mant, p * 2);
 }
 
 void apfp_free(apfp_t x)
@@ -37,7 +40,9 @@ void apfp_set_d(apfp_ptr x, double val)
     h = u.ul;
     x->mant->sign = (int) (h >> 63);
     x->exp = (int64_t) (((h << 1) >> 53) - 1023 - 52);
-    x->mant->limbs[0] = ((h << 12) >> 12) | (UWORD(1) << 52); // | 1ull<<(APINT_LIMB_BITS-1);
+
+    // Middle alignment: Set the "middle-right" limb to the double's mantissa
+    x->mant->limbs[(x->mant->length - 1) / 2] = ((h << 12) >> 12) | (UWORD(1) << 52);
 }
 
 void apfp_print(apfp_srcptr value)
@@ -70,8 +75,12 @@ void apfp_print_msg(const char *msg, apfp_srcptr value){
 
 unsigned char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
+    assert(x->mant->length == a->mant->length);
+    assert(x->mant->length == b->mant->length);
+
     int swapped;
     swapped=0;
+
     // After swap, `a` is guaranteed to have largest exponent
     if (b->exp > a->exp)
     {
@@ -83,26 +92,32 @@ unsigned char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     apfp_exp_t factor = a->exp - b->exp;
     apint_copy(x->mant, b->mant);
     apint_shiftr(x->mant, factor); // right shift mantissa of b
+    x->mant->sign = b->mant->sign;
 
     unsigned char overflow;
 
-    if(a->mant->sign==b->mant->sign ) // if both have the same sign then simple add
+    if(a->mant->sign == b->mant->sign) // If both have the same sign then simple add
     {
         x->mant->sign=a->mant->sign;
         // Add mantissa, shift by carry and update exponent
-        overflow = apint_plus(x->mant, x->mant, a->mant); //overflow would be either 0 or 1
+        apint_plus(x->mant, x->mant, a->mant);
+
+        overflow = x->mant->limbs[x->mant->length / 2]; // Middle-left limb has first bit set -> overflow occured
+        assert(overflow == 0 || overflow == 1); // Extra assertion for safety (should be 0 or 1, but not more)
+
         apint_shiftr(x->mant, overflow);
         x->exp = a->exp + overflow;
 
-        // Set the msb on the mantissa
-        // To-do: Check for 0, +inf, -inf.
-        if (overflow) apint_setmsb(x->mant);
+        // Force the msb on the middle-right limb
+        x->mant->limbs[(x->mant->length - 1) / 2] |= (1llu << (APINT_LIMB_BITS - 1));
     }
-    else // either a -b or b-a
+    else // Either (a - b) or (b - a)
     {
-        apint_sub(x->mant, a->mant, x->mant); //x->mant->sign is set here
-        overflow = apint_detectfirst1(x->mant);//technically this is underflow
-        if(overflow>0)
+        apint_sub(x->mant, a->mant, x->mant);
+        overflow = x->mant->limbs[x->mant->length / 2]; // Middle-left limb has all 1's -> underflow occured
+        assert(overflow == 0 || overflow == (apint_limb_t)(-1)); // Extra assertion for safety (should be 0 or all 1s)
+
+        if (overflow)
         {
             apint_shiftl(x->mant, overflow);
             x->exp = a->exp - overflow;
@@ -114,6 +129,7 @@ unsigned char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
             x->mant->sign = -x->mant->sign;
         }
     }
+
     return overflow;
 }
 
