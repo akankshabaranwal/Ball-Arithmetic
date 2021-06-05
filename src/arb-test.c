@@ -36,7 +36,7 @@ int main()
     arb_t sqr_pi;
     arb_init(sqr_pi);
 
-    arb_mul(sqr_pi, y, y, 256);
+    arb_mul(sqr_pi, y, y, 128);
     printf("pi * pi = "); arb_print(sqr_pi); printf("\n");
 
     arb_clear(x); arb_clear(y); arb_clear(z); arb_clear(double_pi);

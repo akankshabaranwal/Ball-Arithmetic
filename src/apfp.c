@@ -135,8 +135,7 @@ bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     // Add mantissa, shift by carry and update exponent
     apint_add(x->mant, x->mant, a->mant);
     x->exp = a->exp;
-    int middlelimb = (x->mant->length/2);
-    if((apint_getlimb(x->mant,middlelimb)&0x01)!=0)
+    if(MIDDLE_LEFT(x) != 0 && (apint_getlimb(x->mant, 0) & 0x1ull) != 0)
         is_exact = false;
 
     adjust_alignment(x);
@@ -176,8 +175,7 @@ bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
         apint_plus(x->mant, x->mant, a->mant);
     }
     x->exp = a->exp;
-    int middlelimb = (x->mant->length/2);
-    if((apint_getlimb(x->mant,middlelimb)&0x01)!=0)
+    if(MIDDLE_LEFT(x) !=0 && (apint_getlimb(x->mant, 0) & 0x1ull) != 0)
         is_exact = false;
     adjust_alignment(x);
 
