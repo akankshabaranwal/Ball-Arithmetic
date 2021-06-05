@@ -222,17 +222,65 @@ char apint_plus_portable(apint_ptr x, apint_srcptr a, apint_srcptr b)
     return carry;
 }
 
-unsigned char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
+unsigned char apint_plus_base(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length);
     assert(a->length <= x->length);
 
     unsigned char carry = 0;
-    //printf("AB: called apint_plus\n");
     for (apint_size_t i = 0; i < a->length; i++)
     {
         carry = _addcarryx_u64(carry, a->limbs[i], b->limbs[i], &x->limbs[i]);
+    }
+    return carry;
+}
+
+//Optimization 1. Just midpt
+unsigned char apint_plus_optim1(apint_ptr x, apint_srcptr a, apint_srcptr b)
+{
+    assert(x->limbs && a->limbs && b->limbs);
+    assert(a->length == b->length);
+    assert(a->length <= x->length);
+
+    int midpt = (a->length /2) + 1;
+    unsigned char carry = 0;
+    for (apint_size_t i = 0; i < midpt; i++)
+    {
+        carry = _addcarryx_u64(carry, a->limbs[i], b->limbs[i], &x->limbs[i]);
+    }
+    return carry;
+}
+
+//Optimization 2. Increasing ILP. Does not work. Chain dependency.
+unsigned char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
+{
+    assert(x->limbs && a->limbs && b->limbs);
+    assert(a->length == b->length);
+    assert(a->length <= x->length);
+
+    int midpt = (a->length /2) + 1;
+    unsigned char carry = 0;
+    unsigned char carry1 = 0;
+    unsigned char carry01 = 0;
+    unsigned char carry02 = 0;
+    unsigned char carry11 = 0;
+    unsigned char carry12 = 0;
+    int midmidpt = midpt/2;
+
+    for (apint_size_t i = 0; i < midpt;)
+    {
+        if(carry1)
+            carry = _addcarryx_u64(1, a->limbs[i], b->limbs[i], &x->limbs[i]);
+        else
+            carry = _addcarryx_u64(0, a->limbs[i], b->limbs[i], &x->limbs[i]);
+
+        if(carry)
+            carry1 = _addcarryx_u64(1, a->limbs[i+1], b->limbs[i+1], &x->limbs[i+1]);
+        else
+            carry1 = _addcarryx_u64(0, a->limbs[i+1], b->limbs[i+1], &x->limbs[i+1]);
+
+        i+=2;
     }
     return carry;
 }
