@@ -131,13 +131,36 @@ unsigned char apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     unsigned char overflow;
     // Align `b` mantissa to `a` given exponent difference
 
+    printf("a %llu \n", apint_getlimb(a->mant,3));
+    printf("a %llu \n", apint_getlimb(a->mant,2));
+    printf("a %llu \n", apint_getlimb(a->mant,1));
+    printf("a %llu \n", apint_getlimb(a->mant,0));
+    printf("a sign %d \n", a->mant->sign);
+
+    printf("b %llu \n", apint_getlimb(b->mant,3));
+    printf("b %llu \n", apint_getlimb(b->mant,2));
+    printf("b %llu \n", apint_getlimb(b->mant,1));
+    printf("b %llu \n", apint_getlimb(b->mant,0));
+    printf("b sign is %d \n", b->mant->sign);
+
     apfp_exp_t factor = a->exp - b->exp;
     apint_copy(x->mant, b->mant);
     apint_shiftr(x->mant, factor);
+    x->mant->sign = b->mant->sign;
+    printf("x shifted %llu \n", apint_getlimb(x->mant,3));
+    printf("x shifted %llu \n", apint_getlimb(x->mant,2));
+    printf("x shifted %llu \n", apint_getlimb(x->mant,1));
+    printf("x shifted %llu \n", apint_getlimb(x->mant,0));
 
-    if(a->mant->sign==b->mant->sign ) // if both have the same sign then simple add
+    if(x->mant->sign==a->mant->sign ) // if both have the same sign then simple add
     {
+        printf("AB: signs are equal so sub \n");
         apint_sub(x->mant, a->mant, x->mant); //x->mant->sign is set here
+        printf("result x %llu \n", apint_getlimb(x->mant,3));
+        printf("result x %llu \n", apint_getlimb(x->mant,2));
+        printf("result x %llu \n", apint_getlimb(x->mant,1));
+        printf("result x %llu \n", apint_getlimb(x->mant,0));
+
         overflow = apint_detectfirst1(x->mant);//technically this is underflow
         if(overflow>0)
         {
@@ -153,6 +176,7 @@ unsigned char apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     }
     else
     {
+        printf("AB: signs are not equal so add \n");
         x->mant->sign = a->mant->sign;
         // Add mantissa, shift by carry and update exponent
         overflow = apint_plus(x->mant, x->mant, a->mant);

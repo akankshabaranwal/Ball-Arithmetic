@@ -580,7 +580,7 @@ TEST_GROUP(apfp, {
 
             //Check value of exponent and sign
             ASSERT_EQUAL_L(apfp_test[2]->exp, -126l);
-            ASSERT_EQUAL_I(apfp_test[2]->mant->sign, -1);
+            ASSERT_EQUAL_I(apfp_test[2]->mant->sign, 1);
     });
 
 
@@ -790,8 +790,8 @@ TEST_GROUP(ball_arithmetic, {
 
             apbar_set_midpt_mant(apbar_test[1], 1, 0xC90FDAA22168C234llu);
             apbar_set_midpt_mant(apbar_test[1], 0, 0xC4C6628B80DC1CD1llu);
-            apbar_set_midpt_exp(apbar_test[1], -126);
-            apbar_set_rad(apbar_test[1], 536870912, -156);
+            apbar_set_midpt_exp(apbar_test[1], -126l);
+            apbar_set_rad(apbar_test[1], 536870912, -156l);
             apfp_test[1]->mant->sign = 1;
 
             apbar_print_msg("2*pi is:", apbar_test[0]);
