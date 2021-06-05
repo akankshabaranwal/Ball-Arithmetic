@@ -2,6 +2,7 @@
 #define APFP_H
 
 #include <apint.h>
+#include <stdbool.h>
 
 typedef apint_t             apfp_mant_t;
 typedef int64_t             apfp_exp_t;
@@ -31,8 +32,8 @@ void apfp_set_neg(apfp_ptr x);
 void apfp_print(apfp_srcptr value);
 void apfp_print_msg(const char *msg, apfp_srcptr value);
 
-unsigned char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
-unsigned char apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
-int apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
+bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
+bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
+bool apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
 
 #endif /* !APFP_H */
