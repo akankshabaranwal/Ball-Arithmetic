@@ -142,7 +142,6 @@ bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
         x->mant->sign = -x->mant->sign;
     }
 
-    // TODO: detect overflow and return it
     return true;
 }
 
@@ -178,7 +177,6 @@ bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
         x->mant->sign = a->mant->sign;
         apint_plus(x->mant, x->mant, a->mant);
     }
-
     x->exp = a->exp;
     adjust_alignment(x);
     return true;
