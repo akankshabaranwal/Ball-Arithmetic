@@ -436,6 +436,14 @@ uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b
     apint_mul_karatsuba_recurse(z1, a_add, b_add);   // THE LENGTH NEVER DECREASES, ok now it decreases, so its fine
     apint_mul_karatsuba_recurse(z2, a_high, b_high); // There should be an overflow but I don't think I need to do anything with it
 
+    // FREE THINGS
+    apint_free(a_high);
+    apint_free(a_low);
+    apint_free(b_high);
+    apint_free(b_low);
+    apint_free(a_add);
+    apint_free(b_add);
+
     apint_t first_operand; // z2 + z0
     first_operand->sign = 1;
     apint_init(first_operand, (z2->length) * 64);
@@ -447,7 +455,9 @@ uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b
     apint_sub(second_operand, z1, first_operand);
 
     // Shift results appropriately, should be stored in z2 and second_operand
-    d = d * 64;                      // in the beginning we split by d, but d is a limb, which is 64 bits
+    d = d * 64; // in the beginning we split by d, but d is a limb, which is 64 bits
+
+    // INLINE THE SHIFTS
     apint_shiftl(z2, (2 * d));       // multiply by 2 because of Karatsuba algorithm
     apint_shiftl(second_operand, d); // TODO: INLINE
 
@@ -457,9 +467,15 @@ uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b
     apint_add_karatsuba(temp_x, z2, second_operand);
     apint_add_karatsuba(x, temp_x, z0);
 
-    // FREE EVERYTHING, CHECK W VALGRIND
+    // FREE EVERYTHING ELSE
+    apint_free(z0);
+    apint_free(z1);
+    apint_free(z2);
+    apint_free(first_operand);
+    apint_free(second_operand);
+    apint_free(temp_x);
 
-    uint64_t result; // not used yet
+    uint64_t result; // not used
     return result;
 }
 
@@ -516,6 +532,7 @@ uint64_t apint_mul_karatsuba_recurse_extend_basecase(apint_ptr x, apint_srcptr a
 {
     // if lengths small enough, return a*b
     // karatsuba_base_case handles different precision input and output because it is needed
+    // 10 saw improvements
     if (a->length == 10 || b->length == 10)
         return apint_mul_karatsuba_base_case(x, a, b);
 
@@ -564,6 +581,14 @@ uint64_t apint_mul_karatsuba_recurse_extend_basecase(apint_ptr x, apint_srcptr a
     apint_mul_karatsuba_recurse(z1, a_add, b_add);   // THE LENGTH NEVER DECREASES, ok now it decreases, so its fine
     apint_mul_karatsuba_recurse(z2, a_high, b_high); // There should be an overflow but I don't think I need to do anything with it
 
+    // FREE THINGS
+    apint_free(a_high);
+    apint_free(a_low);
+    apint_free(b_high);
+    apint_free(b_low);
+    apint_free(a_add);
+    apint_free(b_add);
+
     apint_t first_operand; // z2 + z0
     first_operand->sign = 1;
     apint_init(first_operand, (z2->length) * 64);
@@ -585,104 +610,182 @@ uint64_t apint_mul_karatsuba_recurse_extend_basecase(apint_ptr x, apint_srcptr a
     apint_add_karatsuba(temp_x, z2, second_operand);
     apint_add_karatsuba(x, temp_x, z0);
 
+    // FREE EVERYTHING ELSE
+    apint_free(z0);
+    apint_free(z1);
+    apint_free(z2);
+    apint_free(first_operand);
+    apint_free(second_operand);
+    apint_free(temp_x);
+
     uint64_t result; // not used yet
     return result;
 }
 
 /* -------------------------------------- OPTIMIZATIONS BELOW (Karatsuba ILP) --------------------------------------  */
-// uint64_t apint_mul_karatsuba_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b)
-// {
-//     assert(x->limbs && a->limbs && b->limbs);
-//     assert(a->length == b->length); // only handle same lengths of input
-//     assert(a->length == x->length); // assuming that output has same precision as both inputs
+uint64_t apint_mul_karatsuba_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b)
+{
+    assert(x->limbs && a->limbs && b->limbs);
+    assert(a->length == b->length); // only handle same lengths of input
+    assert(a->length == x->length); // assuming that output has same precision as both inputs
 
-//     // Make sure to keep track of the sign, but pass everything in as positive
-//     x->sign = a->sign * b->sign;
+    // Make sure to keep track of the sign, but pass everything in as positive
+    x->sign = a->sign * b->sign;
 
-//     // if lengths small enough, return a*b
-//     if (a->length <= 1 || b->length <= 1) // they have to be the same length anyways
-//         return apint_mul_karatsuba_base_case(x, a, b);
+    // if lengths small enough, return a*b
+    if (a->length <= 1 || b->length <= 1) // they have to be the same length anyways
+        return apint_mul_karatsuba_base_case(x, a, b);
 
-//     uint64_t overflow = apint_mul_karatsuba_recurse_OPT1(x, a, b); // Although I don't think there will be overflow here
-//     return overflow;                                          // this returns a unit64_t
-// }
+    uint64_t overflow = apint_mul_karatsuba_recurse_OPT1(x, a, b); // Although I don't think there will be overflow here
+    return overflow;                                               // this returns a unit64_t
+}
 
-// /*
-// This is a recursive method
-// */
-// uint64_t apint_mul_karatsuba_recurse_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b)
-// {
-//     // if lengths small enough, return a*b
-//     // karatsuba_base_case handles different precision input and output because it is needed
-//     if (a->length == 1 || b->length == 1)
-//         return apint_mul_karatsuba_base_case(x, a, b);
+/*
+This is a recursive method
+*/
+uint64_t apint_mul_karatsuba_recurse_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b)
+{
+    // if lengths small enough, return a*b
+    // karatsuba_base_case handles different precision input and output because it is needed
+    if (a->length == 1 || b->length == 1)
+        return apint_mul_karatsuba_base_case(x, a, b);
 
-//     // d = floor(max(length(a), length(b)) / 2)
-//     apint_size_t d = floor(max(a->length, b->length) / 2); // They're the same length anyways
+    // d = floor(max(length(a), length(b)) / 2)
+    apint_size_t d = floor(max(a->length, b->length) / 2); // They're the same length anyways
 
-//     // x_high, x_low = split x at d, or right shift by d
-//     apint_t a_high, a_low;
-//     a_high->sign = 1;
-//     a_low->sign = 1;
-//     apint_init(a_high, (a->length - d) * 64); // The 64 bits here is under the assumption that we use ints to represent everything
-//     apint_init(a_low, d * 64);
+    // x_high, x_low = split x at d, or right shift by d
+    apint_t a_high, a_low;
+    a_high->sign = 1;
+    a_low->sign = 1;
+    apint_init(a_high, (a->length - d) * 64); // The 64 bits here is under the assumption that we use ints to represent everything
+    apint_init(a_low, d * 64);                // a_low length will always be smaller or equal to a_high length bc of d
 
-//     apint_copyover(a_low, a, 0); // Pretty sure I can use the apint_limb function but that just sets one limb right?
-//     apint_copyover(a_high, a, d);
+    // apint_copyover(a_low, a, 0); // INLINE BELOW
+    // apint_copyover(a_high, a, d);
 
-//     // y_high, y_low = split y at d, or right shift by d
-//     apint_t b_high, b_low;
-//     b_high->sign = 1;
-//     b_low->sign = 1;
-//     apint_init(b_high, (b->length - d) * 64);
-//     apint_init(b_low, d * 64);
+    // y_high, y_low = split y at d, or right shift by d
+    apint_t b_high, b_low;
+    b_high->sign = 1;
+    b_low->sign = 1;
+    apint_init(b_high, (b->length - d) * 64);
+    apint_init(b_low, d * 64);
 
-//     apint_copyover(b_low, b, 0);
-//     apint_copyover(b_high, b, d);
+    // apint_copyover(b_low, b, 0); // INLINE BELOW
+    // apint_copyover(b_high, b, d);
 
-//     apint_t z0, z1, z2;
-//     z0->sign = 1;
-//     z1->sign = 1;
-//     z2->sign = 1;
-//     apint_init(z0, x->length * 64); // Padding it to oblivion, trade off between performance and precision
-//     apint_init(z1, x->length * 64);
-//     apint_init(z2, x->length * 64);
+    for (int i = 0; i < a_low->length; i++)
+    {
+        a_low->limbs[i] = a->limbs[i];
+        a_high->limbs[i] = a->limbs[i + d];
+        b_low->limbs[i] = b->limbs[i];
+        b_high->limbs[i] = b->limbs[i + d];
+    }
 
-//     apint_t a_add, b_add;
-//     a_add->sign = 1;
-//     b_add->sign = 1;
-//     char a_add_overflow, b_add_overflow;
-//     apint_init(a_add, (max(a_high->length, a_low->length)) * 64);
-//     apint_init(b_add, (max(b_high->length, b_low->length)) * 64);
+    for (; i < a_high->length; i++)
+    {
+        a_high->limbs[i] = a->limbs[i + d];
+        b_high->limbs[i] = b->limbs[i + d];
+    }
 
-//     a_add_overflow = apint_add_karatsuba(a_add, a_high, a_low); // a_high and a_low have to be the same length for now ASSUMPTION
-//     b_add_overflow = apint_add_karatsuba(b_add, b_high, b_low); // a_high and a_low have to be the same length for now
+    apint_t z0, z1, z2;
+    z0->sign = 1;
+    z1->sign = 1;
+    z2->sign = 1;
+    apint_init(z0, x->length * 64); // Padding it to oblivion, trade off between performance and precision
+    apint_init(z1, x->length * 64);
+    apint_init(z2, x->length * 64);
 
-//     apint_mul_karatsuba_recurse(z0, a_low, b_low);
-//     apint_mul_karatsuba_recurse(z1, a_add, b_add);   // THE LENGTH NEVER DECREASES, ok now it decreases, so its fine
-//     apint_mul_karatsuba_recurse(z2, a_high, b_high); // There should be an overflow but I don't think I need to do anything with it
+    apint_t a_add, b_add;
+    a_add->sign = 1;
+    b_add->sign = 1;
+    char a_add_overflow, b_add_overflow;
+    apint_init(a_add, (max(a_high->length, a_low->length)) * 64);
+    apint_init(b_add, (max(b_high->length, b_low->length)) * 64);
 
-//     apint_t first_operand; // z2 + z0
-//     first_operand->sign = 1;
-//     apint_init(first_operand, (z2->length) * 64);
-//     apint_add(first_operand, z2, z0);
+    a_add_overflow = apint_add_karatsuba(a_add, a_high, a_low); // a_high and a_low have to be the same length for now ASSUMPTION
+    b_add_overflow = apint_add_karatsuba(b_add, b_high, b_low); // a_high and a_low have to be the same length for now
 
-//     apint_t second_operand; // z1 - (z2 + z0)
-//     second_operand->sign = 1;
-//     apint_init(second_operand, (z1->length) * 64);
-//     apint_sub(second_operand, z1, first_operand);
+    apint_mul_karatsuba_recurse(z0, a_low, b_low);
+    apint_mul_karatsuba_recurse(z1, a_add, b_add);   // THE LENGTH NEVER DECREASES, ok now it decreases, so its fine
+    apint_mul_karatsuba_recurse(z2, a_high, b_high); // There should be an overflow but I don't think I need to do anything with it
 
-//     // Shift results appropriately, should be stored in z2 and second_operand
-//     d = d * 64;                // in the beginning we split by d, but d is a limb, which is 64 bits
-//     apint_shiftl(z2, (2 * d)); // multiply by 2 because of Karatsuba algorithm
-//     apint_shiftl(second_operand, d);
+    // FREE THINGS
+    apint_free(a_high);
+    apint_free(a_low);
+    apint_free(b_high);
+    apint_free(b_low);
+    apint_free(a_add);
+    apint_free(b_add);
 
-//     // x = z2 * 2 ^ (2 * d) + (z1 - z2 - z0) * 2 ^ (d) + z0;
-//     apint_t temp_x;
-//     apint_init(temp_x, (x->length) * 64);
-//     apint_add_karatsuba(temp_x, z2, second_operand);
-//     apint_add_karatsuba(x, temp_x, z0);
+    apint_t first_operand; // z2 + z0
+    first_operand->sign = 1;
+    apint_init(first_operand, (z2->length) * 64);
+    apint_add(first_operand, z2, z0);
 
-//     uint64_t result; // not used yet
-//     return result;
-// }
+    apint_t second_operand; // z1 - (z2 + z0)
+    second_operand->sign = 1;
+    apint_init(second_operand, (z1->length) * 64);
+    apint_sub(second_operand, z1, first_operand);
+
+    // Shift results appropriately, should be stored in z2 and second_operand
+    d = d * 64; // in the beginning we split by d, but d is a limb, which is 64 bits
+    // INLINE THE SHIFTS
+    // apint_shiftl(z2, (2 * d));       // multiply by 2 because of Karatsuba algorithm
+    uint full_limbs_shifted = d / APINT_LIMB_BITS;
+    d -= full_limbs_shifted * APINT_LIMB_BITS;
+    for (int i = z2->length - 1; i >= 0; i--)
+    {
+        if (i - (int)full_limbs_shifted >= 0)
+        {
+            z2->limbs[i] = z2->limbs[i - full_limbs_shifted];
+        }
+
+        else
+        {
+            z2->limbs[i] = 0;
+        }
+    }
+    for (int i = z2->length - 1; i > 0; i--)
+    {
+        z2->limbs[i] = (z2->limbs[i] << d) + (z2->limbs[i - 1] >> (APINT_LIMB_BITS - d));
+    }
+    z2->limbs[0] <<= d;
+
+    // apint_shiftl(second_operand, d); // TODO: INLINE
+    // uint full_limbs_shifted = d / APINT_LIMB_BITS;
+    // d -= full_limbs_shifted * APINT_LIMB_BITS;
+    for (int i = second_operand->length - 1; i >= 0; i--)
+    {
+        if (i - (int)full_limbs_shifted >= 0)
+        {
+            second_operand->limbs[i] = second_operand->limbs[i - full_limbs_shifted];
+        }
+
+        else
+        {
+            second_operand->limbs[i] = 0;
+        }
+    }
+    for (int i = second_operand->length - 1; i > 0; i--)
+    {
+        second_operand->limbs[i] = (second_operand->limbs[i] << d) + (second_operand->limbs[i - 1] >> (APINT_LIMB_BITS - d));
+    }
+    second_operand->limbs[0] <<= d;
+
+    // x = z2 * 2 ^ (2 * d) + (z1 - z2 - z0) * 2 ^ (d) + z0;
+    apint_t temp_x;
+    apint_init(temp_x, (x->length) * 64);
+    apint_add_karatsuba(temp_x, z2, second_operand);
+    apint_add_karatsuba(x, temp_x, z0);
+
+    // FREE EVERYTHING ELSE
+    apint_free(z0);
+    apint_free(z1);
+    apint_free(z2);
+    apint_free(first_operand);
+    apint_free(second_operand);
+    apint_free(temp_x);
+
+    uint64_t result; // not used yet
+    return result;
+}

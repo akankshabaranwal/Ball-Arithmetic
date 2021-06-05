@@ -54,6 +54,10 @@ uint64_t apint_mul_karatsuba_extend_basecase(apint_ptr x, apint_srcptr a, apint_
 uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b);
 uint64_t apint_mul_karatsuba_recurse_extend_basecase(apint_ptr x, apint_srcptr a, apint_srcptr b);
 
+// Karatsuba optimization 1 methods
+uint64_t apint_mul_karatsuba_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b);
+uint64_t apint_mul_karatsuba_recurse_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b);
+
 void apint_shiftr(apint_ptr x, unsigned int shift);
 void apint_shiftl(apint_ptr x, unsigned int shift);
 int apint_detectfirst1(apint_ptr x);
@@ -82,26 +86,6 @@ static inline void apint_trim(apint_ptr x, apint_ptr x_temp)
         x->limbs[i] = x_temp->limbs[i];
     }
 }
-
-// static inline void apint_shiftl_by_d(apint_ptr x, apint_ptr x_orig, int shift)
-// {
-//     for (int i = 0; i < x_orig->length; i++)
-//     {
-//         x->limbs[i] = x_orig->limbs[i];
-//     }
-
-//     // LEFT SHIFT, multiplying by 2
-//     size_t sl, sr;
-//     for (apint_size_t i = (x->length - 2); i >= 0; i--)
-//     {
-//         sl = shift;
-//         sr = APINT_LIMB_BITS - shift;
-
-//         x->limbs[i + 1] = x->limbs[i + 1] << sl | x->limbs[i] >> sr;
-//     }
-
-//     x->limbs[x->length - 1] <<= shift;
-// }
 
 // Find maximum between two numbers.
 static inline int max(int num1, int num2)
