@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <flint/flint.h>
 
-#include "apbar.h"
+#include "apbar2.h"
 #include "tsc_x86.h"
 #include "benchmark.h"
 
@@ -52,34 +52,34 @@ void arblib_add(unsigned int prec)
     }
 }
 
-static apbar_t apbar_out, apbar_in1, apbar_in2;
+static apbar2_t apbar2_out, apbar2_in1, apbar2_in2;
 
 void barith_init(unsigned int prec)
 {
-    apbar_init(apbar_out, prec);
-    apbar_init(apbar_in1, prec);
-    apbar_init(apbar_in2, prec);
+    apbar2_init(apbar2_out, prec);
+    apbar2_init(apbar2_in1, prec);
+    apbar2_init(apbar2_in2, prec);
 
     // TODO: Use arbitrary precision random number.
-    apbar_set_d(apbar_in1, (double)rand() / RAND_MAX);
-    apbar_set_d(apbar_in2, (double)rand() / RAND_MAX);
+    apbar2_set_d(apbar2_in1, (double)rand() / RAND_MAX);
+    apbar2_set_d(apbar2_in2, (double)rand() / RAND_MAX);
 }
 
 void barith_deinit(unsigned int prec)
 {
-    apbar_free(apbar_in1);
-    apbar_free(apbar_in2);
-    apbar_free(apbar_out);
+    apbar2_free(apbar2_in1);
+    apbar2_free(apbar2_in2);
+    apbar2_free(apbar2_out);
 }
 
 void barith_add(unsigned int prec)
 {
     for (size_t i = 0; i < BENCHMARK_ITER; i++)
     {
-        apbar_add(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_add(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_add(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_add(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar2_add(apbar2_out, apbar2_in1, apbar2_in2, prec);
+        apbar2_add(apbar2_out, apbar2_in1, apbar2_in2, prec);
+        apbar2_add(apbar2_out, apbar2_in1, apbar2_in2, prec);
+        apbar2_add(apbar2_out, apbar2_in1, apbar2_in2, prec);
     }
 }
 
@@ -89,7 +89,7 @@ BENCHMARK_BEGIN_TABLE(def)
     BENCHMARK_FUNCTION(barith_add, barith_init, barith_deinit, 4.0, 8, 17)
 BENCHMARK_END_TABLE(def)
 
-// To-do: Benchmark the other apbar methods.
+// To-do: Benchmark the other apbar2 methods.
 
 BENCHMARK_END_SUITE()
 
