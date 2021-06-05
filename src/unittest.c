@@ -298,6 +298,30 @@ TEST_GROUP(apint, {
             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0llu);
     });
 
+    TEST_CASE(multiply mantissa of pi with itself, {
+            apint_setlimb(apint_test[0], 3, 0x6487ED5110B4611A);
+            apint_setlimb(apint_test[0], 2, 0x62633145C06E0E68);
+            apint_setlimb(apint_test[0], 1, 0x948127044533E63A);
+            apint_setlimb(apint_test[0], 0, 0x0105DF531D89CD91);
+
+            apint_setlimb(apint_test[1], 3, 0x6487ED5110B4611A);
+            apint_setlimb(apint_test[1], 2, 0x62633145C06E0E68);
+            apint_setlimb(apint_test[1], 1, 0x948127044533E63A);
+            apint_setlimb(apint_test[1], 0, 0x0105DF531D89CD91);
+
+            apint_mul(apint_test[2], apint_test[0], apint_test[1]);
+
+            // Calculated with: https://defuse.ca/big-number-calculator.htm
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 0x68906cc684438c21llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 0x8a103ede33e3d523llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 0xe42ca89707ea23aellu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 0xbc5658f0d63b5677llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 4), 0x19a0884094f1cda3llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 5), 0xc2159a8ff834288allu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 6), 0x95b89b36602306b1llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0x277a79937c8bbcb4llu);
+    });
+
     TEST_CASE(portable multiply, {
             apint_setlimb(apint_test[0], 0, 1);
             apint_setlimb(apint_test[0], 1, 1);
@@ -630,21 +654,16 @@ TEST_GROUP(apfp, {
             apfp_test[1]->mant->sign = 1;
             apfp_test[1]->exp = -253;
 
-            apfp_print_msg("pi is:", apfp_test[0]);
-
             apfp_mul(apfp_test[2], apfp_test[1], apfp_test[0]);
 
-            apfp_print_msg("pi * pi =", apfp_test[2]);
             // From arblib pi * pi = 35713191048373364904601842448597373027278304077961391237116093776389617195847 * 2^-251
-            ASSERT_EQUAL_L(apfp_test[2]->exp, -506l);
-            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 7), 0x277A79937C8BBCB4llu);
-            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 6), 0x95B89B36602306B1llu);
-            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 5), 0xC2159A8FF834288Allu);
-            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 4), 0x19A0884094F1CDA3llu);
-            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 3), 0xBC5658F0D63B5677llu);
-            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 2), 0xE42CA89707EA23AEllu);
-            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 1), 0x8A103EDE33E3D523llu);
-            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 0), 0x68906CC684438C21llu);
+            // But because of the alignment this needs to be adjusted (but if you print it you will see it's the same thing)
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 3), 0x9de9e64df22ef2d2llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 2), 0x56e26cd9808c1ac7llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 1), 0x8566a3fe0d0a228llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 0), 0x6682210253c7368ellu);
+
+            ASSERT_EQUAL_L(apfp_test[2]->exp, -252l);
     });
 
 });

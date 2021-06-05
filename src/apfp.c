@@ -188,6 +188,8 @@ bool apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     x->exp = a->exp + b->exp;
     apint_mul(x->mant, a->mant, b->mant);
+    adjust_alignment(x);
+
     if(a->mant->sign == b->mant->sign)
     {
         apfp_set_pos(x);

@@ -267,16 +267,18 @@ int apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
     assert(a->length == x->length);
 
     unsigned long long overflow;
+    unsigned char carry;
     if (a->sign == b->sign) x->sign = 1;
     else x->sign = -1;
 
-    for (apint_size_t i = 0; i < b->length; i++)
-    {
+    for (apint_size_t i = 0; i < b->length; i++) {
         overflow = 0;
+        carry = 0;
         for (apint_size_t j = 0; j < a->length; j++) {
             // make sure we don't try to set something in x that is outside of its precision
             if ((i + j) < x->length) {
-                x->limbs[i + j] += overflow;
+                carry = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]);
+                x->limbs[i + j] += carry;
                 x->limbs[i + j] += _mulx_u64(a->limbs[j], b->limbs[i], &overflow);
             }
         }
