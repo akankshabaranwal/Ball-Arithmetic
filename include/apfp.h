@@ -21,9 +21,12 @@ void apfp_init(apfp_t x, apint_size_t p);
 void apfp_free(apfp_t x);
 
 void apfp_set_mant(apfp_ptr x, apint_size_t offset, apint_limb_t val);
+void apfp_set_mant_msb(apfp_ptr x);
 apint_limb_t apfp_get_mant(apfp_srcptr x, apint_size_t offset);
 void apfp_set_exp(apfp_ptr x, apfp_exp_t exp);
 void apfp_set_d(apfp_ptr x, double val);
+void apfp_set_pos(apfp_ptr x);
+void apfp_set_neg(apfp_ptr x);
 
 void apfp_print(apfp_srcptr value);
 void apfp_print_msg(const char *msg, apfp_srcptr value);

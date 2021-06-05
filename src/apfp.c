@@ -2,6 +2,12 @@
 #include <apfp.h>
 #include <flint/fmpz.h>
 #include <arf.h>
+#include <stdbool.h>
+
+#define MIDDLE_LEFT(NUM) NUM->mant->limbs[NUM->mant->length / 2]
+#define MIDDLE_RIGHT(NUM) NUM->mant->limbs[NUM->mant->length / 2 - 1]
+#define MID_POS(NUM) NUM->mant->length / 2
+#define MID_POS_BITWISE(NUM) MID_POS(NUM) * APINT_LIMB_BITS
 
 void apfp_init(apfp_t x, apint_size_t p)
 {
@@ -18,11 +24,18 @@ void apfp_free(apfp_t x)
 
 void apfp_set_mant(apfp_ptr x, apint_size_t offset, apint_limb_t limb)
 {
+    assert(offset < x->mant->length / 2);
     apint_setlimb(x->mant, offset, limb);
+}
+
+void apfp_set_mant_msb(apfp_ptr x)
+{
+    MIDDLE_RIGHT(x) = ((apint_limb_t)1 << (sizeof(apint_limb_t) * 8 - 1));
 }
 
 apint_limb_t apfp_get_mant(apfp_srcptr x, apint_size_t offset)
 {
+    assert(offset < x->mant->length / 2);
     return apint_getlimb(x->mant, offset);
 }
 
@@ -42,11 +55,24 @@ void apfp_set_d(apfp_ptr x, double val)
     x->exp = (int64_t) (((h << 1) >> 53) - 1023 - 52);
 
     // Middle alignment: Set the "middle-right" limb to the double's mantissa
-    x->mant->limbs[(x->mant->length - 1) / 2] = ((h << 12) >> 12) | (UWORD(1) << 52);
+    MIDDLE_RIGHT(x) = ((h << 12) >> 12) | (UWORD(1) << 52);
+}
+
+void apfp_set_pos(apfp_ptr x)
+{
+    x->mant->sign = 1;
+}
+
+void apfp_set_neg(apfp_ptr x)
+{
+    x->mant->sign = -1;
 }
 
 void apfp_print(apfp_srcptr value)
 {
+    if (value->mant->sign < 0) {
+        printf("-");
+    }
     fmpz_t exp, man;
     apint_to_fmpz(man, value->mant);
     fmpz_set_si(exp, value->exp);
@@ -59,12 +85,6 @@ void apfp_print(apfp_srcptr value)
     arf_clear(arf_val);
     fmpz_clear(exp);
     fmpz_clear(man);
-
-//    printf("(");
-//    apint_print((apint_srcptr) &value->mant);
-//    printf(" * 2^");
-//    printf("%ld", value->exp);
-//    printf(")");
 }
 
 void apfp_print_msg(const char *msg, apfp_srcptr value){
@@ -73,95 +93,81 @@ void apfp_print_msg(const char *msg, apfp_srcptr value){
     printf("\n");
 }
 
+static inline void adjust_alignment(apfp_ptr x)
+{
+    size_t overflow = apint_detectfirst1(x->mant);
+
+    if (overflow > MID_POS_BITWISE(x))
+    {
+        overflow -= MID_POS_BITWISE(x);
+        apint_shiftr(x->mant, overflow);
+        x->exp += (apfp_exp_t) overflow;
+    }
+    else if (overflow < MID_POS_BITWISE(x))
+    {
+        overflow = MID_POS_BITWISE(x) - overflow;
+        apint_shiftl(x->mant, overflow);
+        x->exp -= (apfp_exp_t) overflow;
+    }
+}
+
 unsigned char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     assert(x->mant->length == a->mant->length);
     assert(x->mant->length == b->mant->length);
 
-    int swapped;
-    swapped=0;
+    bool swapped = false;
 
     // After swap, `a` is guaranteed to have largest exponent
     if (b->exp > a->exp)
     {
         apfp_srcptr t = a; a = b; b = t;
-        swapped=1;
+        swapped = true;
     }
 
     // Align `b` mantissa to `a` given exponent difference
     apfp_exp_t factor = a->exp - b->exp;
+
+    // We could easily combine shift and copy here
     apint_copy(x->mant, b->mant);
     apint_shiftr(x->mant, factor); // right shift mantissa of b
     x->mant->sign = b->mant->sign;
 
-    unsigned char overflow;
+    // Add mantissa, shift by carry and update exponent
+    apint_add(x->mant, x->mant, a->mant);
+    x->exp = a->exp;
+    adjust_alignment(x);
 
-    if(a->mant->sign == b->mant->sign) // If both have the same sign then simple add
+    if(a->mant->sign != b->mant->sign && swapped)
     {
-        x->mant->sign=a->mant->sign;
-        // Add mantissa, shift by carry and update exponent
-        apint_plus(x->mant, x->mant, a->mant);
-
-        overflow = x->mant->limbs[x->mant->length / 2]; // Middle-left limb has first bit set -> overflow occured
-        assert(overflow == 0 || overflow == 1); // Extra assertion for safety (should be 0 or 1, but not more)
-
-        apint_shiftr(x->mant, overflow);
-        x->exp = a->exp + overflow;
-
-        // Force the msb on the middle-right limb
-        x->mant->limbs[(x->mant->length - 1) / 2] |= (1llu << (APINT_LIMB_BITS - 1));
-    }
-    else // Either (a - b) or (b - a)
-    {
-        apint_sub(x->mant, a->mant, x->mant);
-        overflow = x->mant->limbs[x->mant->length / 2]; // Middle-left limb has all 1's -> underflow occured
-        assert(overflow == 0 || overflow == (apint_limb_t)(-1)); // Extra assertion for safety (should be 0 or all 1s)
-
-        if (overflow)
-        {
-            apint_shiftl(x->mant, overflow);
-            x->exp = a->exp - overflow;
-        }
-
-        if (overflow) apint_setmsb(x->mant); //Most likely here it is not required.
-        if(swapped)
-        {
-            x->mant->sign = -x->mant->sign;
-        }
+        x->mant->sign = -x->mant->sign;
     }
 
-    return overflow;
+    // TODO: detect overflow and return it
+    return 0;
 }
 
 //a-b
 unsigned char apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     // After swap, `a` is guaranteed to have largest exponent
-    int swapped;
-    swapped = 0;
+    bool swapped = false;
     if (b->exp > a->exp)
     {
         apfp_srcptr t = a; a = b; b = t;
-        swapped=1;
+        swapped = true;
     }
-    unsigned char overflow;
-    // Align `b` mantissa to `a` given exponent difference
 
+    // Align `b` mantissa to `a` given exponent difference
     apfp_exp_t factor = a->exp - b->exp;
     apint_copy(x->mant, b->mant);
     apint_shiftr(x->mant, factor);
 
-    if(a->mant->sign==b->mant->sign ) // if both have the same sign then simple add
+    if(a->mant->sign == b->mant->sign ) // if both have the same sign then simple add
     {
+        // Subtract the two mantissas
         apint_sub(x->mant, a->mant, x->mant); //x->mant->sign is set here
-        overflow = apint_detectfirst1(x->mant);//technically this is underflow
-        if(overflow>0)
-        {
-            apint_shiftl(x->mant, overflow);
-            x->exp = a->exp - overflow;
-        }
 
-        if (overflow) apint_setmsb(x->mant); //Most likely here it is not required.
         if(swapped)
         {
             x->mant->sign = -x->mant->sign;
@@ -169,17 +175,14 @@ unsigned char apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     }
     else
     {
+        // Add the two mantissas
         x->mant->sign = a->mant->sign;
-        // Add mantissa, shift by carry and update exponent
-        overflow = apint_plus(x->mant, x->mant, a->mant);
-        apint_shiftr(x->mant, overflow);
-        x->exp = a->exp + overflow;
-
-        // Set the msb on the mantissa
-        // To-do: Check for 0, +inf, -inf.
-        if (overflow) apint_setmsb(x->mant);
+        apint_plus(x->mant, x->mant, a->mant);
     }
-    return overflow;
+
+    x->exp = a->exp;
+    adjust_alignment(x);
+    return 0;
 }
 
 int apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
