@@ -116,7 +116,7 @@ bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     assert(x->mant->length == b->mant->length);
 
     bool swapped = false;
-
+    bool is_exact = true;
     // After swap, `a` is guaranteed to have largest exponent
     if (b->exp > a->exp)
     {
@@ -135,15 +135,13 @@ bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     // Add mantissa, shift by carry and update exponent
     apint_add(x->mant, x->mant, a->mant);
     x->exp = a->exp;
+    int middlelimb = (x->mant->length/2);
+    if((apint_getlimb(x->mant,middlelimb)&0x01)!=0)
+        is_exact = false;
+
     adjust_alignment(x);
 
-    if(a->mant->sign != b->mant->sign && swapped)
-    {
-        x->mant->sign = -x->mant->sign;
-    }
-
-    // TODO: detect overflow and return it
-    return true;
+    return is_exact;
 }
 
 //a-b
@@ -151,22 +149,21 @@ bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     // After swap, `a` is guaranteed to have largest exponent
     bool swapped = false;
+    bool is_exact = true;
     if (b->exp > a->exp)
     {
         apfp_srcptr t = a; a = b; b = t;
         swapped = true;
     }
-
     // Align `b` mantissa to `a` given exponent difference
     apfp_exp_t factor = a->exp - b->exp;
     apint_copy(x->mant, b->mant);
     apint_shiftr(x->mant, factor);
 
-    if(a->mant->sign == b->mant->sign ) // if both have the same sign then simple add
+    if(x->mant->sign == b->mant->sign ) // if both have the same sign then simple add
     {
         // Subtract the two mantissas
         apint_sub(x->mant, a->mant, x->mant); //x->mant->sign is set here
-
         if(swapped)
         {
             x->mant->sign = -x->mant->sign;
@@ -178,10 +175,13 @@ bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
         x->mant->sign = a->mant->sign;
         apint_plus(x->mant, x->mant, a->mant);
     }
-
     x->exp = a->exp;
+    int middlelimb = (x->mant->length/2);
+    if((apint_getlimb(x->mant,middlelimb)&0x01)!=0)
+        is_exact = false;
     adjust_alignment(x);
-    return true;
+
+    return is_exact;
 }
 
 bool apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
