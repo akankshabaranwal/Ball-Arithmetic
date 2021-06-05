@@ -2,7 +2,6 @@
 #include <apfp.h>
 #include <flint/fmpz.h>
 #include <arf.h>
-#include <stdbool.h>
 
 #define MIDDLE_LEFT(NUM) NUM->mant->limbs[NUM->mant->length / 2]
 #define MIDDLE_RIGHT(NUM) NUM->mant->limbs[NUM->mant->length / 2 - 1]
@@ -111,7 +110,7 @@ static inline void adjust_alignment(apfp_ptr x)
     }
 }
 
-unsigned char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     assert(x->mant->length == a->mant->length);
     assert(x->mant->length == b->mant->length);
@@ -144,11 +143,11 @@ unsigned char apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     }
 
     // TODO: detect overflow and return it
-    return 0;
+    return true;
 }
 
 //a-b
-unsigned char apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     // After swap, `a` is guaranteed to have largest exponent
     bool swapped = false;
@@ -182,10 +181,10 @@ unsigned char apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 
     x->exp = a->exp;
     adjust_alignment(x);
-    return 0;
+    return true;
 }
 
-int apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+bool apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     x->exp = a->exp + b->exp;
     int is_exact = apint_mul(x->mant, a->mant, b->mant);
@@ -200,5 +199,5 @@ int apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 
     //TODO: move back to left align code is left
 
-    return is_exact;
+    return true;
 }

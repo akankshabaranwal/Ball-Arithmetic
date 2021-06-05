@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <x86intrin.h>
+#include <stdbool.h>
 
 #include <apbar.h>
 #include <mag.h>
@@ -182,13 +183,13 @@ void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
     assert(c);
 
     // midpoint computation (should round towards 0)
-    unsigned char is_not_exact = apfp_add(c->midpt, a->midpt, b->midpt);
+    bool is_exact = apfp_add(c->midpt, a->midpt, b->midpt);
 
     // radius computation (should round towards +inf)
     rad_add(c->rad, a->rad, b->rad);
 
     // error bound computation (should round towards +inf)
-    if (is_not_exact) add_error_bound(c, p);
+    if (!is_exact) add_error_bound(c, p);
 }
 
 //assumes that c, a, b are already allocated
@@ -199,13 +200,13 @@ void apbar_sub(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
     assert(c);
 
     // midpoint computation (should round towards 0)
-    unsigned char is_not_exact = apfp_sub(c->midpt, a->midpt, b->midpt);
+    bool is_exact = apfp_sub(c->midpt, a->midpt, b->midpt);
 
     // radius computation (should round towards +inf)
     rad_add(c->rad, a->rad, b->rad);
 
     // error bound computation (should round towards +inf)
-    if (is_not_exact) add_error_bound(c, p);
+    if (!is_exact) add_error_bound(c, p);
 }
 
 void apbar_mul(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
@@ -215,7 +216,7 @@ void apbar_mul(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
     assert(c);
 
     // midpoint computation (should round towards 0)
-    int is_not_exact = apfp_mul(c->midpt, a->midpt, b->midpt);
+    bool is_exact = apfp_mul(c->midpt, a->midpt, b->midpt);
 
     // radius computation (should round towards +inf)
     // (|x| + r)s + r|y|
@@ -273,5 +274,5 @@ void apbar_mul(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
     apfp_free(x_abs);
 
     // error bound computation (should round towards +inf)
-    if (is_not_exact) add_error_bound(c, p);
+    if (!is_exact) add_error_bound(c, p);
 }
