@@ -36,7 +36,8 @@ void apint_print(apint_srcptr value)
     fmpz_t number;
     apint_to_fmpz(number, value);
 
-    if (value->sign < 0) {
+    if (value->sign < 0)
+    {
         printf("-");
     }
     fmpz_print(number);
@@ -83,12 +84,16 @@ size_t apint_detectfirst1(apint_ptr x)
     size_t pos;
     apint_limb_t number;
     pos = 0;
-    for(i = x->length - 1; i >= 0; i--) {
-        if(x->limbs[i] > 0) {
+    for (i = x->length - 1; i >= 0; i--)
+    {
+        if (x->limbs[i] > 0)
+        {
             // There's a 1 somewhere here
             number = x->limbs[i];
-            while(1) {
-                if (number & APINT_MSB) {
+            while (1)
+            {
+                if (number & APINT_MSB)
+                {
                     return x->length * APINT_LIMB_BITS - pos;
                 }
                 number <<= 1;
@@ -194,7 +199,7 @@ unsigned char apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     unsigned char overflow;
 
-    if(a->sign == b->sign)
+    if (a->sign == b->sign)
     {
         //printf("calling apint_sub\n");
         //printf("in apint_sub calling apint minus\n");
@@ -202,7 +207,7 @@ unsigned char apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
     }
     else
     {
-       // printf("in apint_sub calling apint plus\n");
+        // printf("in apint_sub calling apint plus\n");
         apint_plus(x, a, b);
         x->sign = a->sign;
     }
@@ -687,8 +692,8 @@ uint64_t apint_mul_karatsuba_recurse_OPT1(apint_ptr x, apint_srcptr a, apint_src
 
     // apint_copyover(b_low, b, 0); // INLINE BELOW
     // apint_copyover(b_high, b, d);
-
-    for (int i = 0; i < a_low->length; i++)
+    int i;
+    for (i = 0; i < a_low->length; i++)
     {
         a_low->limbs[i] = a->limbs[i];
         a_high->limbs[i] = a->limbs[i + d];
