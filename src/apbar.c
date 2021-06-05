@@ -246,21 +246,30 @@ void apbar_mul(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
     apfp_init(s, p);
     expand_rad(s, b->rad);
 
+    apint_t one;
+    apint_init(one, 2*p);
+    apint_setlimb(one, 0, 1);
+
+    bool is_exact_sub;
     // TODO: Can we add numbers and have an output as one of the inputs?
     // TODO: round
     // |x| + r
-    unsigned char carry = apfp_add(x_abs, x_abs, r);
+    is_exact_sub = apfp_add(x_abs, x_abs, r);
+    if (!is_exact_sub) apint_add(x_abs->mant, x_abs->mant, one);
     // (|x| + r) * s
     apfp_t res;
     apfp_init(res, p);
-    apfp_mul(res, x_abs, s);
+    is_exact_sub = apfp_mul(res, x_abs, s);
+    if (!is_exact_sub) apint_add(res->mant, res->mant, one);
 
     //r * |y|
     apfp_t res_2;
     apfp_init(res_2, p);
-    apfp_mul(res_2, y_abs, r);
+    is_exact_sub = apfp_mul(res_2, y_abs, r);
+    if (!is_exact_sub) apint_add(res_2->mant, res_2->mant, one);
 
-    carry = apfp_add(res, res, res_2);
+    is_exact_sub = apfp_add(res, res, res_2);
+    if (!is_exact_sub) apint_add(res->mant, res->mant, one);
 
     // narrow back to rad
     narrow_to_rad(res, c->rad);

@@ -7,6 +7,7 @@
 #include <string.h>
 #include <flint/fmpz.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef unsigned long long apint_limb_t;
 typedef uint apint_size_t;
@@ -56,7 +57,7 @@ uint64_t apint_mul_karatsuba_extend_basecase(apint_ptr x, apint_srcptr a, apint_
 uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b);
 uint64_t apint_mul_karatsuba_recurse_extend_basecase(apint_ptr x, apint_srcptr a, apint_srcptr b);
 
-void apint_shiftr(apint_ptr x, unsigned int shift);
+bool apint_shiftr(apint_ptr x, unsigned int shift);
 void apint_shiftl(apint_ptr x, unsigned int shift);
 size_t apint_detectfirst1(apint_ptr x);
 

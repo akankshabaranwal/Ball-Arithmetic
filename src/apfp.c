@@ -92,22 +92,25 @@ void apfp_print_msg(const char *msg, apfp_srcptr value){
     printf("\n");
 }
 
-static inline void adjust_alignment(apfp_ptr x)
+static inline bool adjust_alignment(apfp_ptr x)
 {
+    bool is_exact = true;
     size_t overflow = apint_detectfirst1(x->mant);
 
     if (overflow > MID_POS_BITWISE(x))
     {
         overflow -= MID_POS_BITWISE(x);
-        apint_shiftr(x->mant, overflow);
+        is_exact = apint_shiftr(x->mant, overflow);
         x->exp += (apfp_exp_t) overflow;
     }
     else if (overflow < MID_POS_BITWISE(x))
     {
+        // Can't shift off bits here
         overflow = MID_POS_BITWISE(x) - overflow;
         apint_shiftl(x->mant, overflow);
         x->exp -= (apfp_exp_t) overflow;
     }
+    return is_exact;
 }
 
 bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
@@ -197,7 +200,5 @@ bool apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
         apfp_set_neg(x);
     }
 
-    //TODO: move back to left align code is left
-
-    return true;
+    return ;
 }
