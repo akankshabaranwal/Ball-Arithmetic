@@ -92,22 +92,25 @@ void apfp_print_msg(const char *msg, apfp_srcptr value){
     printf("\n");
 }
 
-static inline void adjust_alignment(apfp_ptr x)
+static inline bool adjust_alignment(apfp_ptr x)
 {
+    bool is_exact = true;
     size_t overflow = apint_detectfirst1(x->mant);
 
     if (overflow > MID_POS_BITWISE(x))
     {
         overflow -= MID_POS_BITWISE(x);
-        apint_shiftr(x->mant, overflow);
+        is_exact = apint_shiftr(x->mant, overflow);
         x->exp += (apfp_exp_t) overflow;
     }
     else if (overflow < MID_POS_BITWISE(x))
     {
+        // Can't shift off bits here
         overflow = MID_POS_BITWISE(x) - overflow;
         apint_shiftl(x->mant, overflow);
         x->exp -= (apfp_exp_t) overflow;
     }
+    return is_exact;
 }
 
 bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
@@ -134,8 +137,7 @@ bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     // Add mantissa, shift by carry and update exponent
     apint_add(x->mant, x->mant, a->mant);
     x->exp = a->exp;
-    int middlelimb = (x->mant->length/2);
-    if((apint_getlimb(x->mant,middlelimb)&0x01)!=0)
+    if(MIDDLE_LEFT(x) != 0 && (apint_getlimb(x->mant, 0) & 0x1ull) != 0)
         is_exact = false;
 
     adjust_alignment(x);
@@ -164,8 +166,7 @@ bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
             x->mant->sign = -x->mant->sign;
     }
     x->exp = a->exp;
-    int middlelimb = (x->mant->length/2);
-    if((apint_getlimb(x->mant,middlelimb)&0x01)!=0)
+    if(MIDDLE_LEFT(x) !=0 && (apint_getlimb(x->mant, 0) & 0x1ull) != 0)
         is_exact = false;
 
     adjust_alignment(x);
@@ -175,17 +176,17 @@ bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 bool apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     x->exp = a->exp + b->exp;
-    int is_exact = apint_mul(x->mant, a->mant, b->mant);
+    apint_mul(x->mant, a->mant, b->mant);
+    adjust_alignment(x);
+
     if(a->mant->sign == b->mant->sign)
     {
-        x->mant->sign = a->mant->sign;
+        apfp_set_pos(x);
     }
     else
     {
-        x->mant->sign = -1;
+        apfp_set_neg(x);
     }
 
-    //TODO: move back to left align code is left
-
-    return true;
+    return ;
 }

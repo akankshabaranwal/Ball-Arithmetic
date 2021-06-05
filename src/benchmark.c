@@ -39,7 +39,9 @@ void arblib_init(unsigned int prec)
 
 void arblib_deinit(unsigned int prec)
 {
-    arb_clear(arb_out); arb_clear(arb_in1); arb_clear(arb_in2);
+    arb_clear(arb_out);
+    arb_clear(arb_in1);
+    arb_clear(arb_in2);
 }
 
 void arblib_add(unsigned int prec)
@@ -128,13 +130,13 @@ static apint_limb_t urand()
     return ret_val;
 }
 
-
 apint_t in1, in2, out;
 static void int_init(uint prec)
 {
     apint_init(in1, prec);
     apint_init(in2, prec);
-    apint_init(out, 2*prec);
+    apint_init(out, prec);
+    // apint_init(out, 2 * prec);
 
     size_t limbs = prec / APINT_LIMB_BITS;
     for (int i = 0; i < limbs; ++i) {
@@ -164,7 +166,6 @@ static void int_plus_portable(uint prec)
     }
 }
 
-
 static void int_mul(uint prec)
 {
     for (size_t i = 0; i < BENCHMARK_ITER; ++i) {
@@ -176,6 +177,22 @@ static void int_mul_portable(uint prec)
 {
     for (size_t i = 0; i < BENCHMARK_ITER; ++i) {
         apint_mul_portable(out, in1, in2);
+    }
+}
+
+static void int_mul_karatsuba(uint prec)
+{
+    for (size_t i = 0; i < BENCHMARK_ITER; ++i)
+    {
+        apint_mul_karatsuba(out, in1, in2);
+    }
+}
+
+static void int_mul_karatsuba_extend_basecase(uint prec)
+{
+    for (size_t i = 0; i < BENCHMARK_ITER; ++i)
+    {
+        apint_mul_karatsuba_extend_basecase(out, in1, in2);
     }
 }
 
@@ -194,6 +211,8 @@ BENCHMARK_END_TABLE(int_plus)
 BENCHMARK_BEGIN_TABLE(int_mul)
     BENCHMARK_FUNCTION(int_mul, int_init, int_cleanup, 1.0, 8, 17)
     BENCHMARK_FUNCTION(int_mul_portable, int_init, int_cleanup, 1.0, 8, 17)
+    BENCHMARK_FUNCTION(int_mul_karatsuba, int_init, int_cleanup, 1.0, 8, 17)
+    BENCHMARK_FUNCTION(int_mul_karatsuba_extend_basecase, int_init, int_cleanup, 1.0, 8, 17)
 BENCHMARK_END_TABLE(int_mul)
 BENCHMARK_END_SUITE()
 

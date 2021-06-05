@@ -6,27 +6,6 @@
 #include <apbar.h>
 #include <mag.h>
 
-void rad_add(rad_ptr x, rad_srcptr a, rad_srcptr b)
-{
-    // derived from apfp_add
-    // After swap, `a` is guaranteed to have largest exponent
-    if (b->exp > a->exp)
-    {
-        rad_srcptr t = a; a = b; b = t;
-    }
-    // Align `b` mantissa to `a` given exponent difference
-    apfp_exp_t factor = a->exp - b->exp;
-    x->mant = a->mant;
-    x->mant <<= factor;
-
-    uint8_t carry = _addcarryx_u64(carry, x->mant, b->mant, &x->mant);
-    x->mant >>= carry;
-    x->exp = b->exp + carry;
-
-    //Set MSB
-    if(carry) x->mant |= 1ull<<(APINT_LIMB_BITS-1);
-}
-
 void apbar_init(apbar_t x, apint_size_t p)
 {    
     apfp_init(x->midpt, p);
@@ -96,21 +75,45 @@ void apbar_set_d(apbar_t x, double val)
     apfp_set_d(x->midpt, val);
 }
 
+void rad_add(rad_ptr x, rad_srcptr a, rad_srcptr b)
+{
+    // derived from apfp_add
+    // After swap, `a` is guaranteed to have largest exponent
+    if (b->exp > a->exp)
+    {
+        rad_srcptr t = a; a = b; b = t;
+    }
+    // Align `b` mantissa to `a` given exponent difference
+    apfp_exp_t factor = a->exp - b->exp;
+    x->mant = a->mant;
+    x->mant <<= factor;
+
+    uint8_t carry = _addcarryx_u64(carry, x->mant, b->mant, &x->mant);
+    x->mant >>= carry;
+    x->exp = b->exp + carry;
+
+    //Set MSB
+    if(carry) x->mant |= 1ull<<(APINT_LIMB_BITS-1);
+    // printf("%llu * 2^%ld + %llu * 2^%ld = %llu * 2^%ld\n", a->mant, a->exp, b->mant, b->exp, x->mant, x->exp);
+}
+
 void narrow_to_rad(apfp_ptr x, rad_ptr rad)
 {
     // Essentially shift right enough so that mantissa fits into 64 bits
-    uint i = x->mant->length - 1;
-    for (; i >= 0; i--) {
-        if (x->mant->limbs[i] != 0) {
-            int leading_bits = __builtin_clzl(x->mant->limbs[i]);
-            i = (i * APINT_LIMB_BITS - 1) + APINT_LIMB_BITS - leading_bits;
-            break;
-        }
-    }
+    size_t pos = apint_detectfirst1(x->mant);
+    size_t shift = pos - APINT_LIMB_BITS;
+    apint_shiftr(x->mant, shift);
+    rad->mant = x->mant->limbs[0];
+    // if (shift > 0) rad->mant++; <-- for rounding, when we shift off bits (did we shift bits?)
+    rad->exp = x->exp + shift;
+}
 
-    apint_shiftr(x->mant, i);
-    rad->mant = x->mant->limbs[0] + 1;
-    rad->exp = x->exp + i - 1;
+void right_align_rad(rad_ptr rad)
+{
+    while((rad->mant & 0x1llu) == 0) {
+        rad->mant >>= 1;
+        rad->exp++;
+    }
 }
 
 static inline void expand_rad(apfp_ptr fp, rad_srcptr rad)
@@ -119,8 +122,8 @@ static inline void expand_rad(apfp_ptr fp, rad_srcptr rad)
     uint limb_pos = fp->mant->length / 2 - 1;
     fp->mant->limbs[limb_pos] = rad->mant << leading_zeros;
 
-    fp->exp = rad->exp - (limb_pos) * APINT_LIMB_BITS - leading_zeros - 1;
-    fp->mant->sign = 0;
+    fp->exp = rad->exp - (limb_pos) * APINT_LIMB_BITS - leading_zeros ;
+    apfp_set_pos(fp);
 }
 
 static inline void add_error_bound(apbar_ptr res, apint_size_t prec)
@@ -145,22 +148,11 @@ static inline void add_error_bound(apbar_ptr res, apint_size_t prec)
     // e is 2^-p so we essentially just need to subtract p from the exponent
     delta_y->exp = res->midpt->exp - prec - carry;
     if (carry) apint_setmsb(delta_y->mant);
-    delta_y->mant->sign = 0;
-
-    /* // This is almost the same as arb:
-    // rad_t dy;
-    // dy->exp = c->rad->exp - 32;
-    // dy->mant = 0x8000000000000001; // bit pattern: 1000...001
-
-    //apbar_t t;
-    //rad_add(t->rad, c->rad, dy);
-    */
+    apfp_set_pos(delta_y);
 
     // Add delta y to the current radius
     apfp_t rad;
     apfp_init(rad, res_length);
-    // apfp_set_mant(rad, 0, res->rad->mant);
-    // apfp_set_exp(rad, res->rad->exp);
     expand_rad(rad, res->rad);
 
     apfp_t new_rad;
@@ -173,6 +165,15 @@ static inline void add_error_bound(apbar_ptr res, apint_size_t prec)
     apfp_free(rad);
     apfp_free(new_rad);
     apfp_free(delta_y);
+
+    // This is almost the same as arb:
+//     rad_t dy;
+//     dy->exp = res->rad->exp - 32;
+//     dy->mant = 0x8000000000000001; // bit pattern: 1000...001
+//
+//    rad_t t;
+//    rad_add(t, res->rad, dy);
+//    printf("t is: %llu * 2^%ld\n", t->mant, t->exp);
 }
 
 //assumes that c, a, b are already allocated
@@ -229,39 +230,46 @@ void apbar_mul(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
     apfp_init(x_abs, p);
     apint_copy(x_abs->mant, a->midpt->mant);
     apfp_set_exp(x_abs, a->midpt->exp);
-    x_abs->mant->sign = 0;
+    apfp_set_pos(x_abs);
 
     apfp_t r;
     apfp_init(r, p);
-    apfp_set_mant(r, 0, a->rad->mant);
-    apfp_set_exp(r, a->rad->exp);
+    expand_rad(r, a->rad);
 
     apfp_t y_abs;
     apfp_init(y_abs, p);
     apint_copy(y_abs->mant, b->midpt->mant);
     apfp_set_exp(y_abs, b->midpt->exp);
-    y_abs->mant->sign = 0;
+    apfp_set_pos(y_abs);
 
     apfp_t s;
     apfp_init(s, p);
-    apfp_set_mant(s, 0, b->rad->mant);
-    apfp_set_exp(s, b->rad->exp);
+    expand_rad(s, b->rad);
 
+    apint_t one;
+    apint_init(one, 2*p);
+    apint_setlimb(one, 0, 1);
+
+    bool is_exact_sub;
     // TODO: Can we add numbers and have an output as one of the inputs?
     // TODO: round
     // |x| + r
-    unsigned char carry = apfp_add(x_abs, x_abs, r);
+    is_exact_sub = apfp_add(x_abs, x_abs, r);
+    if (!is_exact_sub) apint_add(x_abs->mant, x_abs->mant, one);
     // (|x| + r) * s
     apfp_t res;
-    apfp_init(res, 2 * p);
-    apfp_mul(res, x_abs, s);
+    apfp_init(res, p);
+    is_exact_sub = apfp_mul(res, x_abs, s);
+    if (!is_exact_sub) apint_add(res->mant, res->mant, one);
 
     //r * |y|
     apfp_t res_2;
-    apfp_init(res_2, 2 * p);
-    apfp_mul(res_2, y_abs, r);
+    apfp_init(res_2, p);
+    is_exact_sub = apfp_mul(res_2, y_abs, r);
+    if (!is_exact_sub) apint_add(res_2->mant, res_2->mant, one);
 
-    carry = apfp_add(res, res, res_2);
+    is_exact_sub = apfp_add(res, res, res_2);
+    if (!is_exact_sub) apint_add(res->mant, res->mant, one);
 
     // narrow back to rad
     narrow_to_rad(res, c->rad);

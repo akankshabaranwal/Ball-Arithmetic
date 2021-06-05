@@ -18,9 +18,8 @@ endif()
 include_directories(include)
 
 add_executable(arblib-test
-        src/arb-test.c
+    src/arb-test.c
 )
-
 target_link_libraries(arblib-test arb flint)
 
 set(BALL_ARITH_SRC
@@ -29,23 +28,21 @@ set(BALL_ARITH_SRC
     src/apbar.c
 )
 
-
 add_executable(benchmark
     ${BALL_ARITH_SRC}
     src/benchmark.c
 )
+target_link_libraries(benchmark flint gmp arb)
 
 add_executable(unit-test
     ${BALL_ARITH_SRC}
     src/unittest.c
 )
+target_link_libraries(unit-test flint gmp arb)
 
 add_executable(apbar2-example
     src/apbar2-example.c
 )
-
-target_link_libraries(unit-test flint gmp arb)
-target_link_libraries(benchmark flint gmp arb)
 target_link_libraries(apbar2-example flint gmp arb)
 
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
@@ -56,3 +53,7 @@ if ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
     target_compile_options(profile-apbar PUBLIC "-g" "-pg")
     target_link_libraries(profile-apbar flint gmp arb)
 endif()
+
+
+
+
