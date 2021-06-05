@@ -9,8 +9,8 @@
 apint_t apint_test[3];
 
 static void apint_test_setup(void) {
-    apint_init(apint_test[0], 256);
-    apint_init(apint_test[1], 256);
+    apint_init(apint_test[0], 512);
+    apint_init(apint_test[1], 512);
     apint_init(apint_test[2], 512);
 }
 
@@ -269,10 +269,12 @@ TEST_GROUP(apint, {
             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 2llu);
             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 2llu);
 
-            ASSERT_EQUAL_I(carry, 1);
+            // Carry
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 4), 1llu);
+
     });
 
-    TEST_CASE( multiply, {
+    TEST_CASE(multiply, {
             apint_setlimb(apint_test[0], 0, 1);
             apint_setlimb(apint_test[0], 1, 1);
             apint_setlimb(apint_test[0], 2, 1);
@@ -613,6 +615,7 @@ TEST_GROUP(apfp, {
     });
 
     TEST_CASE(pi * pi, {
+            // From arblib pi = 45471447111470790535029367847216232831674172166049053744846518889742361808273 * 2^-253
             apfp_set_mant(apfp_test[0], 3, 0x6487ED5110B4611A);
             apfp_set_mant(apfp_test[0], 2, 0x62633145C06E0E68);
             apfp_set_mant(apfp_test[0], 1, 0x948127044533E63A);
@@ -629,12 +632,10 @@ TEST_GROUP(apfp, {
 
             apfp_print_msg("pi is:", apfp_test[0]);
 
-            // Have to reinit result holder
-            apfp_free(apfp_test[2]);
-            apfp_init(apfp_test[2], 512);
             apfp_mul(apfp_test[2], apfp_test[1], apfp_test[0]);
 
             apfp_print_msg("pi * pi =", apfp_test[2]);
+            // From arblib pi * pi = 35713191048373364904601842448597373027278304077961391237116093776389617195847 * 2^-251
             ASSERT_EQUAL_L(apfp_test[2]->exp, -506l);
             ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 7), 0x277A79937C8BBCB4llu);
             ASSERT_EQUAL_UL(apint_getlimb(apfp_test[2]->mant, 6), 0x95B89B36602306B1llu);

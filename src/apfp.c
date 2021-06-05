@@ -187,14 +187,14 @@ bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 bool apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     x->exp = a->exp + b->exp;
-    int is_exact = apint_mul(x->mant, a->mant, b->mant);
+    apint_mul(x->mant, a->mant, b->mant);
     if(a->mant->sign == b->mant->sign)
     {
-        x->mant->sign = a->mant->sign;
+        apfp_set_pos(x);
     }
     else
     {
-        x->mant->sign = -1;
+        apfp_set_neg(x);
     }
 
     //TODO: move back to left align code is left
