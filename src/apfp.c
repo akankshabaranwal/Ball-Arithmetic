@@ -100,7 +100,7 @@ static inline bool adjust_alignment(apfp_ptr x)
     if (overflow > MID_POS_BITWISE(x))
     {
         overflow -= MID_POS_BITWISE(x);
-        is_exact = apint_shiftr(x->mant, overflow);
+        is_exact = !apint_shiftr(x->mant, overflow);
         x->exp += (apfp_exp_t) overflow;
     }
     else if (overflow < MID_POS_BITWISE(x))
@@ -177,7 +177,7 @@ bool apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     x->exp = a->exp + b->exp;
     apint_mul(x->mant, a->mant, b->mant);
-    adjust_alignment(x);
+    bool is_exact = adjust_alignment(x);
 
     if(a->mant->sign == b->mant->sign)
     {
@@ -188,5 +188,5 @@ bool apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
         apfp_set_neg(x);
     }
 
-    return ;
+    return is_exact;
 }

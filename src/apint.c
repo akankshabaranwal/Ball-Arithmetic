@@ -128,7 +128,7 @@ bool apint_shiftr(apint_ptr x, unsigned int shift)
     }
 
     if (!shift) return did_shift;
-    did_shift = __builtin_ctzl(x->limbs[0]) >= shift;
+    did_shift |= __builtin_ctzl(x->limbs[0]) >= shift;
 
     for (int i = 0; i < x->length - 1; ++i) {
         x->limbs[i] = (x->limbs[i] >> shift) + (x->limbs[i+1] << (APINT_LIMB_BITS - shift));
@@ -136,6 +136,39 @@ bool apint_shiftr(apint_ptr x, unsigned int shift)
 
     x->limbs[x->length - 1] >>= shift;
     return did_shift;
+}
+
+bool apint_shiftr_copy(apint_ptr dest, apint_srcptr src, unsigned int shift)
+{
+    assert(src->limbs);
+    assert(dest->limbs);
+    assert(dst->length >= src->length);
+
+    if (!shift) return false;
+
+    uint full_limbs_shifted = shift / APINT_LIMB_BITS;
+    shift -= full_limbs_shifted * APINT_LIMB_BITS;
+
+    bool did_shift = false;
+
+    //printf("shift is %d \n", shift);
+    for (int i = 0; i < src->length; ++i) {
+        if (i + full_limbs_shifted < src->length) {
+            if (i == 0) {
+                for (int j = 0; j < full_limbs_shifted; ++j) {
+                    if (src->limbs[j] != 0) did_shift = true;
+                }
+            }
+            dest->limbs[i] = (src->limbs[i+full_limbs_shifted] >> shift) + (src->limbs[i+full_limbs_shifted+1] << (APINT_LIMB_BITS - shift));
+            //printf("assign full limb here %d \n", full_limbs_shifted);
+        }
+        else {
+            dest->limbs[i] = 0;
+        }
+    }
+
+    dest->limbs[src->length - 1] = src->limbs[src->length-1] >> shift;
+    return did_shift || __builtin_ctzl(src->limbs[0]) >= shift;
 }
 
 void apint_shiftl(apint_ptr x, unsigned int shift){

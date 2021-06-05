@@ -3,12 +3,12 @@
 #include <apbar.h>
 
 static const int NUM_RUNS = 100000;
-static const int PRECISION = 131072;
+static const int PRECISION = 4096;
 
 int main()
 {
     char profile_func;
-    profile_func = 'a'; //select the function to profile here.
+    profile_func = 'm'; //select the function to profile here.
     // a is addition
     // s is subtraction
     // m is multiplication
@@ -49,8 +49,8 @@ int main()
             }
             case 'm':
             {
-                apbar_mul(apbar_test[2], apbar_test[1], apbar_test[0], 128);
-                apbar_mul(apbar_test[0], apbar_test[1], apbar_test[2], 128);
+                apbar_mul(apbar_test[2], apbar_test[1], apbar_test[0], PRECISION);
+                apbar_mul(apbar_test[0], apbar_test[1], apbar_test[2], PRECISION);
                 break;
             }
         }

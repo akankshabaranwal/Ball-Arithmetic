@@ -53,7 +53,3 @@ if ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
     target_compile_options(profile-apbar PUBLIC "-g" "-pg")
     target_link_libraries(profile-apbar flint gmp arb)
 endif()
-
-
-
-

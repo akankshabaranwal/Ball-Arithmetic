@@ -57,6 +57,22 @@ TEST_GROUP(apint, {
             ASSERT_EQUAL_UL(apint_test[0]->limbs[0], 1llu);
     });
 
+    TEST_CASE(shift right and copy less than 64 bits, {
+            apint_setlimb(apint_test[0], 0, 0);
+            apint_setlimb(apint_test[0], 1, 1);
+            apint_shiftr_copy(apint_test[1], apint_test[0], 1);
+
+            ASSERT_EQUAL_UL(apint_test[1]->limbs[0], 0x8000000000000000llu);
+    });
+
+    TEST_CASE(shift right and copy by more than 64 bits, {
+            apint_setlimb(apint_test[0], 0, 0);
+            apint_setlimb(apint_test[0], 1, 2);
+            apint_shiftr_copy(apint_test[1], apint_test[0], 65);
+
+            ASSERT_EQUAL_UL(apint_test[1]->limbs[0], 1llu);
+    });
+
     TEST_CASE( addition with positive numbers, {
             apint_setlimb(apint_test[0], 0, 1);
             apint_setlimb(apint_test[0], 1, 1);
@@ -846,6 +862,33 @@ TEST_GROUP(ball_arithmetic, {
             apbar_set_rad(apbar_test[1], 536870912, -156);
 
             apbar_mul(apbar_test[2], apbar_test[1], apbar_test[0], 128);
+
+            apbar_print_msg("pi is:     ", apbar_test[0]);
+            apbar_print_msg("pi * pi is:", apbar_test[2]);
+
+            // From arblib mid point needs to be: 9.86960440109
+            ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 1), 0x9de9e64df22ef2d2llu);
+            ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 0), 0x56e26cd9808c1ac7llu);
+            ASSERT_EQUAL_L(apbar_get_midpt_exp(apbar_test[2]), -124l);
+
+            // From arblib radius is: 958528343 * 2^-153
+            printf("Please verify rad is within limit: %llu * 2^%ld\n", apbar_test[2]->rad->mant, apbar_test[2]->rad->exp);
+            // ASSERT_EQUAL_UL(apbar_test[2]->rad->mant, 958528343llu);
+            // ASSERT_EQUAL_L(apbar_test[2]->rad->exp, -153l);
+    });
+
+    TEST_CASE(mul pi with pi no exp, {
+            apbar_set_midpt_mant(apbar_test[0], 0, 0xC4C6628B80DC1CD1);
+            apbar_set_midpt_mant(apbar_test[0], 1, 0xC90FDAA22168C234);
+            apbar_set_midpt_exp(apbar_test[0], -126);
+            apbar_set_rad(apbar_test[0], 536870912, -156);
+
+            apbar_set_midpt_mant(apbar_test[1], 0, 0xC4C6628B80DC1CD1);
+            apbar_set_midpt_mant(apbar_test[1], 1, 0xC90FDAA22168C234);
+            apbar_set_midpt_exp(apbar_test[1], -126);
+            apbar_set_rad(apbar_test[1], 536870912, -156);
+
+            apbar_mul_no_rad_exp(apbar_test[2], apbar_test[1], apbar_test[0], 128);
 
             apbar_print_msg("pi is:     ", apbar_test[0]);
             apbar_print_msg("pi * pi is:", apbar_test[2]);
