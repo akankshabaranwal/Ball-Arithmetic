@@ -243,7 +243,7 @@ static inline uint8_t _sub_unsigned_midpt(apbar_ptr x, apbar_srcptr a, apbar_src
 
     for (apbar_size_t i = 0; i <= APBAR_LOWER(x); i++)
     {
-        // To-do @Kouroche: Scalar replacement? Multiple array access on `x->midpt_mant[i]'.
+        // To-do: Scalar replacement? Multiple array access on `x->midpt_mant[i]'.
         underflow = _subborrow_u64(underflow, a->midpt_mant[i], b->midpt_mant[i + offset] >> shift, &x->midpt_mant[i]);
 
         apbar_limb_t result = x->midpt_mant[i];
@@ -282,7 +282,7 @@ static inline uint8_t _sub_unsigned_midpt(apbar_ptr x, apbar_srcptr a, apbar_src
             {
                 int j = i - offset;
 
-                // To-do @Kouroche: Possible simplification here ?
+                // To-do: Possible simplification here ?
                 if (j > 0)
                 {
                     x->midpt_mant[i] = (x->midpt_mant[j] << leading_zeros) |
@@ -313,7 +313,7 @@ static inline void apbar_add(apbar_ptr x, apbar_srcptr a, apbar_srcptr b, apbar_
     if (a->sign == b->sign)
     {
         x->sign = a->sign;
-        is_inexact = _add_unsigned_midpt(x, a, b); // To-do @Kouroche: Perhaps mantissa alignment is also inexactitude.
+        is_inexact = _add_unsigned_midpt(x, a, b); // To-do: Perhaps mantissa alignment is also inexactitude.
     }
     else
     {
@@ -325,7 +325,7 @@ static inline void apbar_add(apbar_ptr x, apbar_srcptr a, apbar_srcptr b, apbar_
             flipped = _sub_unsigned_midpt(x, b, a);
 
         x->sign = (flipped) ? !a->sign : a->sign;
-        is_inexact = flipped; // To-do @Kouroche: Perhaps underflow doesn't signify inexactitude.
+        is_inexact = flipped; // To-do: Perhaps underflow doesn't signify inexactitude.
     }
 
     // Update the radius (if is_inexact/overflow, add error bound below).
@@ -371,7 +371,7 @@ static inline unsigned long long _mul_unsigned_midpt(apbar_ptr x, apbar_srcptr a
     }
 
     // Leading 1 is always going to land in the last limb: Right shift so it becomes the MSB of lower-half.
-    // To-do @Kouroche: `leading_zeros' can only be 1 or 0, possible optimization?
+    // To-do: `leading_zeros' can only be 1 or 0, possible optimization?
     unsigned long long leading_zeros = _lzcnt_u64(x->midpt_mant[x->midpt_size - 1]);
     for (apbar_size_t i = 0; i < x->midpt_size; i++)
     {
