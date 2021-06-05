@@ -130,7 +130,6 @@ bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     // We could easily combine shift and copy here
     apint_copy(x->mant, b->mant);
     apint_shiftr(x->mant, factor); // right shift mantissa of b
-    x->mant->sign = b->mant->sign;
 
     // Add mantissa, shift by carry and update exponent
     apint_add(x->mant, x->mant, a->mant);
@@ -159,28 +158,17 @@ bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     apfp_exp_t factor = a->exp - b->exp;
     apint_copy(x->mant, b->mant);
     apint_shiftr(x->mant, factor);
-
-    if(x->mant->sign == b->mant->sign ) // if both have the same sign then simple add
+    apint_sub(x->mant, a->mant, x->mant); //x->mant->sign is set here
+    if(swapped)
     {
-        // Subtract the two mantissas
-        apint_sub(x->mant, a->mant, x->mant); //x->mant->sign is set here
-        if(swapped)
-        {
             x->mant->sign = -x->mant->sign;
-        }
-    }
-    else
-    {
-        // Add the two mantissas
-        x->mant->sign = a->mant->sign;
-        apint_plus(x->mant, x->mant, a->mant);
     }
     x->exp = a->exp;
     int middlelimb = (x->mant->length/2);
     if((apint_getlimb(x->mant,middlelimb)&0x01)!=0)
         is_exact = false;
-    adjust_alignment(x);
 
+    adjust_alignment(x);
     return is_exact;
 }
 

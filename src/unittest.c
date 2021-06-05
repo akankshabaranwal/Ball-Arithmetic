@@ -780,8 +780,8 @@ TEST_GROUP(ball_arithmetic, {
             ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 0), 0xC4C6628B80DC1CD2llu);
             ASSERT_EQUAL_L(apbar_get_midpt_exp(apbar_test[2]), -126l);
 
-            ASSERT_EQUAL_UL(apbar_test[2]->rad->mant, 2llu);
-            ASSERT_EQUAL_L(apbar_test[2]->rad->exp, -126l);
+            ASSERT_EQUAL_UL(apbar_test[2]->rad->mant, 1610612736llu);
+            ASSERT_EQUAL_L(apbar_test[2]->rad->exp, -156l);
             //printf("\n done with apbar subtract");
     });
 
