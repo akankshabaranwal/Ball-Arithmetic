@@ -171,7 +171,7 @@ static inline void apbar2_copy(apbar2_ptr dst, apbar2_srcptr src)
 static inline double _rad_error_bound(apbar2_srcptr x, apbar2_size_t prec)
 {
     int p = prec;
-    double eta = ldexp(1.0, 2 - sizeof(apbar2_exp_t) * 8 - p);
+    double eta = ldexp(1.0, 2 - (1 << sizeof(apbar2_exp_t) * 8) - p);
     double eps = ldexp(1.0, -p);
     return (fabs(apbar2_get_d(x)) + eta) * eps;
 }
@@ -195,9 +195,19 @@ static inline uint8_t _add_unsigned_midpt(apbar2_ptr x, apbar2_srcptr a, apbar2_
     shift -= offset * APBAR2_LIMB_BITS;
 
     uint8_t overflow = 0;
+
+    apbar2_limb_t b_mant0;
+    apbar2_limb_t b_mant1 = b->midpt_mant[offset];
+
     for (apbar2_size_t i = 0; i <= APBAR2_LOWER(x); i++)
     {
-        overflow = _addcarryx_u64(overflow, a->midpt_mant[i], b->midpt_mant[i + offset] >> shift, &x->midpt_mant[i]);
+        b_mant0 = b_mant1;
+        b_mant1 = b->midpt_mant[i + offset + 1];
+
+        unsigned long long lower = b_mant0 >> shift;
+        unsigned long long upper = shift ? b_mant1 << (APBAR2_LIMB_BITS - shift) : 0ULL;
+
+        overflow = _addcarryx_u64(overflow, a->midpt_mant[i], upper | lower, &x->midpt_mant[i]);
     }
 
     // Update exponent in `x' accordingly.
@@ -206,12 +216,17 @@ static inline uint8_t _add_unsigned_midpt(apbar2_ptr x, apbar2_srcptr a, apbar2_
     // Shift by one the case of an addition overflow.
     if (overflow)
     {
+        apbar2_limb_t x_mant0;
+        apbar2_limb_t x_mant1 = x->midpt_mant[offset];
+
         for (apbar2_size_t i = 0; i < APBAR2_LOWER(x); i++)
         {
-            x->midpt_mant[i] = (x->midpt_mant[i + 1] << (APBAR2_LIMB_BITS - 1)) | (x->midpt_mant[i] >> 1u);
+            x_mant0 = x_mant1;
+            x_mant1 = x->midpt_mant[offset + 1];
+
+            x->midpt_mant[i] = (x_mant1 << (APBAR2_LIMB_BITS - 1)) | (x_mant0 >> 1u);
         }
-        x->midpt_mant[APBAR2_LOWER(x)] >>= 1;
-        x->midpt_mant[APBAR2_LOWER(x)] |= APBAR2_LIMB_MSBMASK;
+        x->midpt_mant[APBAR2_LOWER(x)] = (x->midpt_mant[APBAR2_LOWER(x)] >> 1) | APBAR2_LIMB_MSBMASK;
     }
 
     return overflow;
@@ -223,10 +238,13 @@ static inline uint8_t _sub_unsigned_midpt(apbar2_ptr x, apbar2_srcptr a, apbar2_
     assert(x->midpt_size == a->midpt_size);
     assert(x->midpt_size == b->midpt_size);
 
+    uint8_t swapped = 0;
+
     // After swap, `a' is guaranteed to have largest exponent.
     if (b->midpt_exp > a->midpt_exp)
     {
         apbar2_srcptr t = a; a = b; b = t;
+        swapped = 1;
     }
 
     // Subtract mantissas taking into account exponent difference.
@@ -237,11 +255,19 @@ static inline uint8_t _sub_unsigned_midpt(apbar2_ptr x, apbar2_srcptr a, apbar2_
     uint8_t underflow = 0;
     int last_non_zero = -1;
 
+    apbar2_limb_t b_mant0;
+    apbar2_limb_t b_mant1 = b->midpt_mant[offset];
+
     for (apbar2_size_t i = 0; i <= APBAR2_LOWER(x); i++)
     {
-        // To-do: Scalar replacement? Multiple array access on `x->midpt_mant[i]'.
-        underflow = _subborrow_u64(underflow, a->midpt_mant[i], b->midpt_mant[i + offset] >> shift, &x->midpt_mant[i]);
+        b_mant0 = b_mant1;
+        b_mant1 = b->midpt_mant[i + offset + 1];
 
+        unsigned long long lower = b_mant0 >> shift;
+        unsigned long long upper = shift ? b_mant1 << (APBAR2_LIMB_BITS - shift) : 0ULL;
+
+        // To-do: Scalar replacement? Multiple array access on `x->midpt_mant[i]'.
+        underflow = _subborrow_u64(underflow, a->midpt_mant[i], upper | lower, &x->midpt_mant[i]);
         apbar2_limb_t result = x->midpt_mant[i];
         if (result)
         {
@@ -274,19 +300,19 @@ static inline uint8_t _sub_unsigned_midpt(apbar2_ptr x, apbar2_srcptr a, apbar2_
 
         if (offset || leading_zeros)
         {
+            apbar2_limb_t x_mant0;
+            apbar2_limb_t x_mant1 = x->midpt_mant[APBAR2_LOWER(x) - offset];
+
             for (apbar2_ssize_t i = APBAR2_LOWER(x); i >= 0; i--)
             {
                 int j = i - offset;
 
                 // To-do: Possible simplification here ?
-                if (j > 0)
-                {
-                    x->midpt_mant[i] = (x->midpt_mant[j] << leading_zeros) |
-                        (x->midpt_mant[j - 1] >> (APBAR2_LIMB_BITS - leading_zeros));
-                }
-                else if (j == 0)
-                {
-                    x->midpt_mant[i] = (x->midpt_mant[0] << leading_zeros);
+                if (j >= 0) {
+                    x_mant0 = x_mant1;
+                    x_mant1 = (j) ? x->midpt_mant[j - 1] : 0ULL;
+
+                    x->midpt_mant[i] = (x_mant0 << leading_zeros) | (x_mant1 >> (APBAR2_LIMB_BITS - leading_zeros));
                 }
                 else
                 {
@@ -299,7 +325,7 @@ static inline uint8_t _sub_unsigned_midpt(apbar2_ptr x, apbar2_srcptr a, apbar2_
     }
 
     // A final underflow signifies output of *unsigned* subtraction is negative.
-    return underflow;
+    return underflow ^ swapped;
 }
 
 static inline void apbar2_add(apbar2_ptr x, apbar2_srcptr a, apbar2_srcptr b, apbar2_size_t prec)
@@ -316,9 +342,13 @@ static inline void apbar2_add(apbar2_ptr x, apbar2_srcptr a, apbar2_srcptr b, ap
         uint8_t flipped;
 
         if (b->sign)
+        {
             flipped = _sub_unsigned_midpt(x, a, b);
+        }
         else
+        {
             flipped = _sub_unsigned_midpt(x, b, a);
+        }
 
         x->sign = (flipped) ? !a->sign : a->sign;
         is_inexact = flipped; // To-do: Perhaps underflow doesn't signify inexactitude.
@@ -346,16 +376,14 @@ static inline unsigned long long _mul_unsigned_midpt(apbar2_ptr x, apbar2_srcptr
 
     unsigned long long overflow;
 
-    int last_non_zero = -1;
-
     for (apbar2_size_t i = 0; i <= APBAR2_UPPER(b); i++)
     {
         overflow = 0;
         for (apbar2_size_t j = 0; j <= APBAR2_UPPER(a); j++)
         {
             unsigned char carry;
-            carry = _addcarryx_u64(carry, x->midpt_mant[i + j], overflow, &x->midpt_mant[i + j]);
-            carry |= _addcarryx_u64(carry, x->midpt_mant[i + j],
+            carry = _addcarryx_u64(0, x->midpt_mant[i + j], overflow, &x->midpt_mant[i + j]);
+            carry |= _addcarryx_u64(0, x->midpt_mant[i + j],
                 _mulx_u64(a->midpt_mant[j], b->midpt_mant[i], &overflow), &x->midpt_mant[i + j]);
 
             // Propagate carry in higher-up limbs
@@ -367,20 +395,23 @@ static inline unsigned long long _mul_unsigned_midpt(apbar2_ptr x, apbar2_srcptr
     }
 
     // Leading 1 is always going to land in the last limb: Right shift so it becomes the MSB of lower-half.
-    // To-do: `leading_zeros' can only be 1 or 0, possible optimization?
-    unsigned long long leading_zeros = _lzcnt_u64(x->midpt_mant[x->midpt_size - 1]);
+    // To-do: `leading_zero' can only be 1 or 0, possible optimization?
+    unsigned long long leading_zero = _lzcnt_u64(x->midpt_mant[x->midpt_size - 1]);
+
     for (apbar2_size_t i = 0; i < x->midpt_size; i++)
     {
         if (i < APBAR2_UPPER(x))
         {
-            x->midpt_mant[i] = (x->midpt_mant[APBAR2_UPPER(x) + i] << leading_zeros) |
-                (x->midpt_mant[APBAR2_UPPER(x) + i + 1] >> (APBAR2_LIMB_BITS - leading_zeros));
+            unsigned long long lower = x->midpt_mant[APBAR2_UPPER(x) + i] << leading_zero;
+            unsigned long long upper = (leading_zero) ?
+                (x->midpt_mant[APBAR2_UPPER(x) + i + 1] >> (APBAR2_LIMB_BITS - leading_zero)) : 0ULL;
+            x->midpt_mant[i] = upper | lower;
         } else {
             x->midpt_mant[i] = 0ull;
         }
     }
 
-    x->midpt_exp = a->midpt_exp + b->midpt_exp + !leading_zeros;
+    x->midpt_exp = a->midpt_exp + b->midpt_exp + !leading_zero;
 
     return overflow;
 }

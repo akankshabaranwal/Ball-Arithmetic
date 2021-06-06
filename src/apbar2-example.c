@@ -2,7 +2,7 @@
 
 #include "apbar2.h"
 
-const unsigned int prec = 128u;
+const unsigned int prec = 256u;
 
 int main(int argc, char const *argv[])
 {
@@ -15,7 +15,7 @@ int main(int argc, char const *argv[])
     apbar2_set_d(a, M_PI);
     apbar2_set_d(b, M_E);
 
-    apbar2_add(x, a, b, prec);
+    apbar2_mul(x, a, b, prec);
 
     printf("a = ");
     apbar2_print(a);
@@ -25,7 +25,7 @@ int main(int argc, char const *argv[])
     apbar2_print(b);
     printf(" (b = %lf)\n", apbar2_get_d(b));
 
-    printf("x = a + b\n");
+    printf("x = a * b\n");
 
     printf("x = ");
     apbar2_print(x);

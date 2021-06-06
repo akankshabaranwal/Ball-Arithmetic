@@ -2,16 +2,17 @@
 #include <apfp.h>
 #include <apbar.h>
 
-static const int NUM_RUNS = 100000;
+static const int NUM_RUNS = 10000;
 static const int PRECISION = 4096;
 
 int main()
 {
     char profile_func;
-    profile_func = 'o'; //select the function to profile here.
+    profile_func = 'a'; //select the function to profile here.
     // a is addition
     // s is subtraction
     // m is multiplication
+    // o is optimized apbar_mul radius
 
     apbar_t apbar_test[3];
     apbar_init(apbar_test[0], PRECISION);
@@ -54,7 +55,6 @@ int main()
                 break;
             }
             case 'o': {
-
                 apbar_mul_no_rad_exp(apbar_test[2], apbar_test[1], apbar_test[0], PRECISION);
                 apbar_mul_no_rad_exp(apbar_test[0], apbar_test[1], apbar_test[2], PRECISION);
                 break;

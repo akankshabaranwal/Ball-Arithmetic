@@ -15,6 +15,8 @@ if ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
     message(WARNING "Profiling flags are set and profile target added.")
 endif()
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
+
 include_directories(include)
 
 add_executable(arblib-test
