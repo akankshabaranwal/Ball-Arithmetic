@@ -73,7 +73,7 @@ void apint_copy(apint_ptr dst, apint_srcptr src)
 
 // detect the position of first 1
 // naive method
-size_t apint_detectfirst1_base(apint_ptr x)
+size_t apint_detectfirst1(apint_ptr x)
 {
     //Iterate over the limbs
     size_t i;
@@ -98,67 +98,28 @@ size_t apint_detectfirst1_base(apint_ptr x)
 }
 
 // Optimization 1
-size_t apint_detectfirst1(apint_ptr x)
+size_t apint_detectfirst1_optim1(apint_ptr x)
 {
     //Iterate over the limbs
     size_t i;
     size_t pos;
-    apint_limb_t number, numbercopy;
+    apint_limb_t number;
     pos = 0;
     for(i = x->length - 1; i >= 0; i--)
     {
         if(x->limbs[i] > 0)
         {
             number = x->limbs[i];
-            numbercopy =number;
             break;
         }
     }
     pos = APINT_LIMB_BITS * (x->length-i-1);
     int xsize = x->length * APINT_LIMB_BITS;
-    int bitpos = __builtin_clzll(numbercopy);
+    int bitpos = __builtin_clzll(number);
     pos = pos + bitpos;
     return (xsize-pos);
 }
 
-// right shift
-bool apint_shiftr_base(apint_ptr x, unsigned int shift)
-{
-    assert(x->limbs);
-
-    if (!shift) return false;
-
-    uint full_limbs_shifted = shift / APINT_LIMB_BITS;
-    shift -= full_limbs_shifted * APINT_LIMB_BITS;
-
-    bool did_shift = false;
-
-    //printf("shift is %d \n", shift);
-    for (int i = 0; i < x->length; ++i) {
-        if (i + full_limbs_shifted < x->length) {
-            if (i == 0) {
-                for (int j = 0; j < full_limbs_shifted; ++j) {
-                    if (x->limbs[j] != 0) did_shift = true;
-                }
-            }
-            x->limbs[i] = x->limbs[i+full_limbs_shifted];
-            //printf("assign full limb here %d \n", full_limbs_shifted);
-        }
-        else {
-            x->limbs[i] = 0;
-        }
-    }
-
-    if (!shift) return did_shift;
-    did_shift |= __builtin_ctzl(x->limbs[0]) >= shift;
-
-    for (int i = 0; i < x->length - 1; ++i) {
-        x->limbs[i] = (x->limbs[i] >> shift) + (x->limbs[i+1] << (APINT_LIMB_BITS - shift));
-    }
-
-    x->limbs[x->length - 1] >>= shift;
-    return did_shift;
-}
 
 bool apint_shiftr_copy(apint_ptr dest, apint_srcptr src, unsigned int shift)
 {
@@ -173,7 +134,6 @@ bool apint_shiftr_copy(apint_ptr dest, apint_srcptr src, unsigned int shift)
 
     bool did_shift = false;
 
-    //printf("shift is %d \n", shift);
     for (int i = 0; i < src->length; ++i) {
         if (i + full_limbs_shifted < src->length) {
             if (i == 0) {
@@ -182,7 +142,6 @@ bool apint_shiftr_copy(apint_ptr dest, apint_srcptr src, unsigned int shift)
                 }
             }
             dest->limbs[i] = (src->limbs[i+full_limbs_shifted] >> shift) + (src->limbs[i+full_limbs_shifted+1] << (APINT_LIMB_BITS - shift));
-            //printf("assign full limb here %d \n", full_limbs_shifted);
         }
         else {
             dest->limbs[i] = 0;
@@ -193,8 +152,9 @@ bool apint_shiftr_copy(apint_ptr dest, apint_srcptr src, unsigned int shift)
     return did_shift || __builtin_ctzl(src->limbs[0]) >= shift;
 }
 
+
 //First optimization. Removed branching. Reorganized function calls.
-bool apint_shiftr_optim1(apint_ptr x, unsigned int shift)
+bool apint_shiftr(apint_ptr x, unsigned int shift)
 {
     assert(x->limbs);
 
@@ -234,44 +194,10 @@ bool apint_shiftr_optim1(apint_ptr x, unsigned int shift)
 }
 
 //Second optimization. Removing branching.
-bool apint_shiftr_optim2(apint_ptr x, unsigned int shift)
-{
-    assert(x->limbs);
-
-    if (!shift) return false;
-
-    int full_limbs_shifted = shift / APINT_LIMB_BITS;
-    shift -= full_limbs_shifted * APINT_LIMB_BITS;
-
-    bool did_shift = false;
-
-    if(full_limbs_shifted<x->length)
-    {
-        for (int j = 0; j < full_limbs_shifted; ++j)
-        {
-            did_shift = did_shift|x->limbs[j];
-        }
-    }
-
-    for (int i = full_limbs_shifted; i  < x->length; i++)
-    {
-        x->limbs[i-full_limbs_shifted] = x->limbs[i];
-    }
-
-    if (!shift) return did_shift;
-    did_shift = __builtin_ctzl(x->limbs[0]) >= shift;
-
-    for (int i = 0; i < x->length - 1; ++i) {
-        x->limbs[i] = (x->limbs[i] >> shift) + (x->limbs[i+1] << (APINT_LIMB_BITS - shift));
-    }
-
-    x->limbs[x->length - 1] >>= shift;
-    return did_shift;
-}
 
 // Third optimization. Unrolling, considering mid pt, removing unnecessary calls which don't break unit tests?
 // Someone can check if its okay to do this.
-bool apint_shiftr(apint_ptr x, unsigned int shift)
+bool apint_shiftr_optim1(apint_ptr x, unsigned int shift)
 {
     assert(x->limbs);
 
@@ -301,7 +227,7 @@ bool apint_shiftr(apint_ptr x, unsigned int shift)
     return did_shift;
 }
 
-void apint_shiftl_base(apint_ptr x, unsigned int shift){
+void apint_shiftl(apint_ptr x, unsigned int shift){
     assert(x->limbs);
     if (shift == 0) return;
 
@@ -350,7 +276,7 @@ void apint_shiftl_optim1(apint_ptr x, unsigned int shift){
 }
 
 // Optimization 2. Loop unrolling. Type casting to same data type. Unroll more
-void apint_shiftl(apint_ptr x, unsigned int shift){
+void apint_shiftl_optim2(apint_ptr x, unsigned int shift){
     assert(x->limbs);
     if (shift == 0) return;
 
@@ -431,7 +357,7 @@ char apint_plus_portable(apint_ptr x, apint_srcptr a, apint_srcptr b)
     return carry;
 }
 
-unsigned char apint_plus_base(apint_ptr x, apint_srcptr a, apint_srcptr b)
+unsigned char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length);
@@ -446,7 +372,7 @@ unsigned char apint_plus_base(apint_ptr x, apint_srcptr a, apint_srcptr b)
 }
 
 //Optimization 1. Just midpt
-unsigned char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
+unsigned char apint_plus_optim1(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length);
@@ -485,6 +411,54 @@ unsigned char apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
         for (apint_size_t i = 0; i < a->length; i++)
         {
             borrow = _subborrow_u64(borrow, b->limbs[i], a->limbs[i], &x->limbs[i]);
+        }
+    }
+    return borrow;
+}
+
+unsigned char apint_minus_optim1(apint_ptr x, apint_srcptr a, apint_srcptr b)
+{
+    assert(x->limbs && a->limbs && b->limbs);
+    assert(a->length == b->length); // only handle same lengths for now
+    assert(a->length <= x->length);
+    unsigned char borrow = 0;
+    int midlength = (b->length/2)+1;
+    int is_greater1,is_greater2,is_greater3,is_greater4 ;
+    int is_greater=0;
+    unsigned char borrow1 = 0;
+    unsigned char borrow2 = 0;
+    unsigned char borrow3 = 0;
+    unsigned char borrow4 = 0;
+    for (int i = midlength; i >= 0; i-=4)
+    {
+        is_greater1=(a->limbs[i] > b->limbs[i]);
+        is_greater2=(a->limbs[i-1] > b->limbs[i-1]);
+        is_greater3=(a->limbs[i-2] > b->limbs[i-2]);
+        is_greater4=(a->limbs[i-3] > b->limbs[i-3]);
+        is_greater = is_greater | is_greater1|is_greater2|is_greater3|is_greater4;
+    }
+    if (is_greater) // a > b so a-b
+    {
+        //printf("Yes is greater\n");
+        x->sign = a->sign;
+        for (apint_size_t i = 0; i < midlength; i+=4)
+        {
+            borrow1 = _subborrow_u64(borrow4, a->limbs[i], b->limbs[i], &x->limbs[i]);
+            borrow2 = _subborrow_u64(borrow1, a->limbs[i+1], b->limbs[i+1], &x->limbs[i+1]);
+            borrow3 = _subborrow_u64(borrow2, a->limbs[i+2], b->limbs[i+2], &x->limbs[i+2]);
+            borrow4 = _subborrow_u64(borrow3, a->limbs[i+3], b->limbs[i+3], &x->limbs[i+3]);
+        }
+    }
+    else // b > a so -(b-a)
+    {
+        //printf("No swapped it\n");
+        x->sign = -b->sign;
+        for (apint_size_t i = 0; i < midlength; i+=4)
+        {
+            borrow1 = _subborrow_u64(borrow4, b->limbs[i], a->limbs[i], &x->limbs[i]);
+            borrow2 = _subborrow_u64(borrow1, b->limbs[i+1], a->limbs[i+1], &x->limbs[i+1]);
+            borrow3 = _subborrow_u64(borrow2, b->limbs[i+2], a->limbs[i+2], &x->limbs[i+2]);
+            borrow4 = _subborrow_u64(borrow3, b->limbs[i+3], a->limbs[i+3], &x->limbs[i+3]);
         }
     }
     return borrow;
