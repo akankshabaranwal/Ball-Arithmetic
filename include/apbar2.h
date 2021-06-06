@@ -398,13 +398,18 @@ static inline unsigned long long _mul_unsigned_midpt(apbar2_ptr x, apbar2_srcptr
     // To-do: `leading_zero' can only be 1 or 0, possible optimization?
     unsigned long long leading_zero = _lzcnt_u64(x->midpt_mant[x->midpt_size - 1]);
 
+    apbar2_limb_t x_mant0;
+    apbar2_limb_t x_mant1 = x->midpt_mant[APBAR2_UPPER(x)];
+
     for (apbar2_size_t i = 0; i < x->midpt_size; i++)
     {
         if (i < APBAR2_UPPER(x))
         {
-            unsigned long long lower = x->midpt_mant[APBAR2_UPPER(x) + i] << leading_zero;
-            unsigned long long upper = (leading_zero) ?
-                (x->midpt_mant[APBAR2_UPPER(x) + i + 1] >> (APBAR2_LIMB_BITS - leading_zero)) : 0ULL;
+            x_mant0 = x_mant1;
+            x_mant1 = x->midpt_mant[APBAR2_UPPER(x) + i + 1];
+
+            unsigned long long lower = x_mant0 << leading_zero;
+            unsigned long long upper = (leading_zero) ? (x_mant1 >> (APBAR2_LIMB_BITS - leading_zero)) : 0ULL;
             x->midpt_mant[i] = upper | lower;
         } else {
             x->midpt_mant[i] = 0ull;
