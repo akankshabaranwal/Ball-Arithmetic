@@ -57,6 +57,22 @@ TEST_GROUP(apint, {
             ASSERT_EQUAL_UL(apint_test[0]->limbs[0], 1llu);
     });
 
+    TEST_CASE(shift right and copy less than 64 bits, {
+            apint_setlimb(apint_test[0], 0, 0);
+            apint_setlimb(apint_test[0], 1, 1);
+            apint_shiftr_copy(apint_test[1], apint_test[0], 1);
+
+            ASSERT_EQUAL_UL(apint_test[1]->limbs[0], 0x8000000000000000llu);
+    });
+
+    TEST_CASE(shift right and copy by more than 64 bits, {
+            apint_setlimb(apint_test[0], 0, 0);
+            apint_setlimb(apint_test[0], 1, 2);
+            apint_shiftr_copy(apint_test[1], apint_test[0], 65);
+
+            ASSERT_EQUAL_UL(apint_test[1]->limbs[0], 1llu);
+    });
+
     TEST_CASE( addition with positive numbers, {
             apint_setlimb(apint_test[0], 0, 1);
             apint_setlimb(apint_test[0], 1, 1);
@@ -311,6 +327,78 @@ TEST_GROUP(apint, {
             apint_setlimb(apint_test[1], 0, 0x0105DF531D89CD91);
 
             apint_mul(apint_test[2], apint_test[0], apint_test[1]);
+
+            // Calculated with: https://defuse.ca/big-number-calculator.htm
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 0x68906cc684438c21llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 0x8a103ede33e3d523llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 0xe42ca89707ea23aellu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 0xbc5658f0d63b5677llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 4), 0x19a0884094f1cda3llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 5), 0xc2159a8ff834288allu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 6), 0x95b89b36602306b1llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0x277a79937c8bbcb4llu);
+    });
+
+    TEST_CASE(multiply propagate, {
+            apint_setlimb(apint_test[0], 3, 0xffffffffffffffff);
+            apint_setlimb(apint_test[0], 2, 0xffffffffffffffff);
+            apint_setlimb(apint_test[0], 1, 0xffffffffffffffff);
+            apint_setlimb(apint_test[0], 0, 0xffffffffffffffff);
+
+            apint_setlimb(apint_test[1], 3, 0xffffffffffffffff);
+            apint_setlimb(apint_test[1], 2, 0xffffffffffffffff);
+            apint_setlimb(apint_test[1], 1, 0xffffffffffffffff);
+            apint_setlimb(apint_test[1], 0, 0xffffffffffffffff);
+
+            apint_mul(apint_test[2], apint_test[0], apint_test[1]);
+
+            // Calculated with: https://defuse.ca/big-number-calculator.htm
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 0x0000000000000001llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 0llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 0llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 0llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 4), 0xfffffffffffffffellu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 5), 0xffffffffffffffffllu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 6), 0xffffffffffffffffllu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0xffffffffffffffffllu);
+    });
+
+    TEST_CASE(multiply unrolled, {
+            apint_setlimb(apint_test[0], 0, 1);
+            apint_setlimb(apint_test[0], 1, 1);
+            apint_setlimb(apint_test[0], 2, 1);
+            apint_setlimb(apint_test[0], 3, 1);
+
+            apint_setlimb(apint_test[1], 0, 2);
+            apint_setlimb(apint_test[1], 1, 2);
+            apint_setlimb(apint_test[1], 2, 2);
+            apint_setlimb(apint_test[1], 3, 2);
+
+            apint_mul_unroll(apint_test[2], apint_test[0], apint_test[1]);
+
+            // Calculated with: https://defuse.ca/big-number-calculator.htm
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 2llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 4llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 6llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 8llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 4), 6llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 5), 4llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 6), 2llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0llu);
+    });
+
+    TEST_CASE(multiply mantissa of pi with itself unrolled, {
+            apint_setlimb(apint_test[0], 3, 0x6487ED5110B4611A);
+            apint_setlimb(apint_test[0], 2, 0x62633145C06E0E68);
+            apint_setlimb(apint_test[0], 1, 0x948127044533E63A);
+            apint_setlimb(apint_test[0], 0, 0x0105DF531D89CD91);
+
+            apint_setlimb(apint_test[1], 3, 0x6487ED5110B4611A);
+            apint_setlimb(apint_test[1], 2, 0x62633145C06E0E68);
+            apint_setlimb(apint_test[1], 1, 0x948127044533E63A);
+            apint_setlimb(apint_test[1], 0, 0x0105DF531D89CD91);
+
+            apint_mul_unroll(apint_test[2], apint_test[0], apint_test[1]);
 
             // Calculated with: https://defuse.ca/big-number-calculator.htm
             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 0x68906cc684438c21llu);
@@ -852,7 +940,34 @@ TEST_GROUP(ball_arithmetic, {
 
             // From arblib mid point needs to be: 9.86960440109
             ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 1), 0x9de9e64df22ef2d2llu);
-            ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 0), 0x56e26cd9808c1ac7llu);
+            ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 0), 0x56e26cd9808c1ac6llu);
+            ASSERT_EQUAL_L(apbar_get_midpt_exp(apbar_test[2]), -124l);
+
+            // From arblib radius is: 958528343 * 2^-153
+            printf("Please verify rad is within limit: %llu * 2^%ld\n", apbar_test[2]->rad->mant, apbar_test[2]->rad->exp);
+            // ASSERT_EQUAL_UL(apbar_test[2]->rad->mant, 958528343llu);
+            // ASSERT_EQUAL_L(apbar_test[2]->rad->exp, -153l);
+    });
+
+    TEST_CASE(mul pi with pi no exp, {
+            apbar_set_midpt_mant(apbar_test[0], 0, 0xC4C6628B80DC1CD1);
+            apbar_set_midpt_mant(apbar_test[0], 1, 0xC90FDAA22168C234);
+            apbar_set_midpt_exp(apbar_test[0], -126);
+            apbar_set_rad(apbar_test[0], 536870912, -156);
+
+            apbar_set_midpt_mant(apbar_test[1], 0, 0xC4C6628B80DC1CD1);
+            apbar_set_midpt_mant(apbar_test[1], 1, 0xC90FDAA22168C234);
+            apbar_set_midpt_exp(apbar_test[1], -126);
+            apbar_set_rad(apbar_test[1], 536870912, -156);
+
+            apbar_mul_no_rad_exp(apbar_test[2], apbar_test[1], apbar_test[0], 128);
+
+            apbar_print_msg("pi is:     ", apbar_test[0]);
+            apbar_print_msg("pi * pi is:", apbar_test[2]);
+
+            // From arblib mid point needs to be: 9.86960440109
+            ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 1), 0x9de9e64df22ef2d2llu);
+            ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 0), 0x56e26cd9808c1ac6llu);
             ASSERT_EQUAL_L(apbar_get_midpt_exp(apbar_test[2]), -124l);
 
             // From arblib radius is: 958528343 * 2^-153

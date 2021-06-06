@@ -7,6 +7,8 @@
 #include "tsc_x86.h"
 #include "benchmark.h"
 
+#define ITERATE(CODE) for (size_t i = 0; i < BENCHMARK_ITER; i++) (CODE);
+
 static double bench(benchmark_fun_t f, unsigned int prec)
 {
     /* Warm up the cpu. */
@@ -196,6 +198,45 @@ static void int_mul_karatsuba_extend_basecase(uint prec)
     }
 }
 
+apbar_t ball_in1, ball_in2, ball_out;
+
+static void ball_init(uint prec)
+{
+    apbar_init(ball_in1, prec);
+    apbar_init(ball_in2, prec);
+    apbar_init(ball_out, prec);
+
+    size_t limbs = prec / APINT_LIMB_BITS;
+    for (int i = 0; i < limbs; ++i) {
+        apbar_set_midpt_mant(ball_in1, i, urand());
+        apbar_set_midpt_mant(ball_in2, i, urand());
+    }
+
+    apbar_set_midpt_exp(ball_in1, random());
+    apbar_set_midpt_exp(ball_in2, random());
+
+    apbar_set_rad(ball_in1, urand(), random());
+    apbar_set_rad(ball_in2, urand(), random());
+}
+
+static void ball_cleanup(uint prec)
+{
+    apbar_free(ball_in1);
+    apbar_free(ball_in2);
+    apbar_free(ball_out);
+}
+
+static void ball_mull_vanilla(uint prec) {
+    ITERATE(apbar_mul(ball_out, ball_in1, ball_in2, prec));
+}
+
+static void ball_mull_no_exp(uint prec) {
+    ITERATE(apbar_mul_no_rad_exp(ball_out, ball_in1, ball_in2, prec));
+}
+static void ball_mull_unroll(uint prec) {
+    ITERATE(apbar_mul_unroll(ball_out, ball_in1, ball_in2, prec));
+}
+
 BENCHMARK_BEGIN_SUITE()
 BENCHMARK_BEGIN_TABLE(def)
     BENCHMARK_FUNCTION(arblib_add, arblib_init, arblib_deinit, 4.0, 8, 17)
@@ -214,6 +255,12 @@ BENCHMARK_BEGIN_TABLE(int_mul)
     BENCHMARK_FUNCTION(int_mul_karatsuba, int_init, int_cleanup, 1.0, 8, 17)
     BENCHMARK_FUNCTION(int_mul_karatsuba_extend_basecase, int_init, int_cleanup, 1.0, 8, 17)
 BENCHMARK_END_TABLE(int_mul)
+
+BENCHMARK_BEGIN_TABLE(apbar_mul)
+    BENCHMARK_FUNCTION(ball_mull_vanilla, ball_init, ball_cleanup, 1.0, 8, 17)
+    BENCHMARK_FUNCTION(ball_mull_no_exp, ball_init, ball_cleanup, 1.0, 8, 17)
+    BENCHMARK_FUNCTION(ball_mull_unroll, ball_init, ball_cleanup, 1.0, 8, 17)
+BENCHMARK_END_TABLE(apbar_mul)
 BENCHMARK_END_SUITE()
 
 int main(int argc, char const *argv[])
