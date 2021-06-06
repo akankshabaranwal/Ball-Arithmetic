@@ -195,10 +195,18 @@ static inline uint8_t _add_unsigned_midpt(apbar2_ptr x, apbar2_srcptr a, apbar2_
     shift -= offset * APBAR2_LIMB_BITS;
 
     uint8_t overflow = 0;
+
+    apbar2_limb_t b_mant0;
+    apbar2_limb_t b_mant1 = b->midpt_mant[offset];
+
     for (apbar2_size_t i = 0; i <= APBAR2_LOWER(x); i++)
     {
-        unsigned long long lower = b->midpt_mant[i + offset] >> shift;
-        unsigned long long upper = shift ? b->midpt_mant[i + offset + 1] << (APBAR2_LIMB_BITS - shift) : 0ULL;
+        b_mant0 = b_mant1;
+        b_mant1 = b->midpt_mant[i + offset + 1];
+
+        unsigned long long lower = b_mant0 >> shift;
+        unsigned long long upper = shift ? b_mant1 << (APBAR2_LIMB_BITS - shift) : 0ULL;
+
         overflow = _addcarryx_u64(overflow, a->midpt_mant[i], upper | lower, &x->midpt_mant[i]);
     }
 
@@ -208,12 +216,17 @@ static inline uint8_t _add_unsigned_midpt(apbar2_ptr x, apbar2_srcptr a, apbar2_
     // Shift by one the case of an addition overflow.
     if (overflow)
     {
+        apbar2_limb_t x_mant0;
+        apbar2_limb_t x_mant1 = x->midpt_mant[offset];
+
         for (apbar2_size_t i = 0; i < APBAR2_LOWER(x); i++)
         {
-            x->midpt_mant[i] = (x->midpt_mant[i + 1] << (APBAR2_LIMB_BITS - 1)) | (x->midpt_mant[i] >> 1u);
+            x_mant0 = x_mant1;
+            x_mant1 = x->midpt_mant[offset + 1];
+
+            x->midpt_mant[i] = (x_mant1 << (APBAR2_LIMB_BITS - 1)) | (x_mant0 >> 1u);
         }
-        x->midpt_mant[APBAR2_LOWER(x)] >>= 1;
-        x->midpt_mant[APBAR2_LOWER(x)] |= APBAR2_LIMB_MSBMASK;
+        x->midpt_mant[APBAR2_LOWER(x)] = (x->midpt_mant[APBAR2_LOWER(x)] >> 1) | APBAR2_LIMB_MSBMASK;
     }
 
     return overflow;
