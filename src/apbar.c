@@ -203,6 +203,7 @@ void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
     if (!is_exact) add_error_bound(c, p);
 }
 
+//With shiftr optimized
 void apbar_add_optim1(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 {
     assert(a);
