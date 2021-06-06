@@ -47,6 +47,19 @@ add_executable(apbar2-example
 )
 target_link_libraries(apbar2-example flint gmp arb)
 
+add_executable(karatsuba
+    ${BALL_ARITH_SRC}
+    src/karatsuba.c
+)
+target_link_libraries(karatsuba flint gmp arb)
+
+add_executable(profile-karatsuba
+    ${BALL_ARITH_SRC}
+    src/profile_karatsuba.c
+)
+target_compile_options(profile-karatsuba PUBLIC "-g" "-pg")
+target_link_libraries(profile-karatsuba flint gmp arb)
+
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
     add_executable(profile-apbar
         ${BALL_ARITH_SRC}
