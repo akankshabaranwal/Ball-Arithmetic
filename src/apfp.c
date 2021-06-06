@@ -136,18 +136,17 @@ static inline bool adjust_alignment(apfp_ptr x)
     return is_exact;
 }
 
+// Collapsed all functions to 1.
 bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     assert(x->mant->length == a->mant->length);
     assert(x->mant->length == b->mant->length);
 
-    bool swapped = false;
     bool is_exact = true;
     // After swap, `a` is guaranteed to have largest exponent
     if (b->exp > a->exp)
     {
         apfp_srcptr t = a; a = b; b = t;
-        swapped = true;
     }
 
     // Align `b` mantissa to `a` given exponent difference
@@ -188,31 +187,80 @@ bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     }
 
     // Add mantissa, shift by carry and update exponent
-    apint_add(x->mant, x->mant, a->mant);
-/*
-    if (x->mant->sign == x->mant->sign)
+
+    if (x->mant->sign == a->mant->sign)
     {
-        apint_plus(x, a, b);
-        x->mant->sign = x->mant->sign;
+        apint_plus(x->mant, x->mant, a->mant);
+        x->mant->sign = a->mant->sign;
     }
     else
     {
-        if (x->mant->sign == -1) //only a is negative. so equivalent to b-a.
+        if (x->mant->sign == 1) //only a is negative. so equivalent to b-a.
         {
-            apint_minus(x, b, a);
+            apint_minus(x->mant, x->mant, a->mant);
         }
         else
         {
-            apint_minus(x, a, b);
+            apint_minus(x->mant, a->mant, x->mant);
         }
-    }*/
+    }
 
     x->exp = a->exp;
     if(MIDDLE_LEFT(x) != 0 && (x->mant->limbs[0]& 0x1ull) != 0)
         is_exact = false;
 
-    adjust_alignment(x);
+    //is_exact = adjust_alignment(x);
+    size_t overflow = apint_detectfirst1(x->mant);
+    int mid_pos_bitwise_val = MID_POS_BITWISE(x);
+    if (overflow > mid_pos_bitwise_val)
+    {
+        overflow -= mid_pos_bitwise_val;
+        //is_exact = apint_shiftr(x->mant, overflow);
+        if (overflow)
+        {
+            int full_limbs_shifted = overflow / APINT_LIMB_BITS;
+            overflow -= full_limbs_shifted * APINT_LIMB_BITS;
+            int full_limbs_shifted_1 = full_limbs_shifted - 1;
+            for (int i = full_limbs_shifted; i < x->mant->length; i += 2) {
+                x->mant->limbs[i - full_limbs_shifted] = x->mant->limbs[i];
+                x->mant->limbs[i - full_limbs_shifted_1] = x->mant->limbs[i + 1];
+            }
+            if (overflow)
+            {
+                int leftshiftamt = (APINT_LIMB_BITS - overflow);
+                for (int i = 0; i < x->mant->length - 1; ++i)
+                {
+                    x->mant->limbs[i] = (x->mant->limbs[i] >> overflow) + (x->mant->limbs[i + 1] << leftshiftamt);
+                }
+                    x->mant->limbs[x->mant->length - 1] >>= overflow;
+            }
+        }
+        x->exp += (apfp_exp_t) overflow;
+    }
+    else if (overflow < mid_pos_bitwise_val)
+    {
+        // Can't shift off bits here
+        overflow = mid_pos_bitwise_val - overflow;
+        if (overflow) {
+            int full_limbs_shifted = overflow / APINT_LIMB_BITS;
+            overflow -= full_limbs_shifted * APINT_LIMB_BITS;
+            int full_limbs_shifted_1 = full_limbs_shifted + 1;
+            for (int i = x->mant->length - 1; i >= full_limbs_shifted - 1; i -= 2) {
+                x->mant->limbs[i] = x->mant->limbs[i - full_limbs_shifted];
+                //x->limbs[i-1] = x->limbs[i-full_limbs_shifted-1];
+                x->mant->limbs[i - 1] = x->mant->limbs[i - full_limbs_shifted_1];
+            }
 
+            if (overflow) {
+                int rightshiftamt = (APINT_LIMB_BITS - overflow);
+                for (int i = x->mant->length - 1; i > 0; i--) {
+                    x->mant->limbs[i] = (x->mant->limbs[i] << overflow) + (x->mant->limbs[i - 1] >> rightshiftamt);
+                }
+                x->mant->limbs[0] <<= overflow;
+            }
+        }
+        x->exp -= (apfp_exp_t) overflow;
+    }
     return is_exact;
 }
 
