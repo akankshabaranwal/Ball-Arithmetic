@@ -1,8 +1,8 @@
 #ifndef BALL_ARITHMETIC_BENCHMARK_H
 #define BALL_ARITHMETIC_BENCHMARK_H
 
-static const int BENCHMARK_ITER = 100;
-static const int BENCHMARK_WARMUPS = 10;
+static const int BENCHMARK_ITER = 20;
+static const int BENCHMARK_WARMUPS = 2;
 
 typedef void (*benchmark_fun_t)(unsigned int precision);
 

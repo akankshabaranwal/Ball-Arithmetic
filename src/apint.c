@@ -510,6 +510,7 @@ int apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
     assert(a->length == x->length);
 
     unsigned long long overflow;
+    apint_limb_t b_limb;
     unsigned char carry;
     if (a->sign == b->sign) x->sign = 1;
     else x->sign = -1;
@@ -517,9 +518,10 @@ int apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
     for (apint_size_t i = 0; i < b->length; i++) {
         overflow = 0;
         carry = 0;
+        b_limb = b->limbs[i];
         for (apint_size_t j = 0; j < a->length && i + j < x->length; j++) {
             carry = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]);
-            carry += _addcarryx_u64(0, x->limbs[i + j], _mulx_u64(a->limbs[j], b->limbs[i], &overflow), &x->limbs[i + j]);
+            carry += _addcarryx_u64(0, x->limbs[i + j], _mulx_u64(a->limbs[j], b_limb, &overflow), &x->limbs[i + j]);
         }
     }
     return (int) overflow;
@@ -538,74 +540,76 @@ int apint_mul_unroll(apint_ptr x, apint_srcptr a, apint_srcptr b)
     unsigned long long overflow1;
     unsigned long long overflow2;
     unsigned long long overflow3;
+    unsigned long long overflow4;
+    unsigned long long overflow5;
+    unsigned long long overflow6;
+    unsigned long long overflow7;
     unsigned long long temp;
     unsigned long long temp1;
     unsigned long long temp2;
     unsigned long long temp3;
+    unsigned long long temp4;
+    unsigned long long temp5;
+    unsigned long long temp6;
+    unsigned long long temp7;
+    apint_limb_t b_limb;
     unsigned char carry;
     unsigned char carry1;
     unsigned char carry2;
     unsigned char carry3;
-    if (a->length <= 4 || b->length <= 4) {
+    unsigned char carry4;
+    unsigned char carry5;
+    unsigned char carry6;
+    unsigned char carry7;
+    if (a->length < 4) {
         // a and b should be same length
         return apint_mul(x, a, b);
     }
     else {
-        assert(a->length % 4 == 0);
         // Loop unrolling if size is greater than 4
         for (apint_size_t i = 0; i < b->length; i += 1) {
             // doing 1 for now
             overflow = 0;
             carry = 0;
-            for (apint_size_t j = 0; j < a->length; j += 4) {
-                // make sure we don't try to set something in x that is outside of its precision
-                if ((i + j + 3) < x->length) {
-                    carry1 = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]); // needs to be done first because dependent on previous overflow
-                    temp = _mulx_u64(a->limbs[j], b->limbs[i], &overflow1);
-                    temp1 = _mulx_u64(a->limbs[j + 1], b->limbs[i], &overflow2);
-                    temp2 = _mulx_u64(a->limbs[j + 2], b->limbs[i], &overflow3);
-                    temp3 = _mulx_u64(a->limbs[j + 3], b->limbs[i], &overflow);
+            b_limb = b->limbs[i];
+            apint_size_t j = 0;
+            for (; j < a->length && i + j + 7 < x->length; j += 8) {
+                carry1 = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]); // needs to be done first because dependent on previous overflow
+                temp = _mulx_u64(a->limbs[j], b_limb, &overflow1);
+                temp1 = _mulx_u64(a->limbs[j + 1], b_limb, &overflow2);
+                temp2 = _mulx_u64(a->limbs[j + 2], b_limb, &overflow3);
+                temp3 = _mulx_u64(a->limbs[j + 3], b_limb, &overflow4);
+                temp4 = _mulx_u64(a->limbs[j + 4], b_limb, &overflow5);
+                temp5 = _mulx_u64(a->limbs[j + 5], b_limb, &overflow6);
+                temp6 = _mulx_u64(a->limbs[j + 6], b_limb, &overflow7);
+                temp7 = _mulx_u64(a->limbs[j + 7], b_limb, &overflow);
 
-                    carry1 += _addcarryx_u64(0, x->limbs[i + j], temp, &x->limbs[i + j]);
+                carry1 += _addcarryx_u64(0, x->limbs[i + j], temp, &x->limbs[i + j]);
 
-                    carry2 = _addcarryx_u64(carry1, x->limbs[i + j + 1], overflow1, &x->limbs[i + j + 1]);
-                    carry2 += _addcarryx_u64(0, x->limbs[i + j + 1], temp1, &x->limbs[i + j + 1]);
+                carry2 = _addcarryx_u64(carry1, x->limbs[i + j + 1], overflow1, &x->limbs[i + j + 1]);
+                carry2 += _addcarryx_u64(0, x->limbs[i + j + 1], temp1, &x->limbs[i + j + 1]);
 
-                    carry3 = _addcarryx_u64(carry2, x->limbs[i + j + 2], overflow2, &x->limbs[i + j + 2]);
-                    carry3 += _addcarryx_u64(0, x->limbs[i + j + 2], temp2, &x->limbs[i + j + 2]);
+                carry3 = _addcarryx_u64(carry2, x->limbs[i + j + 2], overflow2, &x->limbs[i + j + 2]);
+                carry3 += _addcarryx_u64(0, x->limbs[i + j + 2], temp2, &x->limbs[i + j + 2]);
 
-                    carry = _addcarryx_u64(carry3, x->limbs[i + j + 3], overflow3, &x->limbs[i + j + 3]);
-                    carry += _addcarryx_u64(0, x->limbs[i + j + 3], temp3, &x->limbs[i + j + 3]);
-                }
-                else if ((i + j + 2) < x->length) {
-                    carry1 = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]); // needs to be done first because dependent on previous overflow
-                    temp = _mulx_u64(a->limbs[j], b->limbs[i], &overflow1);
-                    temp1 = _mulx_u64(a->limbs[j + 1], b->limbs[i], &overflow2);
-                    temp2 = _mulx_u64(a->limbs[j + 2], b->limbs[i], &overflow);
+                carry4 = _addcarryx_u64(carry3, x->limbs[i + j + 3], overflow3, &x->limbs[i + j + 3]);
+                carry4 += _addcarryx_u64(0, x->limbs[i + j + 3], temp3, &x->limbs[i + j + 3]);
 
-                    carry1 += _addcarryx_u64(0, x->limbs[i + j], temp, &x->limbs[i + j]);
+                carry5 = _addcarryx_u64(carry4, x->limbs[i + j + 4], overflow4, &x->limbs[i + j + 4]);
+                carry5 += _addcarryx_u64(0, x->limbs[i + j + 4], temp4, &x->limbs[i + j + 4]);
 
-                    carry2 = _addcarryx_u64(carry1, x->limbs[i + j + 1], overflow1, &x->limbs[i + j + 1]);
-                    carry2 += _addcarryx_u64(0, x->limbs[i + j + 1], temp1, &x->limbs[i + j + 1]);
+                carry6 = _addcarryx_u64(carry5, x->limbs[i + j + 5], overflow5, &x->limbs[i + j + 5]);
+                carry6 += _addcarryx_u64(0, x->limbs[i + j + 5], temp5, &x->limbs[i + j + 5]);
 
-                    carry = _addcarryx_u64(carry2, x->limbs[i + j + 2], overflow2, &x->limbs[i + j + 2]);
-                    carry += _addcarryx_u64(0, x->limbs[i + j + 2], temp2, &x->limbs[i + j + 2]);
-                }
-                else if ((i + j + 1) < x->length) {
-                    carry1 = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]); // needs to be done first because dependent on previous overflow
-                    temp = _mulx_u64(a->limbs[j], b->limbs[i], &overflow1);
-                    temp1 = _mulx_u64(a->limbs[j + 1], b->limbs[i], &overflow);
+                carry7 = _addcarryx_u64(carry6, x->limbs[i + j + 6], overflow6, &x->limbs[i + j + 6]);
+                carry7 += _addcarryx_u64(0, x->limbs[i + j + 6], temp6, &x->limbs[i + j + 6]);
 
-                    carry1 += _addcarryx_u64(0, x->limbs[i + j], temp, &x->limbs[i + j]);
-
-                    carry = _addcarryx_u64(carry1, x->limbs[i + j + 1], overflow1, &x->limbs[i + j + 1]);
-                    carry += _addcarryx_u64(0, x->limbs[i + j + 1], temp1, &x->limbs[i + j + 1]);
-                }
-                else if (i + j < x->length) {
-                    // Can't propagate carry / overflow anymore
-                    x->limbs[i + j] += overflow + carry;
-                    x->limbs[i + j] += _mulx_u64(a->limbs[j], b->limbs[i], &overflow1);
-                }
+                carry = _addcarryx_u64(carry7, x->limbs[i + j + 7], overflow7, &x->limbs[i + j + 7]);
+                carry += _addcarryx_u64(0, x->limbs[i + j + 7], temp7, &x->limbs[i + j + 7]);
+            }
+            for (; j < a->length && i + j < x->length; j++) {
+                carry = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]);
+                carry += _addcarryx_u64(0, x->limbs[i + j], _mulx_u64(a->limbs[j], b_limb, &overflow), &x->limbs[i + j]);
             }
         }
     }

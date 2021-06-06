@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(ball_arithmetic C)
 
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mavx2 -madx -mbmi2 -mlzcnt")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mavx2 -madx -mbmi2 -mlzcnt -Ofast -march=native -mtune=skylake -g") # -Ofast -march=native -mtune=skylake
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build)
 
