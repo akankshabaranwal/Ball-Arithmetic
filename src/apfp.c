@@ -644,11 +644,11 @@ bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
         {
             overflow = mid_pos_bitwise_val - overflow;
             int rightshiftamt = (APINT_LIMB_BITS - overflow);
-            for (i = midlength ; i > 0; i-=4) {
+            for (int i = midlength ; i > 3; i-=4) {
                 x->mant->limbs[i] = (x->mant->limbs[i] << overflow) + (x->mant->limbs[i - 1] >> rightshiftamt);
                 x->mant->limbs[i-1] = (x->mant->limbs[i-1] << overflow) + (x->mant->limbs[i - 2] >> rightshiftamt);
-                x->mant->limbs[i-2] = (x->mant->limbs[i-1] << overflow) + (x->mant->limbs[i - 3] >> rightshiftamt);
-                x->mant->limbs[i-3] = (x->mant->limbs[i-1] << overflow) + (x->mant->limbs[i - 4] >> rightshiftamt);
+                x->mant->limbs[i-2] = (x->mant->limbs[i-2] << overflow) + (x->mant->limbs[i - 3] >> rightshiftamt);
+                x->mant->limbs[i-3] = (x->mant->limbs[i-3] << overflow) + (x->mant->limbs[i - 4] >> rightshiftamt);
             }
             x->mant->limbs[0] <<= overflow;
             x->exp -= (apfp_exp_t) overflow;
