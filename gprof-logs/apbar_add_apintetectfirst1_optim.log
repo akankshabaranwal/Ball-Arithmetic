@@ -1,0 +1,367 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  us/call  us/call  name    
+ 30.09      0.40     0.40    20000    20.01    20.01  apint_shiftl
+ 25.58      0.74     0.34    20000    17.01    17.01  apint_shiftr
+ 17.30      0.97     0.23    20000    11.51    11.51  apint_plus
+ 15.80      1.18     0.21    20000    10.51    10.51  apint_detectfirst1
+ 11.28      1.33     0.15    20000     7.50     7.50  apint_copy
+  0.00      1.33     0.00    20000     0.00    30.52  adjust_alignment
+  0.00      1.33     0.00    20000     0.00    66.54  apbar_add
+  0.00      1.33     0.00    20000     0.00    66.54  apfp_add
+  0.00      1.33     0.00    20000     0.00    11.51  apint_add
+  0.00      1.33     0.00    20000     0.00     0.00  rad_add
+  0.00      1.33     0.00     4096     0.00     0.00  fmpz_set_ui
+  0.00      1.33     0.00     4094     0.00     0.00  _fmpz_demote
+  0.00      1.33     0.00        4     0.00     0.00  _fmpz_demote
+  0.00      1.33     0.00        4     0.00     0.00  apbar_set_midpt_mant
+  0.00      1.33     0.00        4     0.00     0.00  apfp_set_mant
+  0.00      1.33     0.00        4     0.00     0.00  apint_setlimb
+  0.00      1.33     0.00        3     0.00     0.00  apbar_free
+  0.00      1.33     0.00        3     0.00     0.00  apbar_init
+  0.00      1.33     0.00        3     0.00     0.00  apfp_free
+  0.00      1.33     0.00        3     0.00     0.00  apfp_init
+  0.00      1.33     0.00        3     0.00     0.00  apint_free
+  0.00      1.33     0.00        3     0.00     0.00  apint_init
+  0.00      1.33     0.00        2     0.00     0.00  apbar_set_midpt_exp
+  0.00      1.33     0.00        2     0.00     0.00  apbar_set_rad
+  0.00      1.33     0.00        2     0.00     0.00  apfp_set_exp
+  0.00      1.33     0.00        2     0.00     0.00  fmpz_clear
+  0.00      1.33     0.00        2     0.00     0.00  fmpz_set_si
+  0.00      1.33     0.00        1     0.00     0.00  apbar_print
+  0.00      1.33     0.00        1     0.00     0.00  apbar_print_msg
+  0.00      1.33     0.00        1     0.00     0.00  apfp_print
+  0.00      1.33     0.00        1     0.00     0.00  apint_to_fmpz
+  0.00      1.33     0.00        1     0.00     0.00  arf_init
+  0.00      1.33     0.00        1     0.00     0.00  arf_is_zero
+  0.00      1.33     0.00        1     0.00     0.00  arf_set_fmpz
+  0.00      1.33     0.00        1     0.00     0.00  arf_set_fmpz_2exp
+  0.00      1.33     0.00        1     0.00     0.00  arf_set_mpz
+  0.00      1.33     0.00        1     0.00     0.00  fmpz_add_inline
+  0.00      1.33     0.00        1     0.00     0.00  fmpz_init
+  0.00      1.33     0.00        1     0.00     0.00  fmpz_init
+  0.00      1.33     0.00        1     0.00     0.00  mag_init
+  0.00      1.33     0.00        1     0.00     0.00  print_mid
+  0.00      1.33     0.00        1     0.00     0.00  print_rad
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+Copyright (C) 2012-2020 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+		     Call graph (explanation follows)
+
+
+granularity: each sample hit covers 2 byte(s) for 0.75% of 1.33 seconds
+
+index % time    self  children    called     name
+                0.00    1.33   20000/20000       main [3]
+[1]    100.0    0.00    1.33   20000         apbar_add [1]
+                0.00    1.33   20000/20000       apfp_add [2]
+                0.00    0.00   20000/20000       rad_add [11]
+-----------------------------------------------
+                0.00    1.33   20000/20000       apbar_add [1]
+[2]    100.0    0.00    1.33   20000         apfp_add [2]
+                0.00    0.61   20000/20000       adjust_alignment [4]
+                0.34    0.00   20000/20000       apint_shiftr [6]
+                0.00    0.23   20000/20000       apint_add [7]
+                0.15    0.00   20000/20000       apint_copy [10]
+-----------------------------------------------
+                                                 <spontaneous>
+[3]    100.0    0.00    1.33                 main [3]
+                0.00    1.33   20000/20000       apbar_add [1]
+                0.00    0.00       4/4           apbar_set_midpt_mant [13]
+                0.00    0.00       3/3           apbar_init [17]
+                0.00    0.00       3/3           apbar_free [16]
+                0.00    0.00       2/2           apbar_set_midpt_exp [22]
+                0.00    0.00       2/2           apbar_set_rad [23]
+                0.00    0.00       1/1           apbar_print_msg [28]
+-----------------------------------------------
+                0.00    0.61   20000/20000       apfp_add [2]
+[4]     45.9    0.00    0.61   20000         adjust_alignment [4]
+                0.40    0.00   20000/20000       apint_shiftl [5]
+                0.21    0.00   20000/20000       apint_detectfirst1 [9]
+-----------------------------------------------
+                0.40    0.00   20000/20000       adjust_alignment [4]
+[5]     30.1    0.40    0.00   20000         apint_shiftl [5]
+-----------------------------------------------
+                0.34    0.00   20000/20000       apfp_add [2]
+[6]     25.6    0.34    0.00   20000         apint_shiftr [6]
+-----------------------------------------------
+                0.00    0.23   20000/20000       apfp_add [2]
+[7]     17.3    0.00    0.23   20000         apint_add [7]
+                0.23    0.00   20000/20000       apint_plus [8]
+-----------------------------------------------
+                0.23    0.00   20000/20000       apint_add [7]
+[8]     17.3    0.23    0.00   20000         apint_plus [8]
+-----------------------------------------------
+                0.21    0.00   20000/20000       adjust_alignment [4]
+[9]     15.8    0.21    0.00   20000         apint_detectfirst1 [9]
+-----------------------------------------------
+                0.15    0.00   20000/20000       apfp_add [2]
+[10]    11.3    0.15    0.00   20000         apint_copy [10]
+-----------------------------------------------
+                0.00    0.00   20000/20000       apbar_add [1]
+[11]     0.0    0.00    0.00   20000         rad_add [11]
+-----------------------------------------------
+                0.00    0.00    4096/4096        apint_to_fmpz [30]
+[12]     0.0    0.00    0.00    4096         fmpz_set_ui [12]
+                0.00    0.00    4094/4094        _fmpz_demote [97]
+-----------------------------------------------
+                0.00    0.00       4/4           main [3]
+[13]     0.0    0.00    0.00       4         apbar_set_midpt_mant [13]
+                0.00    0.00       4/4           apfp_set_mant [14]
+-----------------------------------------------
+                0.00    0.00       4/4           apbar_set_midpt_mant [13]
+[14]     0.0    0.00    0.00       4         apfp_set_mant [14]
+                0.00    0.00       4/4           apint_setlimb [15]
+-----------------------------------------------
+                0.00    0.00       4/4           apfp_set_mant [14]
+[15]     0.0    0.00    0.00       4         apint_setlimb [15]
+-----------------------------------------------
+                0.00    0.00       3/3           main [3]
+[16]     0.0    0.00    0.00       3         apbar_free [16]
+                0.00    0.00       3/3           apfp_free [18]
+-----------------------------------------------
+                0.00    0.00       3/3           main [3]
+[17]     0.0    0.00    0.00       3         apbar_init [17]
+                0.00    0.00       3/3           apfp_init [19]
+-----------------------------------------------
+                0.00    0.00       3/3           apbar_free [16]
+[18]     0.0    0.00    0.00       3         apfp_free [18]
+                0.00    0.00       3/3           apint_free [20]
+-----------------------------------------------
+                0.00    0.00       3/3           apbar_init [17]
+[19]     0.0    0.00    0.00       3         apfp_init [19]
+                0.00    0.00       3/3           apint_init [21]
+-----------------------------------------------
+                0.00    0.00       3/3           apfp_free [18]
+[20]     0.0    0.00    0.00       3         apint_free [20]
+-----------------------------------------------
+                0.00    0.00       3/3           apfp_init [19]
+[21]     0.0    0.00    0.00       3         apint_init [21]
+-----------------------------------------------
+                0.00    0.00       2/2           main [3]
+[22]     0.0    0.00    0.00       2         apbar_set_midpt_exp [22]
+                0.00    0.00       2/2           apfp_set_exp [24]
+-----------------------------------------------
+                0.00    0.00       2/2           main [3]
+[23]     0.0    0.00    0.00       2         apbar_set_rad [23]
+-----------------------------------------------
+                0.00    0.00       2/2           apbar_set_midpt_exp [22]
+[24]     0.0    0.00    0.00       2         apfp_set_exp [24]
+-----------------------------------------------
+                0.00    0.00       2/2           apfp_print [29]
+[25]     0.0    0.00    0.00       2         fmpz_clear [25]
+                0.00    0.00       2/4           _fmpz_demote [98]
+-----------------------------------------------
+                0.00    0.00       1/2           fmpz_add_inline [36]
+                0.00    0.00       1/2           apfp_print [29]
+[26]     0.0    0.00    0.00       2         fmpz_set_si [26]
+                0.00    0.00       2/4           _fmpz_demote [98]
+-----------------------------------------------
+                0.00    0.00       1/1           apbar_print_msg [28]
+[27]     0.0    0.00    0.00       1         apbar_print [27]
+                0.00    0.00       1/1           print_mid [40]
+                0.00    0.00       1/1           print_rad [41]
+-----------------------------------------------
+                0.00    0.00       1/1           main [3]
+[28]     0.0    0.00    0.00       1         apbar_print_msg [28]
+                0.00    0.00       1/1           apbar_print [27]
+-----------------------------------------------
+                0.00    0.00       1/1           print_mid [40]
+[29]     0.0    0.00    0.00       1         apfp_print [29]
+                0.00    0.00       2/2           fmpz_clear [25]
+                0.00    0.00       1/1           apint_to_fmpz [30]
+                0.00    0.00       1/2           fmpz_set_si [26]
+                0.00    0.00       1/1           arf_init [31]
+                0.00    0.00       1/1           arf_set_fmpz_2exp [34]
+-----------------------------------------------
+                0.00    0.00       1/1           apfp_print [29]
+[30]     0.0    0.00    0.00       1         apint_to_fmpz [30]
+                0.00    0.00    4096/4096        fmpz_set_ui [12]
+-----------------------------------------------
+                0.00    0.00       1/1           apfp_print [29]
+[31]     0.0    0.00    0.00       1         arf_init [31]
+                0.00    0.00       1/1           fmpz_init [37]
+-----------------------------------------------
+                0.00    0.00       1/1           arf_set_fmpz_2exp [34]
+[32]     0.0    0.00    0.00       1         arf_is_zero [32]
+-----------------------------------------------
+                0.00    0.00       1/1           arf_set_fmpz_2exp [34]
+[33]     0.0    0.00    0.00       1         arf_set_fmpz [33]
+                0.00    0.00       1/1           arf_set_mpz [35]
+-----------------------------------------------
+                0.00    0.00       1/1           apfp_print [29]
+[34]     0.0    0.00    0.00       1         arf_set_fmpz_2exp [34]
+                0.00    0.00       1/1           arf_set_fmpz [33]
+                0.00    0.00       1/1           arf_is_zero [32]
+                0.00    0.00       1/1           fmpz_add_inline [36]
+-----------------------------------------------
+                0.00    0.00       1/1           arf_set_fmpz [33]
+[35]     0.0    0.00    0.00       1         arf_set_mpz [35]
+-----------------------------------------------
+                0.00    0.00       1/1           arf_set_fmpz_2exp [34]
+[36]     0.0    0.00    0.00       1         fmpz_add_inline [36]
+                0.00    0.00       1/2           fmpz_set_si [26]
+-----------------------------------------------
+                0.00    0.00       1/1           arf_init [31]
+[37]     0.0    0.00    0.00       1         fmpz_init [37]
+-----------------------------------------------
+                0.00    0.00       1/1           mag_init [39]
+[38]     0.0    0.00    0.00       1         fmpz_init [38]
+-----------------------------------------------
+                0.00    0.00       1/1           print_rad [41]
+[39]     0.0    0.00    0.00       1         mag_init [39]
+                0.00    0.00       1/1           fmpz_init [38]
+-----------------------------------------------
+                0.00    0.00       1/1           apbar_print [27]
+[40]     0.0    0.00    0.00       1         print_mid [40]
+                0.00    0.00       1/1           apfp_print [29]
+-----------------------------------------------
+                0.00    0.00       1/1           apbar_print [27]
+[41]     0.0    0.00    0.00       1         print_rad [41]
+                0.00    0.00       1/1           mag_init [39]
+-----------------------------------------------
+                0.00    0.00    4094/4094        fmpz_set_ui [12]
+[97]     0.0    0.00    0.00    4094         _fmpz_demote [97]
+-----------------------------------------------
+                0.00    0.00       2/4           fmpz_clear [25]
+                0.00    0.00       2/4           fmpz_set_si [26]
+[98]     0.0    0.00    0.00       4         _fmpz_demote [98]
+-----------------------------------------------
+
+ This table describes the call tree of the program, and was sorted by
+ the total amount of time spent in each function and its children.
+
+ Each entry in this table consists of several lines.  The line with the
+ index number at the left hand margin lists the current function.
+ The lines above it list the functions that called this function,
+ and the lines below it list the functions this one called.
+ This line lists:
+     index	A unique number given to each element of the table.
+		Index numbers are sorted numerically.
+		The index number is printed next to every function name so
+		it is easier to look up where the function is in the table.
+
+     % time	This is the percentage of the `total' time that was spent
+		in this function and its children.  Note that due to
+		different viewpoints, functions excluded by options, etc,
+		these numbers will NOT add up to 100%.
+
+     self	This is the total amount of time spent in this function.
+
+     children	This is the total amount of time propagated into this
+		function by its children.
+
+     called	This is the number of times the function was called.
+		If the function called itself recursively, the number
+		only includes non-recursive calls, and is followed by
+		a `+' and the number of recursive calls.
+
+     name	The name of the current function.  The index number is
+		printed after it.  If the function is a member of a
+		cycle, the cycle number is printed between the
+		function's name and the index number.
+
+
+ For the function's parents, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the function into this parent.
+
+     children	This is the amount of time that was propagated from
+		the function's children into this parent.
+
+     called	This is the number of times this parent called the
+		function `/' the total number of times the function
+		was called.  Recursive calls to the function are not
+		included in the number after the `/'.
+
+     name	This is the name of the parent.  The parent's index
+		number is printed after it.  If the parent is a
+		member of a cycle, the cycle number is printed between
+		the name and the index number.
+
+ If the parents of the function cannot be determined, the word
+ `<spontaneous>' is printed in the `name' field, and all the other
+ fields are blank.
+
+ For the function's children, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the child into the function.
+
+     children	This is the amount of time that was propagated from the
+		child's children to the function.
+
+     called	This is the number of times the function called
+		this child `/' the total number of times the child
+		was called.  Recursive calls by the child are not
+		listed in the number after the `/'.
+
+     name	This is the name of the child.  The child's index
+		number is printed after it.  If the child is a
+		member of a cycle, the cycle number is printed
+		between the name and the index number.
+
+ If there are any cycles (circles) in the call graph, there is an
+ entry for the cycle-as-a-whole.  This entry shows who called the
+ cycle (as parents) and the members of the cycle (as children.)
+ The `+' recursive calls entry shows the number of function calls that
+ were internal to the cycle, and the calls entry for each member shows,
+ for that member, how many times it was called from other members of
+ the cycle.
+
+Copyright (C) 2012-2020 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Index by function name
+
+  [97] _fmpz_demote (fmpz.h)  [29] apfp_print             [32] arf_is_zero (arf.h)
+  [98] _fmpz_demote (fmpz.h)  [24] apfp_set_exp           [33] arf_set_fmpz (arf.h)
+   [4] adjust_alignment (apfp.c) [14] apfp_set_mant       [34] arf_set_fmpz_2exp (arf.h)
+   [1] apbar_add               [7] apint_add              [35] arf_set_mpz (arf.h)
+  [16] apbar_free             [10] apint_copy             [36] fmpz_add_inline (fmpz_extras.h)
+  [17] apbar_init              [9] apint_detectfirst1     [25] fmpz_clear (fmpz.h)
+  [27] apbar_print            [20] apint_free             [37] fmpz_init (fmpz.h)
+  [28] apbar_print_msg        [21] apint_init             [38] fmpz_init (fmpz.h)
+  [22] apbar_set_midpt_exp     [8] apint_plus             [26] fmpz_set_si (fmpz.h)
+  [13] apbar_set_midpt_mant   [15] apint_setlimb (apint.h) [12] fmpz_set_ui (fmpz.h)
+  [23] apbar_set_rad           [5] apint_shiftl           [39] mag_init (mag.h)
+   [2] apfp_add                [6] apint_shiftr           [40] print_mid (apbar.c)
+  [18] apfp_free              [30] apint_to_fmpz          [41] print_rad (apbar.c)
+  [19] apfp_init              [31] arf_init (arf.h)       [11] rad_add

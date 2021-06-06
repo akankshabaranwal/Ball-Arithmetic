@@ -92,7 +92,7 @@ void apfp_print_msg(const char *msg, apfp_srcptr value){
     printf("\n");
 }
 
-static inline bool adjust_alignment(apfp_ptr x)
+static inline bool adjust_alignment_base(apfp_ptr x)
 {
     bool is_exact = true;
     size_t overflow = apint_detectfirst1(x->mant);
@@ -107,6 +107,29 @@ static inline bool adjust_alignment(apfp_ptr x)
     {
         // Can't shift off bits here
         overflow = MID_POS_BITWISE(x) - overflow;
+        apint_shiftl(x->mant, overflow);
+        x->exp -= (apfp_exp_t) overflow;
+    }
+    return is_exact;
+}
+
+//first optimization
+static inline bool adjust_alignment(apfp_ptr x)
+{
+    bool is_exact = true;
+    size_t overflow = apint_detectfirst1(x->mant);
+
+    int mid_pos_bitwise_val = MID_POS_BITWISE(x);
+    if (overflow > mid_pos_bitwise_val)
+    {
+        overflow -= mid_pos_bitwise_val;
+        is_exact = apint_shiftr(x->mant, overflow);
+        x->exp += (apfp_exp_t) overflow;
+    }
+    else if (overflow < mid_pos_bitwise_val)
+    {
+        // Can't shift off bits here
+        overflow = mid_pos_bitwise_val - overflow;
         apint_shiftl(x->mant, overflow);
         x->exp -= (apfp_exp_t) overflow;
     }
