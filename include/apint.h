@@ -61,9 +61,13 @@ uint64_t apint_mul_karatsuba_extend_basecase(apint_ptr x, apint_srcptr a, apint_
 uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b);
 uint64_t apint_mul_karatsuba_recurse_extend_basecase(apint_ptr x, apint_srcptr a, apint_srcptr b);
 
-// Karatsuba optimization 1 methods
+// Karatsuba optimization 1 methods; inlining functions
 uint64_t apint_mul_karatsuba_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b);
 uint64_t apint_mul_karatsuba_recurse_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b);
+
+// Karatsuba optimization 2 methods; making sub calls faster
+uint64_t apint_mul_karatsuba_OPT2(apint_ptr x, apint_srcptr a, apint_srcptr b);
+uint64_t apint_mul_karatsuba_recurse_OPT2(apint_ptr x, apint_srcptr a, apint_srcptr b);
 
 bool apint_shiftr(apint_ptr x, unsigned int shift);
 bool apint_shiftr_copy(apint_ptr dest, apint_srcptr src, unsigned int shift);
