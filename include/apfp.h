@@ -34,6 +34,7 @@ void apfp_print_msg(const char *msg, apfp_srcptr value);
 
 bool apfp_add_base(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
 bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
+bool apfp_add_optim1(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
 
 bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
 bool apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);

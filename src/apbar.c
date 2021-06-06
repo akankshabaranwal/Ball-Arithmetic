@@ -201,6 +201,25 @@ void apbar_add_base(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
     if (!is_exact) add_error_bound(c, p);
 }
 
+// apbar_add shiftl base v/s shiftl optimal??
+// apbar add shiftr base v/s shiftr optimal??
+
+void apbar_add_optim1(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_add_optim1(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    rad_add(c->rad, a->rad, b->rad);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) add_error_bound(c, p);
+}
+
 void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 {
     assert(a);

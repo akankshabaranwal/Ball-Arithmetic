@@ -103,20 +103,19 @@ size_t apint_detectfirst1(apint_ptr x)
     //Iterate over the limbs
     size_t i;
     size_t pos;
-    apint_limb_t number, numbercopy;
+    apint_limb_t number;
     pos = 0;
     for(i = x->length - 1; i >= 0; i--)
     {
         if(x->limbs[i] > 0)
         {
             number = x->limbs[i];
-            numbercopy =number;
             break;
         }
     }
     pos = APINT_LIMB_BITS * (x->length-i-1);
     int xsize = x->length * APINT_LIMB_BITS;
-    int bitpos = __builtin_clzll(numbercopy);
+    int bitpos = __builtin_clzll(number);
     pos = pos + bitpos;
     return (xsize-pos);
 }
