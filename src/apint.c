@@ -557,15 +557,48 @@ int apint_mul_unroll(apint_ptr x, apint_srcptr a, apint_srcptr b)
             // doing 1 for now
             overflow = 0;
             carry = 0;
-            for (apint_size_t j = 0; j < a->length; j += 2) {
+            for (apint_size_t j = 0; j < a->length; j += 4) {
                 // make sure we don't try to set something in x that is outside of its precision
-                if ((i + j + 1) < x->length) {
+                if ((i + j + 3) < x->length) {
                     carry1 = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]); // needs to be done first because dependent on previous overflow
                     temp = _mulx_u64(a->limbs[j], b->limbs[i], &overflow1);
+                    temp1 = _mulx_u64(a->limbs[j + 1], b->limbs[i], &overflow2);
+                    temp2 = _mulx_u64(a->limbs[j + 2], b->limbs[i], &overflow3);
+                    temp3 = _mulx_u64(a->limbs[j + 3], b->limbs[i], &overflow);
+
+                    carry1 += _addcarryx_u64(0, x->limbs[i + j], temp, &x->limbs[i + j]);
+
+                    carry2 = _addcarryx_u64(carry1, x->limbs[i + j + 1], overflow1, &x->limbs[i + j + 1]);
+                    carry2 += _addcarryx_u64(0, x->limbs[i + j + 1], temp1, &x->limbs[i + j + 1]);
+
+                    carry3 = _addcarryx_u64(carry2, x->limbs[i + j + 2], overflow2, &x->limbs[i + j + 2]);
+                    carry3 += _addcarryx_u64(0, x->limbs[i + j + 2], temp2, &x->limbs[i + j + 2]);
+
+                    carry = _addcarryx_u64(carry3, x->limbs[i + j + 3], overflow3, &x->limbs[i + j + 3]);
+                    carry += _addcarryx_u64(0, x->limbs[i + j + 3], temp3, &x->limbs[i + j + 3]);
+                }
+                else if ((i + j + 2) < x->length) {
+                    carry1 = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]); // needs to be done first because dependent on previous overflow
+                    temp = _mulx_u64(a->limbs[j], b->limbs[i], &overflow1);
+                    temp1 = _mulx_u64(a->limbs[j + 1], b->limbs[i], &overflow2);
+                    temp2 = _mulx_u64(a->limbs[j + 2], b->limbs[i], &overflow);
+
+                    carry1 += _addcarryx_u64(0, x->limbs[i + j], temp, &x->limbs[i + j]);
+
+                    carry2 = _addcarryx_u64(carry1, x->limbs[i + j + 1], overflow1, &x->limbs[i + j + 1]);
+                    carry2 += _addcarryx_u64(0, x->limbs[i + j + 1], temp1, &x->limbs[i + j + 1]);
+
+                    carry = _addcarryx_u64(carry2, x->limbs[i + j + 2], overflow2, &x->limbs[i + j + 2]);
+                    carry += _addcarryx_u64(0, x->limbs[i + j + 2], temp2, &x->limbs[i + j + 2]);
+                }
+                else if ((i + j + 1) < x->length) {
+                    carry1 = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]); // needs to be done first because dependent on previous overflow
+                    temp = _mulx_u64(a->limbs[j], b->limbs[i], &overflow1);
+                    temp1 = _mulx_u64(a->limbs[j + 1], b->limbs[i], &overflow);
+
                     carry1 += _addcarryx_u64(0, x->limbs[i + j], temp, &x->limbs[i + j]);
 
                     carry = _addcarryx_u64(carry1, x->limbs[i + j + 1], overflow1, &x->limbs[i + j + 1]);
-                    temp1 = _mulx_u64(a->limbs[j + 1], b->limbs[i], &overflow);
                     carry += _addcarryx_u64(0, x->limbs[i + j + 1], temp1, &x->limbs[i + j + 1]);
                 }
                 else if (i + j < x->length) {
