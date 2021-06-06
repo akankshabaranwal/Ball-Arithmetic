@@ -257,9 +257,9 @@ BENCHMARK_BEGIN_TABLE(int_mul)
 BENCHMARK_END_TABLE(int_mul)
 
 BENCHMARK_BEGIN_TABLE(apbar_mul)
-                BENCHMARK_FUNCTION(ball_mull_vanilla, ball_init, ball_cleanup, 1.0, 8, 17)
-                BENCHMARK_FUNCTION(ball_mull_no_exp, ball_init, ball_cleanup, 1.0, 8, 17)
-                BENCHMARK_FUNCTION(ball_mull_unroll, ball_init, ball_cleanup, 1.0, 8, 17)
+    BENCHMARK_FUNCTION(ball_mull_vanilla, ball_init, ball_cleanup, 1.0, 8, 17)
+    BENCHMARK_FUNCTION(ball_mull_no_exp, ball_init, ball_cleanup, 1.0, 8, 17)
+    BENCHMARK_FUNCTION(ball_mull_unroll, ball_init, ball_cleanup, 1.0, 8, 17)
 BENCHMARK_END_TABLE(apbar_mul)
 BENCHMARK_END_SUITE()
 

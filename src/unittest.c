@@ -339,6 +339,32 @@ TEST_GROUP(apint, {
             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0x277a79937c8bbcb4llu);
     });
 
+    TEST_CASE(multiply propagate, {
+            apint_setlimb(apint_test[0], 3, 0xffffffffffffffff);
+            apint_setlimb(apint_test[0], 2, 0xffffffffffffffff);
+            apint_setlimb(apint_test[0], 1, 0xffffffffffffffff);
+            apint_setlimb(apint_test[0], 0, 0xffffffffffffffff);
+
+            apint_setlimb(apint_test[1], 3, 0xffffffffffffffff);
+            apint_setlimb(apint_test[1], 2, 0xffffffffffffffff);
+            apint_setlimb(apint_test[1], 1, 0xffffffffffffffff);
+            apint_setlimb(apint_test[1], 0, 0xffffffffffffffff);
+
+            apint_mul(apint_test[2], apint_test[0], apint_test[1]);
+
+            apint_print_msg("res:", apint_test[2]);
+
+            // Calculated with: https://defuse.ca/big-number-calculator.htm
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 0x0000000000000001llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 0llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 0llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 0llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 4), 0xfffffffffffffffellu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 5), 0xffffffffffffffffllu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 6), 0xffffffffffffffffllu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0xffffffffffffffffllu);
+    });
+
     TEST_CASE(multiply unrolled, {
             apint_setlimb(apint_test[0], 0, 1);
             apint_setlimb(apint_test[0], 1, 1);
