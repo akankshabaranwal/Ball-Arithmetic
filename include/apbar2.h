@@ -5,6 +5,7 @@
 #include <assert.h>
 
 #include <math.h>
+#include <stdalign.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -398,13 +399,18 @@ static inline unsigned long long _mul_unsigned_midpt(apbar2_ptr x, apbar2_srcptr
     // To-do: `leading_zero' can only be 1 or 0, possible optimization?
     unsigned long long leading_zero = _lzcnt_u64(x->midpt_mant[x->midpt_size - 1]);
 
+    apbar2_limb_t x_mant0;
+    apbar2_limb_t x_mant1 = x->midpt_mant[APBAR2_UPPER(x)];
+
     for (apbar2_size_t i = 0; i < x->midpt_size; i++)
     {
         if (i < APBAR2_UPPER(x))
         {
-            unsigned long long lower = x->midpt_mant[APBAR2_UPPER(x) + i] << leading_zero;
-            unsigned long long upper = (leading_zero) ?
-                (x->midpt_mant[APBAR2_UPPER(x) + i + 1] >> (APBAR2_LIMB_BITS - leading_zero)) : 0ULL;
+            x_mant0 = x_mant1;
+            x_mant1 = x->midpt_mant[APBAR2_UPPER(x) + i + 1];
+
+            unsigned long long lower = x_mant0 << leading_zero;
+            unsigned long long upper = (leading_zero) ? (x_mant1 >> (APBAR2_LIMB_BITS - leading_zero)) : 0ULL;
             x->midpt_mant[i] = upper | lower;
         } else {
             x->midpt_mant[i] = 0ull;
@@ -421,6 +427,215 @@ static inline void apbar2_mul(apbar2_ptr x, apbar2_srcptr a, apbar2_srcptr b, ap
     x->sign = (a->sign != b->sign);
     _mul_unsigned_midpt(x, a, b);
     x->rad = (fabs(apbar2_get_d(a)) + a->rad) * b->rad + a->rad * fabs(apbar2_get_d(b)) + _rad_error_bound(x, prec);
+}
+
+static inline void _add_unsigned_midpt4(apbar2_ptr x1, apbar2_srcptr a1, apbar2_srcptr b1,
+                                        apbar2_ptr x2, apbar2_srcptr a2, apbar2_srcptr b2,
+                                        apbar2_ptr x3, apbar2_srcptr a3, apbar2_srcptr b3,
+                                        apbar2_ptr x4, apbar2_srcptr a4, apbar2_srcptr b4,
+                                        uint64_t *overflows)
+{
+    // After swap, `a' is guaranteed to have largest exponent.
+    if (b1->midpt_exp > a1->midpt_exp)
+    {
+        apbar2_srcptr t = a1; a1 = b1; b1 = t;
+    }
+
+    if (b2->midpt_exp > a2->midpt_exp)
+    {
+        apbar2_srcptr t = a2; a2 = b2; b2 = t;
+    }
+
+    if (b3->midpt_exp > a3->midpt_exp)
+    {
+        apbar2_srcptr t = a3; a3 = b3; b3 = t;
+    }
+
+    if (b4->midpt_exp > a4->midpt_exp)
+    {
+        apbar2_srcptr t = a4; a4 = b4; b4 = t;
+    }
+
+    // Add mantissas taking into account exponent difference.
+    apbar2_exp_t shift1 = a1->midpt_exp - b1->midpt_exp;
+    apbar2_size_t offset1 = shift1 / APBAR2_LIMB_BITS;
+    shift1 -= offset1 * APBAR2_LIMB_BITS;
+
+    apbar2_exp_t shift2 = a2->midpt_exp - b2->midpt_exp;
+    apbar2_size_t offset2 = shift2 / APBAR2_LIMB_BITS;
+    shift2 -= offset2 * APBAR2_LIMB_BITS;
+
+    apbar2_exp_t shift3 = a3->midpt_exp - b3->midpt_exp;
+    apbar2_size_t offset3 = shift3 / APBAR2_LIMB_BITS;
+    shift3 -= offset3 * APBAR2_LIMB_BITS;
+
+    apbar2_exp_t shift4 = a4->midpt_exp - b4->midpt_exp;
+    apbar2_size_t offset4 = shift4 / APBAR2_LIMB_BITS;
+    shift4 -= offset4 * APBAR2_LIMB_BITS;
+
+    __m256i overflow = _mm256_setzero_si256();
+
+    __m256i a_mant_addr = _mm256_setr_epi64x(
+        a1->midpt_mant, a2->midpt_mant, a3->midpt_mant, a4->midpt_mant
+    );
+
+    __m256i b_mant_addr = _mm256_setr_epi64x(
+        b1->midpt_mant + offset1, b2->midpt_mant + offset2, b3->midpt_mant + offset3, b4->midpt_mant + offset4
+    );
+
+    __m256i limb_bytes = _mm256_set1_epi64x(APBAR2_LIMB_BYTES);
+
+    __m256i shiftr = _mm256_setr_epi64x(shift1, shift2, shift3, shift4);
+    __m256i shiftl = _mm256_setr_epi64x(
+        APBAR2_LIMB_BITS - shift1, APBAR2_LIMB_BITS - shift2, APBAR2_LIMB_BITS - shift3, APBAR2_LIMB_BITS - shift4
+    );
+
+    __m256i b_mant0;
+    __m256i b_mant1 = _mm256_i64gather_epi64(0, b_mant_addr, 1);
+
+    for (apbar2_size_t i = 0; i <= APBAR2_LOWER(x1); i++)
+    {
+        b_mant0 = b_mant1;
+        b_mant_addr = _mm256_add_epi64(b_mant_addr, limb_bytes);
+        b_mant1 = _mm256_i64gather_epi64(0, b_mant_addr, 1);
+
+        __m256i a_mant = _mm256_i64gather_epi64(0, a_mant_addr, 1);
+
+        __m256i lower = _mm256_srlv_epi64(b_mant0, shiftr);
+        __m256i upper = _mm256_sllv_epi64(b_mant1, shiftl);
+
+        __m256i b_shifted = _mm256_or_si256(upper, lower);
+        __m256i x_mant1 = _mm256_add_epi64(a_mant, b_shifted);
+        __m256i x_mant2 = _mm256_add_epi64(x_mant1, overflow);
+
+        __m256i xor1, xor2;
+
+        xor1 = _mm256_xor_si256(x_mant1, a_mant);
+        xor2 = _mm256_xor_si256(x_mant1, b_shifted);
+        __m256i overflow1 = _mm256_and_si256(xor1, xor2);
+        overflow1 = _mm256_srli_epi64(overflow1, 63);
+
+        xor1 = _mm256_xor_si256(x_mant2, x_mant1);
+        xor2 = _mm256_xor_si256(x_mant2, overflow);
+        __m256i overflow2 = _mm256_and_si256(xor1, xor2);
+        overflow2 = _mm256_srli_epi64(overflow2, 63);
+
+        overflow = _mm256_or_si256(overflow1, overflow2);
+
+        alignas(32) uint64_t x_mant[4];
+        _mm256_store_si256(x_mant, x_mant2);
+
+        x1->midpt_mant[i] = x_mant[3];
+        x2->midpt_mant[i] = x_mant[2];
+        x3->midpt_mant[i] = x_mant[1];
+        x4->midpt_mant[i] = x_mant[0];
+
+        a_mant_addr = _mm256_add_epi64(a_mant_addr, limb_bytes);
+    }
+
+    _mm256_store_si256(overflows, overflow);
+
+    uint64_t overflow1 = overflows[3];
+    uint64_t overflow2 = overflows[2];
+    uint64_t overflow3 = overflows[1];
+    uint64_t overflow4 = overflows[0];
+
+    // Update exponent in `x' accordingly.
+    x1->midpt_exp = a1->midpt_exp + overflow1;
+    x2->midpt_exp = a2->midpt_exp + overflow2;
+    x3->midpt_exp = a3->midpt_exp + overflow3;
+    x4->midpt_exp = a4->midpt_exp + overflow4;
+
+    // Shift by one the case of an addition overflow.
+    if (overflow1)
+    {
+        apbar2_limb_t x_mant0;
+        apbar2_limb_t x_mant1 = x1->midpt_mant[offset1];
+
+        for (apbar2_size_t i = 0; i < APBAR2_LOWER(x1); i++)
+        {
+            x_mant0 = x_mant1;
+            x_mant1 = x1->midpt_mant[offset1 + 1];
+
+            x1->midpt_mant[i] = (x_mant1 << (APBAR2_LIMB_BITS - 1)) | (x_mant0 >> 1u);
+        }
+        x1->midpt_mant[APBAR2_LOWER(x1)] = (x1->midpt_mant[APBAR2_LOWER(x1)] >> 1) | APBAR2_LIMB_MSBMASK;
+    }
+
+    if (overflow2)
+    {
+        apbar2_limb_t x_mant0;
+        apbar2_limb_t x_mant1 = x2->midpt_mant[offset1];
+
+        for (apbar2_size_t i = 0; i < APBAR2_LOWER(x2); i++)
+        {
+            x_mant0 = x_mant1;
+            x_mant1 = x2->midpt_mant[offset1 + 1];
+
+            x2->midpt_mant[i] = (x_mant1 << (APBAR2_LIMB_BITS - 1)) | (x_mant0 >> 1u);
+        }
+        x2->midpt_mant[APBAR2_LOWER(x2)] = (x2->midpt_mant[APBAR2_LOWER(x2)] >> 1) | APBAR2_LIMB_MSBMASK;
+    }
+
+    if (overflow3)
+    {
+        apbar2_limb_t x_mant0;
+        apbar2_limb_t x_mant1 = x3->midpt_mant[offset1];
+
+        for (apbar2_size_t i = 0; i < APBAR2_LOWER(x3); i++)
+        {
+            x_mant0 = x_mant1;
+            x_mant1 = x3->midpt_mant[offset1 + 1];
+
+            x3->midpt_mant[i] = (x_mant1 << (APBAR2_LIMB_BITS - 1)) | (x_mant0 >> 1u);
+        }
+        x3->midpt_mant[APBAR2_LOWER(x3)] = (x3->midpt_mant[APBAR2_LOWER(x3)] >> 1) | APBAR2_LIMB_MSBMASK;
+    }
+
+    if (overflow4)
+    {
+        apbar2_limb_t x_mant0;
+        apbar2_limb_t x_mant1 = x4->midpt_mant[offset1];
+
+        for (apbar2_size_t i = 0; i < APBAR2_LOWER(x4); i++)
+        {
+            x_mant0 = x_mant1;
+            x_mant1 = x4->midpt_mant[offset1 + 1];
+
+            x4->midpt_mant[i] = (x_mant1 << (APBAR2_LIMB_BITS - 1)) | (x_mant0 >> 1u);
+        }
+        x4->midpt_mant[APBAR2_LOWER(x4)] = (x4->midpt_mant[APBAR2_LOWER(x4)] >> 1) | APBAR2_LIMB_MSBMASK;
+    }
+}
+
+// Only supports positive numbers.
+static inline void apbar2_add4(apbar2_ptr x1, apbar2_srcptr a1, apbar2_srcptr b1,
+                               apbar2_ptr x2, apbar2_srcptr a2, apbar2_srcptr b2,
+                               apbar2_ptr x3, apbar2_srcptr a3, apbar2_srcptr b3,
+                               apbar2_ptr x4, apbar2_srcptr a4, apbar2_srcptr b4,
+                               apbar2_size_t prec)
+{
+    alignas(32) uint64_t overflows[4];
+
+    _add_unsigned_midpt4(x1, a1, b1, x2, a2, b2, x3, a3, b3, x4, a4, b4, overflows);
+
+    uint64_t is_inexact1 = overflows[3];
+    uint64_t is_inexact2 = overflows[2];
+    uint64_t is_inexact3 = overflows[1];
+    uint64_t is_inexact4 = overflows[0];
+
+    // Update the radius (if is_inexact/overflow, add error bound below).
+    x1->rad = a1->rad + b1->rad;
+    if (is_inexact1) x1->rad += _rad_error_bound(x1, prec);
+
+    x2->rad = a2->rad + b2->rad;
+    if (is_inexact2) x2->rad += _rad_error_bound(x2, prec);
+
+    x3->rad = a3->rad + b3->rad;
+    if (is_inexact3) x3->rad += _rad_error_bound(x3, prec);
+
+    x4->rad = a4->rad + b4->rad;
+    if (is_inexact4) x4->rad += _rad_error_bound(x4, prec);
 }
 
 #endif //APBAR2_H
