@@ -513,7 +513,7 @@ unsigned char apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
     {
         //printf("Yes is greater\n");
         x->sign = a->sign;
-        for (apint_size_t i = 0; i < a->length; i+=4)
+        for (apint_size_t i = 0; i < midlength; i+=4)
         {
             borrow1 = _subborrow_u64(borrow4, a->limbs[i], b->limbs[i], &x->limbs[i]);
             borrow2 = _subborrow_u64(borrow1, a->limbs[i+1], b->limbs[i+1], &x->limbs[i+1]);
@@ -525,7 +525,7 @@ unsigned char apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
     {
         //printf("No swapped it\n");
         x->sign = -b->sign;
-        for (apint_size_t i = 0; i < a->length; i+=4)
+        for (apint_size_t i = 0; i < midlength; i+=4)
         {
             borrow1 = _subborrow_u64(borrow4, b->limbs[i], a->limbs[i], &x->limbs[i]);
             borrow2 = _subborrow_u64(borrow1, b->limbs[i+1], a->limbs[i+1], &x->limbs[i+1]);

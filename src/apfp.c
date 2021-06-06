@@ -516,8 +516,8 @@ bool apfp_add_optim3(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
         else{
             apint_minus(x->mant, a->mant, x->mant);
         }
-        size_t pos;
-        size_t i;
+        //size_t pos;
+        //size_t i;
         for(i = midlength; i >= 0; i--)
         {
             if(x->mant->limbs[i] > 0)
@@ -763,9 +763,231 @@ bool apfp_sub_base(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     return is_exact;
 }
 
+//Optimization 1
+bool apfp_sub_optim1(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+{
+    // After swap, `a` is guaranteed to have largest exponent
+    bool swapped = false;
+    bool is_exact = true;
+    if (b->exp > a->exp)
+    {
+        apfp_srcptr t = a; a = b; b = t;
+        swapped = true;
+    }
+    // Align `b` mantissa to `a` given exponent difference
+    apfp_exp_t factor = a->exp - b->exp;
+    for (int i = 0; i < b->mant->length; i+=4)
+    {
+        x->mant->limbs[i] = b->mant->limbs[i];
+        x->mant->limbs[i+1] = b->mant->limbs[i+1];
+        x->mant->limbs[i+2] = b->mant->limbs[i+2];
+        x->mant->limbs[i+3] = b->mant->limbs[i+3];
+    }
+    x->mant->sign = b->mant->sign;
+    int midlength = (b->mant->length/2)+1;
+    int maxlength = b->mant->length;
+
+    if(factor)
+    {
+        int full_limbs_shifted = factor / APINT_LIMB_BITS;
+        factor -= full_limbs_shifted * APINT_LIMB_BITS;
+
+        int full_limbs_shifted_1 = full_limbs_shifted-1;
+        for (int i = full_limbs_shifted; i  < x->mant->length-1; i+=2)
+        {
+            x->mant->limbs[i-full_limbs_shifted] = x->mant->limbs[i];
+            x->mant->limbs[i-full_limbs_shifted_1] = x->mant->limbs[i+1];
+        }
+
+        if (factor)
+        {
+            int leftshiftamt = (APINT_LIMB_BITS - factor);
+            for (int i = 0; i < x->mant->length - 1; ++i)
+            {
+                x->mant->limbs[i] = (x->mant->limbs[i] >> factor) + (x->mant->limbs[i + 1] << leftshiftamt);
+            }
+            x->mant->limbs[x->mant->length - 1] >>= factor;
+        }
+    }
+    unsigned char carry1 = 0;
+    unsigned char carry2 = 0;
+    unsigned char carry3 = 0;
+    unsigned char carry4 = 0;
+    if(x->mant->sign == a->mant->sign)
+    {
+        apint_minus(x->mant, a->mant, x->mant); //sign is set here
+    }
+    else
+    {
+        for (apint_size_t i = 0; i < midlength; i+=4)
+        {
+            carry1 = _addcarryx_u64(carry4, x->mant->limbs[i], a->mant->limbs[i], &x->mant->limbs[i]);
+            carry2 = _addcarryx_u64(carry1, x->mant->limbs[i+1], a->mant->limbs[i+1], &x->mant->limbs[i+1]);
+            carry3 = _addcarryx_u64(carry2, x->mant->limbs[i+2], a->mant->limbs[i+2], &x->mant->limbs[i+2]);
+            carry4 = _addcarryx_u64(carry3, x->mant->limbs[i+3], a->mant->limbs[i+3], &x->mant->limbs[i+3]);
+        }
+
+        x->mant->sign = a->mant->sign;
+    }
+
+    if(swapped)
+    {
+        x->mant->sign = -x->mant->sign;
+    }
+    x->exp = a->exp;
+    if(MIDDLE_LEFT(x) !=0 && (apint_getlimb(x->mant, 0) & 0x1ull) != 0)
+        is_exact = false;
+
+    adjust_alignment(x);
+    return is_exact;
+}
+
+bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+{
+    // After swap, `a` is guaranteed to have largest exponent
+    bool swapped = false;
+    bool is_exact = true;
+    if (b->exp > a->exp)
+    {
+        apfp_srcptr t = a; a = b; b = t;
+        swapped = true;
+    }
+    // Align `b` mantissa to `a` given exponent difference
+    apfp_exp_t factor = a->exp - b->exp;
+    for (int i = 0; i < b->mant->length; i+=4)
+    {
+        x->mant->limbs[i] = b->mant->limbs[i];
+        x->mant->limbs[i+1] = b->mant->limbs[i+1];
+        x->mant->limbs[i+2] = b->mant->limbs[i+2];
+        x->mant->limbs[i+3] = b->mant->limbs[i+3];
+    }
+    x->mant->sign = b->mant->sign;
+    int midlength = (b->mant->length/2)+1;
+    int maxlength = b->mant->length;
+    size_t pos;
+    size_t i;
+    size_t overflow;
+
+    int mid_pos_bitwise_val = MID_POS_BITWISE(x);
+    if(factor)
+    {
+        int full_limbs_shifted = factor / APINT_LIMB_BITS;
+        factor -= full_limbs_shifted * APINT_LIMB_BITS;
+
+        int full_limbs_shifted_1 = full_limbs_shifted-1;
+        for (int i = full_limbs_shifted; i  < x->mant->length-1; i+=2)
+        {
+            x->mant->limbs[i-full_limbs_shifted] = x->mant->limbs[i];
+            x->mant->limbs[i-full_limbs_shifted_1] = x->mant->limbs[i+1];
+        }
+
+        if (factor)
+        {
+            int leftshiftamt = (APINT_LIMB_BITS - factor);
+            for (int i = 0; i < x->mant->length - 1; ++i)
+            {
+                x->mant->limbs[i] = (x->mant->limbs[i] >> factor) + (x->mant->limbs[i + 1] << leftshiftamt);
+            }
+            x->mant->limbs[x->mant->length - 1] >>= factor;
+        }
+    }
+    unsigned char carry1 = 0;
+    unsigned char carry2 = 0;
+    unsigned char carry3 = 0;
+    unsigned char carry4 = 0;
+    x->exp = a->exp;
+    if(x->mant->sign == a->mant->sign)
+    {
+        apint_minus(x->mant, a->mant, x->mant); //sign is set here
+        for(i = midlength; i >= 0; i--)
+        {
+            if(x->mant->limbs[i] > 0)
+            {
+                break;
+            }
+        }
+        pos = APINT_LIMB_BITS * (maxlength-i-1);
+        int xsize = maxlength * APINT_LIMB_BITS;
+        int bitpos = __builtin_clzll(x->mant->limbs[i]);
+        pos = pos + bitpos;
+        overflow = (xsize-pos);
+        overflow = mid_pos_bitwise_val - overflow;
+        int full_limbs_shifted = overflow / APINT_LIMB_BITS;
+        overflow -= full_limbs_shifted * APINT_LIMB_BITS;
+        int full_limbs_shifted_1 = full_limbs_shifted + 1;
+        for (i = maxlength - 1; i >= full_limbs_shifted - 1; i -= 2)
+        {
+            x->mant->limbs[i] = x->mant->limbs[i - full_limbs_shifted];
+            x->mant->limbs[i - 1] = x->mant->limbs[i - full_limbs_shifted_1];
+        }
+        if (overflow) {
+            int rightshiftamt = (APINT_LIMB_BITS - overflow);
+            for ( i = maxlength - 1; i > 0; i--) {
+                x->mant->limbs[i] = (x->mant->limbs[i] << overflow) + (x->mant->limbs[i - 1] >> rightshiftamt);
+            }
+            x->mant->limbs[0] <<= overflow;
+        }
+        x->exp -= (apfp_exp_t) overflow;
+    }
+    else
+    {
+        for (apint_size_t i = 0; i < midlength; i+=4)
+        {
+            carry1 = _addcarryx_u64(carry4, x->mant->limbs[i], a->mant->limbs[i], &x->mant->limbs[i]);
+            carry2 = _addcarryx_u64(carry1, x->mant->limbs[i+1], a->mant->limbs[i+1], &x->mant->limbs[i+1]);
+            carry3 = _addcarryx_u64(carry2, x->mant->limbs[i+2], a->mant->limbs[i+2], &x->mant->limbs[i+2]);
+            carry4 = _addcarryx_u64(carry3, x->mant->limbs[i+3], a->mant->limbs[i+3], &x->mant->limbs[i+3]);
+        }
+        for(i = midlength; i >= 0; i--)
+        {
+            if(x->mant->limbs[i] > 0)
+            {
+                break;
+            }
+        }
+        pos = APINT_LIMB_BITS * (maxlength-i-1);
+        int xsize = maxlength * APINT_LIMB_BITS;
+        int bitpos = __builtin_clzll(x->mant->limbs[i]);
+        pos = pos + bitpos;
+        overflow = (xsize-pos);
+        if (overflow > mid_pos_bitwise_val)
+        {
+            overflow -= mid_pos_bitwise_val;
+            int leftshiftamt = (APINT_LIMB_BITS - overflow);
+            for (int i = 0; i < midlength; ++i)
+            {
+                x->mant->limbs[i] = (x->mant->limbs[i] >> overflow) + (x->mant->limbs[i + 1] << leftshiftamt);
+            }
+            x->mant->limbs[x->mant->length - 1] >>= overflow;
+            x->exp += (apfp_exp_t) overflow;
+        }
+        else if (overflow < mid_pos_bitwise_val)
+        {
+            overflow = mid_pos_bitwise_val - overflow;
+            int rightshiftamt = (APINT_LIMB_BITS - overflow);
+            for (i = midlength ; i > 0; i--) {
+                x->mant->limbs[i] = (x->mant->limbs[i] << overflow) + (x->mant->limbs[i - 1] >> rightshiftamt);
+            }
+            x->mant->limbs[0] <<= overflow;
+            x->exp -= (apfp_exp_t) overflow;
+        }
+        x->mant->sign = a->mant->sign;
+    }
+
+    if(swapped)
+    {
+        x->mant->sign = -x->mant->sign;
+    }
+    if(MIDDLE_LEFT(x) !=0 && (apint_getlimb(x->mant, 0) & 0x1ull) != 0)
+        is_exact = false;
+
+    //adjust_alignment(x);
+    return is_exact;
+}
+
 //a-b
 //optimization 1. Merged to 1.
-bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+bool apfp_sub_segfault(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     // After swap, `a` is guaranteed to have largest exponent
     bool swapped = false;
