@@ -339,6 +339,54 @@ TEST_GROUP(apint, {
             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0x277a79937c8bbcb4llu);
     });
 
+    TEST_CASE(multiply unrolled, {
+            apint_setlimb(apint_test[0], 0, 1);
+            apint_setlimb(apint_test[0], 1, 1);
+            apint_setlimb(apint_test[0], 2, 1);
+            apint_setlimb(apint_test[0], 3, 1);
+
+            apint_setlimb(apint_test[1], 0, 2);
+            apint_setlimb(apint_test[1], 1, 2);
+            apint_setlimb(apint_test[1], 2, 2);
+            apint_setlimb(apint_test[1], 3, 2);
+
+            apint_mul_unroll(apint_test[2], apint_test[0], apint_test[1]);
+
+            // Calculated with: https://defuse.ca/big-number-calculator.htm
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 2llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 4llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 6llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 8llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 4), 6llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 5), 4llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 6), 2llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0llu);
+    });
+
+    TEST_CASE(multiply mantissa of pi with itself unrolled, {
+            apint_setlimb(apint_test[0], 3, 0x6487ED5110B4611A);
+            apint_setlimb(apint_test[0], 2, 0x62633145C06E0E68);
+            apint_setlimb(apint_test[0], 1, 0x948127044533E63A);
+            apint_setlimb(apint_test[0], 0, 0x0105DF531D89CD91);
+
+            apint_setlimb(apint_test[1], 3, 0x6487ED5110B4611A);
+            apint_setlimb(apint_test[1], 2, 0x62633145C06E0E68);
+            apint_setlimb(apint_test[1], 1, 0x948127044533E63A);
+            apint_setlimb(apint_test[1], 0, 0x0105DF531D89CD91);
+
+            apint_mul_unroll(apint_test[2], apint_test[0], apint_test[1]);
+
+            // Calculated with: https://defuse.ca/big-number-calculator.htm
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 0x68906cc684438c21llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 0x8a103ede33e3d523llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 0xe42ca89707ea23aellu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 0xbc5658f0d63b5677llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 4), 0x19a0884094f1cda3llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 5), 0xc2159a8ff834288allu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 6), 0x95b89b36602306b1llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0x277a79937c8bbcb4llu);
+    });
+
     TEST_CASE(portable multiply, {
             apint_setlimb(apint_test[0], 0, 1);
             apint_setlimb(apint_test[0], 1, 1);

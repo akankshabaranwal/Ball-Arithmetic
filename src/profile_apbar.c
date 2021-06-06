@@ -8,7 +8,7 @@ static const int PRECISION = 4096;
 int main()
 {
     char profile_func;
-    profile_func = 'm'; //select the function to profile here.
+    profile_func = 'o'; //select the function to profile here.
     // a is addition
     // s is subtraction
     // m is multiplication
@@ -51,6 +51,12 @@ int main()
             {
                 apbar_mul(apbar_test[2], apbar_test[1], apbar_test[0], PRECISION);
                 apbar_mul(apbar_test[0], apbar_test[1], apbar_test[2], PRECISION);
+                break;
+            }
+            case 'o': {
+
+                apbar_mul_no_rad_exp(apbar_test[2], apbar_test[1], apbar_test[0], PRECISION);
+                apbar_mul_no_rad_exp(apbar_test[0], apbar_test[1], apbar_test[2], PRECISION);
                 break;
             }
         }

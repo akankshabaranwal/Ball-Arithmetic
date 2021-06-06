@@ -370,3 +370,42 @@ void apbar_mul_no_rad_exp(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_siz
     // error bound computation (should round towards +inf)
     if (!is_exact) error_bound_no_exp(c, p);
 }
+
+
+void apbar_mul_unroll(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_mul_unroll(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    // (|x| + r)s + r|y|
+    // x == a->midpt, r == a->rad
+    // y == b->midpt, s == b->rad
+
+    // For now do the computation in apfp for max precision
+    // TODO: [optimisation] perform the computation in the rad type and over-estimate
+    rad_t x_abs;
+    narrow_to_rad_keep(a->midpt, x_abs);
+
+    rad_t y_abs;
+    narrow_to_rad_keep(b->midpt, y_abs);
+
+    // TODO: Can we add numbers and have an output as one of the inputs?
+    // TODO: round
+    // |x| + r
+    rad_add(x_abs, x_abs, a->rad);
+    // (|x| + r) * s
+    rad_mul(x_abs, x_abs, b->rad);
+
+    //r * |y|
+    rad_mul(y_abs, y_abs, a->rad);
+
+    rad_add(c->rad, x_abs, y_abs);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) error_bound_no_exp(c, p);
+}

@@ -44,6 +44,7 @@ unsigned char apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b);
 int apint_is_greater(apint_srcptr a, apint_srcptr b);
 void apint_mul_portable(apint_ptr x, apint_srcptr a, apint_srcptr b);
 int apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b);
+int apint_mul_unroll(apint_ptr x, apint_srcptr a, apint_srcptr b);
 
 // Karatsuba helper methods
 char apint_add_karatsuba(apint_ptr x, apint_srcptr a, apint_srcptr b);

@@ -233,6 +233,9 @@ static void ball_mull_vanilla(uint prec) {
 static void ball_mull_no_exp(uint prec) {
     ITERATE(apbar_mul_no_rad_exp(ball_out, ball_in1, ball_in2, prec));
 }
+static void ball_mull_unroll(uint prec) {
+    ITERATE(apbar_mul_unroll(ball_out, ball_in1, ball_in2, prec));
+}
 
 BENCHMARK_BEGIN_SUITE()
 BENCHMARK_BEGIN_TABLE(def)
@@ -256,6 +259,7 @@ BENCHMARK_END_TABLE(int_mul)
 BENCHMARK_BEGIN_TABLE(apbar_mul)
                 BENCHMARK_FUNCTION(ball_mull_vanilla, ball_init, ball_cleanup, 1.0, 8, 17)
                 BENCHMARK_FUNCTION(ball_mull_no_exp, ball_init, ball_cleanup, 1.0, 8, 17)
+                BENCHMARK_FUNCTION(ball_mull_unroll, ball_init, ball_cleanup, 1.0, 8, 17)
 BENCHMARK_END_TABLE(apbar_mul)
 BENCHMARK_END_SUITE()
 
