@@ -46,16 +46,12 @@ void apfp_set_exp(apfp_ptr x, apfp_exp_t exp)
 void apfp_set_d(apfp_ptr x, double val)
 {
     u_int64_t h;
-    union
-    {
-        double uf;
-        u_int64_t ul;
-    } u;
+    union { double uf; u_int64_t ul; } u;
 
     u.uf = val;
     h = u.ul;
-    x->mant->sign = (int)(h >> 63);
-    x->exp = (int64_t)(((h << 1) >> 53) - 1023 - 52);
+    x->mant->sign = (int) (h >> 63);
+    x->exp = (int64_t) (((h << 1) >> 53) - 1023 - 52);
 
     // Middle alignment: Set the "middle-right" limb to the double's mantissa
     MIDDLE_RIGHT(x) = ((h << 12) >> 12) | (UWORD(1) << 52);
@@ -73,8 +69,7 @@ void apfp_set_neg(apfp_ptr x)
 
 void apfp_print(apfp_srcptr value)
 {
-    if (value->mant->sign < 0)
-    {
+    if (value->mant->sign < 0) {
         printf("-");
     }
     fmpz_t exp, man;
@@ -98,7 +93,7 @@ void apfp_print_msg(const char *msg, apfp_srcptr value)
     printf("\n");
 }
 
-static inline bool adjust_alignment(apfp_ptr x)
+static inline bool adjust_alignment_base(apfp_ptr x)
 {
     bool is_exact = true;
     size_t overflow = apint_detectfirst1(x->mant);
@@ -106,15 +101,38 @@ static inline bool adjust_alignment(apfp_ptr x)
     if (overflow > MID_POS_BITWISE(x))
     {
         overflow -= MID_POS_BITWISE(x);
-        is_exact = apint_shiftr(x->mant, overflow);
-        x->exp += (apfp_exp_t)overflow;
+        is_exact = !apint_shiftr(x->mant, overflow);
+        x->exp += (apfp_exp_t) overflow;
     }
     else if (overflow < MID_POS_BITWISE(x))
     {
         // Can't shift off bits here
         overflow = MID_POS_BITWISE(x) - overflow;
         apint_shiftl(x->mant, overflow);
-        x->exp -= (apfp_exp_t)overflow;
+        x->exp -= (apfp_exp_t) overflow;
+    }
+    return is_exact;
+}
+
+//first optimization
+static inline bool adjust_alignment(apfp_ptr x)
+{
+    bool is_exact = true;
+    size_t overflow = apint_detectfirst1(x->mant);
+
+    int mid_pos_bitwise_val = MID_POS_BITWISE(x);
+    if (overflow > mid_pos_bitwise_val)
+    {
+        overflow -= mid_pos_bitwise_val;
+        is_exact = !apint_shiftr(x->mant, overflow);
+        x->exp += (apfp_exp_t) overflow;
+    }
+    else if (overflow < mid_pos_bitwise_val)
+    {
+        // Can't shift off bits here
+        overflow = mid_pos_bitwise_val - overflow;
+        apint_shiftl(x->mant, overflow);
+        x->exp -= (apfp_exp_t) overflow;
     }
     return is_exact;
 }
@@ -129,9 +147,7 @@ bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     // After swap, `a` is guaranteed to have largest exponent
     if (b->exp > a->exp)
     {
-        apfp_srcptr t = a;
-        a = b;
-        b = t;
+        apfp_srcptr t = a; a = b; b = t;
         swapped = true;
     }
 
@@ -161,9 +177,7 @@ bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     bool is_exact = true;
     if (b->exp > a->exp)
     {
-        apfp_srcptr t = a;
-        a = b;
-        b = t;
+        apfp_srcptr t = a; a = b; b = t;
         swapped = true;
     }
     // Align `b` mantissa to `a` given exponent difference
@@ -171,8 +185,7 @@ bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     apint_copy(x->mant, b->mant);
     apint_shiftr(x->mant, factor);
     apint_sub(x->mant, a->mant, x->mant); //x->mant->sign is set here
-    if (swapped)
-    {
+    if(swapped) {
         x->mant->sign = -x->mant->sign;
     }
     x->exp = a->exp;
@@ -187,7 +200,25 @@ bool apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     x->exp = a->exp + b->exp;
     apint_mul(x->mant, a->mant, b->mant);
-    adjust_alignment(x);
+    bool is_exact = adjust_alignment(x);
+
+    if(a->mant->sign == b->mant->sign)
+    {
+        apfp_set_pos(x);
+    }
+    else
+    {
+        apfp_set_neg(x);
+    }
+
+    return is_exact;
+}
+
+bool apfp_mul_unroll(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+{
+    x->exp = a->exp + b->exp;
+    apint_mul_unroll(x->mant, a->mant, b->mant);
+    bool is_exact = adjust_alignment(x);
 
     if (a->mant->sign == b->mant->sign)
     {
@@ -198,5 +229,5 @@ bool apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
         apfp_set_neg(x);
     }
 
-    return false;
+    return is_exact;
 }

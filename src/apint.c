@@ -62,22 +62,20 @@ void apint_free(apint_t x)
 void apint_copy(apint_ptr dst, apint_srcptr src)
 {
     assert(dst->length >= src->length);
-    /*
-    dst->length = src->length;
-    dst->limbs = realloc(dst->limbs, src->length * APINT_LIMB_BYTES);
-    memcpy(dst->limbs, src->limbs, src->length * APINT_LIMB_BYTES);
-    */
     int i;
-    for (i = 0; i < src->length; i++)
+    for (i = 0; i < src->length; i += 4)
     {
         dst->limbs[i] = src->limbs[i];
+        dst->limbs[i + 1] = src->limbs[i + 1];
+        dst->limbs[i + 2] = src->limbs[i + 2];
+        dst->limbs[i + 3] = src->limbs[i + 3];
     }
     dst->sign = src->sign;
 }
 
 // detect the position of first 1
 // naive method
-size_t apint_detectfirst1(apint_ptr x)
+size_t apint_detectfirst1_base(apint_ptr x)
 {
     //Iterate over the limbs
     size_t i;
@@ -105,8 +103,32 @@ size_t apint_detectfirst1(apint_ptr x)
     return x->length * APINT_LIMB_BITS - pos;
 }
 
+// Optimization 1
+size_t apint_detectfirst1(apint_ptr x)
+{
+    //Iterate over the limbs
+    size_t i;
+    size_t pos;
+    apint_limb_t number, numbercopy;
+    pos = 0;
+    for (i = x->length - 1; i >= 0; i--)
+    {
+        if (x->limbs[i] > 0)
+        {
+            number = x->limbs[i];
+            numbercopy = number;
+            break;
+        }
+    }
+    pos = APINT_LIMB_BITS * (x->length - i - 1);
+    int xsize = x->length * APINT_LIMB_BITS;
+    int bitpos = __builtin_clzll(numbercopy);
+    pos = pos + bitpos;
+    return (xsize - pos);
+}
+
 // right shift
-bool apint_shiftr(apint_ptr x, unsigned int shift)
+bool apint_shiftr_base(apint_ptr x, unsigned int shift)
 {
     assert(x->limbs);
 
@@ -142,6 +164,90 @@ bool apint_shiftr(apint_ptr x, unsigned int shift)
 
     if (!shift)
         return did_shift;
+    did_shift |= __builtin_ctzl(x->limbs[0]) >= shift;
+
+    for (int i = 0; i < x->length - 1; ++i)
+    {
+        x->limbs[i] = (x->limbs[i] >> shift) + (x->limbs[i + 1] << (APINT_LIMB_BITS - shift));
+    }
+
+    x->limbs[x->length - 1] >>= shift;
+    return did_shift;
+}
+
+bool apint_shiftr_copy(apint_ptr dest, apint_srcptr src, unsigned int shift)
+{
+    assert(src->limbs);
+    assert(dest->limbs);
+    assert(dest->length >= src->length);
+
+    if (!shift)
+        return false;
+
+    uint full_limbs_shifted = shift / APINT_LIMB_BITS;
+    shift -= full_limbs_shifted * APINT_LIMB_BITS;
+
+    bool did_shift = false;
+
+    //printf("shift is %d \n", shift);
+    for (int i = 0; i < src->length; ++i)
+    {
+        if (i + full_limbs_shifted < src->length)
+        {
+            if (i == 0)
+            {
+                for (int j = 0; j < full_limbs_shifted; ++j)
+                {
+                    if (src->limbs[j] != 0)
+                        did_shift = true;
+                }
+            }
+            dest->limbs[i] = (src->limbs[i + full_limbs_shifted] >> shift) + (src->limbs[i + full_limbs_shifted + 1] << (APINT_LIMB_BITS - shift));
+            //printf("assign full limb here %d \n", full_limbs_shifted);
+        }
+        else
+        {
+            dest->limbs[i] = 0;
+        }
+    }
+
+    dest->limbs[src->length - 1] = src->limbs[src->length - 1] >> shift;
+    return did_shift || __builtin_ctzl(src->limbs[0]) >= shift;
+}
+
+//First optimization. Removed branching. Reorganized function calls.
+bool apint_shiftr_optim1(apint_ptr x, unsigned int shift)
+{
+    assert(x->limbs);
+
+    if (!shift)
+        return false;
+
+    int full_limbs_shifted = shift / APINT_LIMB_BITS;
+    shift -= full_limbs_shifted * APINT_LIMB_BITS;
+
+    bool did_shift = false;
+    if (full_limbs_shifted < x->length)
+    {
+        for (int j = 0; j < full_limbs_shifted; ++j)
+        {
+            if (apint_getlimb(x, j) != 0)
+            {
+                did_shift = true;
+                break;
+            }
+        }
+    }
+    for (int i = 0; i < x->length; ++i)
+    {
+        if (i + full_limbs_shifted < x->length)
+        {
+            x->limbs[i] = x->limbs[i + full_limbs_shifted];
+        }
+    }
+
+    if (!shift)
+        return did_shift;
     did_shift = __builtin_ctzl(x->limbs[0]) >= shift;
 
     for (int i = 0; i < x->length - 1; ++i)
@@ -153,7 +259,80 @@ bool apint_shiftr(apint_ptr x, unsigned int shift)
     return did_shift;
 }
 
-void apint_shiftl(apint_ptr x, unsigned int shift)
+//Second optimization. Removing branching.
+bool apint_shiftr_optim2(apint_ptr x, unsigned int shift)
+{
+    assert(x->limbs);
+
+    if (!shift)
+        return false;
+
+    int full_limbs_shifted = shift / APINT_LIMB_BITS;
+    shift -= full_limbs_shifted * APINT_LIMB_BITS;
+
+    bool did_shift = false;
+
+    if (full_limbs_shifted < x->length)
+    {
+        for (int j = 0; j < full_limbs_shifted; ++j)
+        {
+            did_shift = did_shift | x->limbs[j];
+        }
+    }
+
+    for (int i = full_limbs_shifted; i < x->length; i++)
+    {
+        x->limbs[i - full_limbs_shifted] = x->limbs[i];
+    }
+
+    if (!shift)
+        return did_shift;
+    did_shift = __builtin_ctzl(x->limbs[0]) >= shift;
+
+    for (int i = 0; i < x->length - 1; ++i)
+    {
+        x->limbs[i] = (x->limbs[i] >> shift) + (x->limbs[i + 1] << (APINT_LIMB_BITS - shift));
+    }
+
+    x->limbs[x->length - 1] >>= shift;
+    return did_shift;
+}
+
+// Third optimization. Unrolling, considering mid pt, removing unnecessary calls which don't break unit tests?
+// Someone can check if its okay to do this.
+bool apint_shiftr(apint_ptr x, unsigned int shift)
+{
+    assert(x->limbs);
+
+    if (!shift)
+        return false;
+
+    int full_limbs_shifted = shift / APINT_LIMB_BITS;
+    shift -= full_limbs_shifted * APINT_LIMB_BITS;
+
+    bool did_shift = false;
+
+    int full_limbs_shifted_1 = full_limbs_shifted - 1;
+    for (int i = full_limbs_shifted; i < x->length; i += 2)
+    {
+        x->limbs[i - full_limbs_shifted] = x->limbs[i];
+        x->limbs[i - full_limbs_shifted_1] = x->limbs[i + 1];
+    }
+
+    if (!shift)
+        return did_shift;
+
+    int leftshiftamt = (APINT_LIMB_BITS - shift);
+    for (int i = 0; i < x->length - 1; ++i)
+    {
+        x->limbs[i] = (x->limbs[i] >> shift) + (x->limbs[i + 1] << leftshiftamt);
+    }
+
+    x->limbs[x->length - 1] >>= shift;
+    return did_shift;
+}
+
+void apint_shiftl_base(apint_ptr x, unsigned int shift)
 {
     assert(x->limbs);
     if (shift == 0)
@@ -185,6 +364,60 @@ void apint_shiftl(apint_ptr x, unsigned int shift)
     x->limbs[0] <<= shift;
 }
 
+// Optimization 1. Removing unnecessary computations.
+void apint_shiftl_optim1(apint_ptr x, unsigned int shift)
+{
+    assert(x->limbs);
+    if (shift == 0)
+        return;
+
+    int full_limbs_shifted = shift / APINT_LIMB_BITS;
+    shift -= full_limbs_shifted * APINT_LIMB_BITS;
+
+    for (int i = x->length - 1; i >= full_limbs_shifted; i--)
+    {
+        x->limbs[i] = x->limbs[i - full_limbs_shifted];
+    }
+
+    if (!shift)
+        return;
+
+    for (int i = x->length - 1; i > 0; i--)
+    {
+        x->limbs[i] = (x->limbs[i] << shift) + (x->limbs[i - 1] >> (APINT_LIMB_BITS - shift));
+    }
+
+    x->limbs[0] <<= shift;
+}
+
+// Optimization 2. Loop unrolling. Type casting to same data type. Unroll more
+void apint_shiftl(apint_ptr x, unsigned int shift)
+{
+    assert(x->limbs);
+    if (shift == 0)
+        return;
+
+    int full_limbs_shifted = shift / APINT_LIMB_BITS;
+    shift -= full_limbs_shifted * APINT_LIMB_BITS;
+    int full_limbs_shifted_1 = full_limbs_shifted + 1;
+    for (int i = x->length - 1; i >= full_limbs_shifted - 1; i -= 2)
+    {
+        x->limbs[i] = x->limbs[i - full_limbs_shifted];
+        //x->limbs[i-1] = x->limbs[i-full_limbs_shifted-1];
+        x->limbs[i - 1] = x->limbs[i - full_limbs_shifted_1];
+    }
+
+    if (!shift)
+        return;
+
+    int rightshiftamt = (APINT_LIMB_BITS - shift);
+    for (int i = x->length - 1; i > 0; i--)
+    {
+        x->limbs[i] = (x->limbs[i] << shift) + (x->limbs[i - 1] >> rightshiftamt);
+    }
+    x->limbs[0] <<= shift;
+}
+
 unsigned char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     unsigned char overflow;
@@ -200,7 +433,7 @@ unsigned char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
             overflow = apint_minus(x, b, a);
         }
         else
-        { //only b is negative.
+        {
             overflow = apint_minus(x, a, b);
         }
     }
@@ -219,7 +452,6 @@ unsigned char apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
     }
     else
     {
-        // printf("in apint_sub calling apint plus\n");
         apint_plus(x, a, b);
         x->sign = a->sign;
     }
@@ -243,15 +475,30 @@ char apint_plus_portable(apint_ptr x, apint_srcptr a, apint_srcptr b)
     return carry;
 }
 
-unsigned char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
+unsigned char apint_plus_base(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length);
     assert(a->length <= x->length);
 
     unsigned char carry = 0;
-    //printf("AB: called apint_plus\n");
     for (apint_size_t i = 0; i < a->length; i++)
+    {
+        carry = _addcarryx_u64(carry, a->limbs[i], b->limbs[i], &x->limbs[i]);
+    }
+    return carry;
+}
+
+//Optimization 1. Just midpt
+unsigned char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
+{
+    assert(x->limbs && a->limbs && b->limbs);
+    assert(a->length == b->length);
+    assert(a->length <= x->length);
+
+    int midpt = (a->length / 2) + 1;
+    unsigned char carry = 0;
+    for (apint_size_t i = 0; i < midpt; i++)
     {
         carry = _addcarryx_u64(carry, a->limbs[i], b->limbs[i], &x->limbs[i]);
     }
@@ -304,15 +551,12 @@ int apint_is_greater(apint_srcptr a, apint_srcptr b)
 */
 int apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
-    //TODO: check if these checks are needed anywhere else in the code.
     assert(x->limbs && a->limbs && b->limbs);
-    assert(a->length == b->length); // only handle same lengths
+    assert(a->length == b->length); // only handle same lengths for now
     assert(a->length == x->length);
 
     unsigned long long overflow;
-    unsigned long long temp;
     unsigned char carry;
-    unsigned char carry1;
     if (a->sign == b->sign)
         x->sign = 1;
     else
@@ -322,17 +566,106 @@ int apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
     {
         overflow = 0;
         carry = 0;
-        apint_size_t j;
-        for (j = 0; j < a->length; j++)
+        for (apint_size_t j = 0; j < a->length && i + j < x->length; j++)
         {
-            // make sure we don't try to set something in x that is outside of its precision
-            if ((i + j) < x->length)
+            carry = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]);
+            carry += _addcarryx_u64(0, x->limbs[i + j], _mulx_u64(a->limbs[j], b->limbs[i], &overflow), &x->limbs[i + j]);
+        }
+    }
+    return (int)overflow;
+}
+
+int apint_mul_unroll(apint_ptr x, apint_srcptr a, apint_srcptr b)
+{
+    assert(x->limbs && a->limbs && b->limbs);
+    assert(a->length == b->length); // only handle same lengths
+    assert(a->length == x->length);
+
+    if (a->sign == b->sign)
+        x->sign = 1;
+    else
+        x->sign = -1;
+
+    unsigned long long overflow;
+    unsigned long long overflow1;
+    unsigned long long overflow2;
+    unsigned long long overflow3;
+    unsigned long long temp;
+    unsigned long long temp1;
+    unsigned long long temp2;
+    unsigned long long temp3;
+    unsigned char carry;
+    unsigned char carry1;
+    unsigned char carry2;
+    unsigned char carry3;
+    if (a->length <= 4 || b->length <= 4)
+    {
+        // a and b should be same length
+        return apint_mul(x, a, b);
+    }
+    else
+    {
+        assert(a->length % 4 == 0);
+        // Loop unrolling if size is greater than 4
+        for (apint_size_t i = 0; i < b->length; i += 1)
+        {
+            // doing 1 for now
+            overflow = 0;
+            carry = 0;
+            for (apint_size_t j = 0; j < a->length; j += 4)
             {
-                // carry = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]);
-                // x->limbs[i + j] += carry;
-                // x->limbs[i + j] += _mulx_u64(a->limbs[j], b->limbs[i], &overflow);
-                carry = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]);
-                carry += _addcarryx_u64(0, x->limbs[i + j], _mulx_u64(a->limbs[j], b->limbs[i], &overflow), &x->limbs[i + j]);
+                // make sure we don't try to set something in x that is outside of its precision
+                if ((i + j + 3) < x->length)
+                {
+                    carry1 = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]); // needs to be done first because dependent on previous overflow
+                    temp = _mulx_u64(a->limbs[j], b->limbs[i], &overflow1);
+                    temp1 = _mulx_u64(a->limbs[j + 1], b->limbs[i], &overflow2);
+                    temp2 = _mulx_u64(a->limbs[j + 2], b->limbs[i], &overflow3);
+                    temp3 = _mulx_u64(a->limbs[j + 3], b->limbs[i], &overflow);
+
+                    carry1 += _addcarryx_u64(0, x->limbs[i + j], temp, &x->limbs[i + j]);
+
+                    carry2 = _addcarryx_u64(carry1, x->limbs[i + j + 1], overflow1, &x->limbs[i + j + 1]);
+                    carry2 += _addcarryx_u64(0, x->limbs[i + j + 1], temp1, &x->limbs[i + j + 1]);
+
+                    carry3 = _addcarryx_u64(carry2, x->limbs[i + j + 2], overflow2, &x->limbs[i + j + 2]);
+                    carry3 += _addcarryx_u64(0, x->limbs[i + j + 2], temp2, &x->limbs[i + j + 2]);
+
+                    carry = _addcarryx_u64(carry3, x->limbs[i + j + 3], overflow3, &x->limbs[i + j + 3]);
+                    carry += _addcarryx_u64(0, x->limbs[i + j + 3], temp3, &x->limbs[i + j + 3]);
+                }
+                else if ((i + j + 2) < x->length)
+                {
+                    carry1 = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]); // needs to be done first because dependent on previous overflow
+                    temp = _mulx_u64(a->limbs[j], b->limbs[i], &overflow1);
+                    temp1 = _mulx_u64(a->limbs[j + 1], b->limbs[i], &overflow2);
+                    temp2 = _mulx_u64(a->limbs[j + 2], b->limbs[i], &overflow);
+
+                    carry1 += _addcarryx_u64(0, x->limbs[i + j], temp, &x->limbs[i + j]);
+
+                    carry2 = _addcarryx_u64(carry1, x->limbs[i + j + 1], overflow1, &x->limbs[i + j + 1]);
+                    carry2 += _addcarryx_u64(0, x->limbs[i + j + 1], temp1, &x->limbs[i + j + 1]);
+
+                    carry = _addcarryx_u64(carry2, x->limbs[i + j + 2], overflow2, &x->limbs[i + j + 2]);
+                    carry += _addcarryx_u64(0, x->limbs[i + j + 2], temp2, &x->limbs[i + j + 2]);
+                }
+                else if ((i + j + 1) < x->length)
+                {
+                    carry1 = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]); // needs to be done first because dependent on previous overflow
+                    temp = _mulx_u64(a->limbs[j], b->limbs[i], &overflow1);
+                    temp1 = _mulx_u64(a->limbs[j + 1], b->limbs[i], &overflow);
+
+                    carry1 += _addcarryx_u64(0, x->limbs[i + j], temp, &x->limbs[i + j]);
+
+                    carry = _addcarryx_u64(carry1, x->limbs[i + j + 1], overflow1, &x->limbs[i + j + 1]);
+                    carry += _addcarryx_u64(0, x->limbs[i + j + 1], temp1, &x->limbs[i + j + 1]);
+                }
+                else if (i + j < x->length)
+                {
+                    // Can't propagate carry / overflow anymore
+                    x->limbs[i + j] += overflow + carry;
+                    x->limbs[i + j] += _mulx_u64(a->limbs[j], b->limbs[i], &overflow1);
+                }
             }
         }
     }
@@ -411,7 +744,7 @@ int apint_mul_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b)
 void apint_mul_portable(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
-    assert(a->length == b->length); // only handle same lengths
+    assert(a->length == b->length); // only handle same lengths for now
     assert(a->length == x->length);
 
     if (a->sign == b->sign)

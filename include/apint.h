@@ -44,6 +44,7 @@ unsigned char apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b);
 int apint_is_greater(apint_srcptr a, apint_srcptr b);
 void apint_mul_portable(apint_ptr x, apint_srcptr a, apint_srcptr b);
 int apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b);
+int apint_mul_unroll(apint_ptr x, apint_srcptr a, apint_srcptr b);
 
 // apint_mul optimization 1 methods: unrolling
 int apint_mul_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b);
@@ -65,6 +66,7 @@ uint64_t apint_mul_karatsuba_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b);
 uint64_t apint_mul_karatsuba_recurse_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b);
 
 bool apint_shiftr(apint_ptr x, unsigned int shift);
+bool apint_shiftr_copy(apint_ptr dest, apint_srcptr src, unsigned int shift);
 void apint_shiftl(apint_ptr x, unsigned int shift);
 size_t apint_detectfirst1(apint_ptr x);
 

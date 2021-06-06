@@ -86,6 +86,12 @@ void rad_add(rad_ptr x, rad_srcptr a, rad_srcptr b)
     // Align `b` mantissa to `a` given exponent difference
     apfp_exp_t factor = a->exp - b->exp;
     x->mant = a->mant;
+    if (factor >= APINT_LIMB_BITS) {
+        x->mant++;
+        x->exp = a->exp;
+        // printf("(%ld) %llu * 2^%ld + %llu * 2^%ld = %llu * 2^%ld\n", factor, a->mant, a->exp, b->mant, b->exp, x->mant, x->exp);
+        return;
+    }
     x->mant <<= factor;
 
     uint8_t carry = _addcarryx_u64(carry, x->mant, b->mant, &x->mant);
@@ -283,4 +289,123 @@ void apbar_mul(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 
     // error bound computation (should round towards +inf)
     if (!is_exact) add_error_bound(c, p);
+}
+
+static inline void narrow_to_rad_keep(apfp_ptr x, rad_ptr rad)
+{
+    // Essentially shift right enough so that mantissa fits into 64 bits
+    size_t pos = apint_detectfirst1(x->mant);
+    size_t shift = pos - APINT_LIMB_BITS;
+    apint_t new_mant;
+    apint_init(new_mant, x->mant->length * APINT_LIMB_BITS);
+    apint_shiftr_copy(new_mant, x->mant, shift);
+    rad->mant = new_mant->limbs[0] + 1;
+    rad->exp = x->exp + shift;
+}
+
+static inline void rad_mul(rad_ptr c, rad_srcptr a, rad_srcptr b)
+{
+    c->exp = a->exp + b->exp;
+    uint64_t low = _mulx_u64(a->mant, b->mant, &c->mant);
+    uint shift = __builtin_clzl(c->mant);
+    c->mant = (c->mant << shift) + ((apint_limb_t) low >> (APINT_LIMB_BITS - shift)) + 1;
+    c->exp += (apfp_exp_t) APINT_LIMB_BITS - shift;
+}
+
+static inline void error_bound_no_exp(apbar_ptr res, apint_size_t prec)
+{
+    // From the arb paper delta y (error bound) is (|y|+n)*e
+    // y = resulting midpoint (I think)
+    // n = smallest representable number
+    // e = machine accuracy
+    rad_t delta_y;
+    narrow_to_rad_keep(res->midpt, delta_y);
+
+    // Add n. This is always just adding one to the mantissa since we are
+    // rounding towards +inf.
+    delta_y->mant++;
+
+    // Multiply by e.
+    // e is 2^-p so we essentially just need to subtract p from the exponent
+    delta_y->exp -= prec;
+
+    // Add delta y to the current radius
+    rad_add(res->rad, res->rad, delta_y);
+}
+
+void apbar_mul_no_rad_exp(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_mul(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    // (|x| + r)s + r|y|
+    // x == a->midpt, r == a->rad
+    // y == b->midpt, s == b->rad
+
+    // For now do the computation in apfp for max precision
+    // TODO: [optimisation] perform the computation in the rad type and over-estimate
+    rad_t x_abs;
+    narrow_to_rad_keep(a->midpt, x_abs);
+
+    rad_t y_abs;
+    narrow_to_rad_keep(b->midpt, y_abs);
+
+    // TODO: Can we add numbers and have an output as one of the inputs?
+    // TODO: round
+    // |x| + r
+    rad_add(x_abs, x_abs, a->rad);
+    // (|x| + r) * s
+    rad_mul(x_abs, x_abs, b->rad);
+
+    //r * |y|
+    rad_mul(y_abs, y_abs, a->rad);
+
+    rad_add(c->rad, x_abs, y_abs);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) error_bound_no_exp(c, p);
+}
+
+
+void apbar_mul_unroll(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_mul_unroll(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    // (|x| + r)s + r|y|
+    // x == a->midpt, r == a->rad
+    // y == b->midpt, s == b->rad
+
+    // For now do the computation in apfp for max precision
+    // TODO: [optimisation] perform the computation in the rad type and over-estimate
+    rad_t x_abs;
+    narrow_to_rad_keep(a->midpt, x_abs);
+
+    rad_t y_abs;
+    narrow_to_rad_keep(b->midpt, y_abs);
+
+    // TODO: Can we add numbers and have an output as one of the inputs?
+    // TODO: round
+    // |x| + r
+    rad_add(x_abs, x_abs, a->rad);
+    // (|x| + r) * s
+    rad_mul(x_abs, x_abs, b->rad);
+
+    //r * |y|
+    rad_mul(y_abs, y_abs, a->rad);
+
+    rad_add(c->rad, x_abs, y_abs);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) error_bound_no_exp(c, p);
 }

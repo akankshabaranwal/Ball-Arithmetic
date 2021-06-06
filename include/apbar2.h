@@ -195,10 +195,18 @@ static inline uint8_t _add_unsigned_midpt(apbar2_ptr x, apbar2_srcptr a, apbar2_
     shift -= offset * APBAR2_LIMB_BITS;
 
     uint8_t overflow = 0;
+
+    apbar2_limb_t b_mant0;
+    apbar2_limb_t b_mant1 = b->midpt_mant[offset];
+
     for (apbar2_size_t i = 0; i <= APBAR2_LOWER(x); i++)
     {
-        unsigned long long lower = b->midpt_mant[i + offset] >> shift;
-        unsigned long long upper = shift ? b->midpt_mant[i + offset + 1] << (APBAR2_LIMB_BITS - shift) : 0ULL;
+        b_mant0 = b_mant1;
+        b_mant1 = b->midpt_mant[i + offset + 1];
+
+        unsigned long long lower = b_mant0 >> shift;
+        unsigned long long upper = shift ? b_mant1 << (APBAR2_LIMB_BITS - shift) : 0ULL;
+
         overflow = _addcarryx_u64(overflow, a->midpt_mant[i], upper | lower, &x->midpt_mant[i]);
     }
 
@@ -208,12 +216,17 @@ static inline uint8_t _add_unsigned_midpt(apbar2_ptr x, apbar2_srcptr a, apbar2_
     // Shift by one the case of an addition overflow.
     if (overflow)
     {
+        apbar2_limb_t x_mant0;
+        apbar2_limb_t x_mant1 = x->midpt_mant[offset];
+
         for (apbar2_size_t i = 0; i < APBAR2_LOWER(x); i++)
         {
-            x->midpt_mant[i] = (x->midpt_mant[i + 1] << (APBAR2_LIMB_BITS - 1)) | (x->midpt_mant[i] >> 1u);
+            x_mant0 = x_mant1;
+            x_mant1 = x->midpt_mant[offset + 1];
+
+            x->midpt_mant[i] = (x_mant1 << (APBAR2_LIMB_BITS - 1)) | (x_mant0 >> 1u);
         }
-        x->midpt_mant[APBAR2_LOWER(x)] >>= 1;
-        x->midpt_mant[APBAR2_LOWER(x)] |= APBAR2_LIMB_MSBMASK;
+        x->midpt_mant[APBAR2_LOWER(x)] = (x->midpt_mant[APBAR2_LOWER(x)] >> 1) | APBAR2_LIMB_MSBMASK;
     }
 
     return overflow;
@@ -242,11 +255,18 @@ static inline uint8_t _sub_unsigned_midpt(apbar2_ptr x, apbar2_srcptr a, apbar2_
     uint8_t underflow = 0;
     int last_non_zero = -1;
 
+    apbar2_limb_t b_mant0;
+    apbar2_limb_t b_mant1 = b->midpt_mant[offset];
+
     for (apbar2_size_t i = 0; i <= APBAR2_LOWER(x); i++)
     {
+        b_mant0 = b_mant1;
+        b_mant1 = b->midpt_mant[i + offset + 1];
+
+        unsigned long long lower = b_mant0 >> shift;
+        unsigned long long upper = shift ? b_mant1 << (APBAR2_LIMB_BITS - shift) : 0ULL;
+
         // To-do: Scalar replacement? Multiple array access on `x->midpt_mant[i]'.
-        unsigned long long lower = b->midpt_mant[i + offset] >> shift;
-        unsigned long long upper = shift ? b->midpt_mant[i + offset + 1] << (APBAR2_LIMB_BITS - shift) : 0ULL;
         underflow = _subborrow_u64(underflow, a->midpt_mant[i], upper | lower, &x->midpt_mant[i]);
         apbar2_limb_t result = x->midpt_mant[i];
         if (result)
@@ -280,19 +300,19 @@ static inline uint8_t _sub_unsigned_midpt(apbar2_ptr x, apbar2_srcptr a, apbar2_
 
         if (offset || leading_zeros)
         {
+            apbar2_limb_t x_mant0;
+            apbar2_limb_t x_mant1 = x->midpt_mant[APBAR2_LOWER(x) - offset];
+
             for (apbar2_ssize_t i = APBAR2_LOWER(x); i >= 0; i--)
             {
                 int j = i - offset;
 
                 // To-do: Possible simplification here ?
-                if (j > 0)
-                {
-                    x->midpt_mant[i] = (x->midpt_mant[j] << leading_zeros) |
-                        (x->midpt_mant[j - 1] >> (APBAR2_LIMB_BITS - leading_zeros));
-                }
-                else if (j == 0)
-                {
-                    x->midpt_mant[i] = (x->midpt_mant[0] << leading_zeros);
+                if (j >= 0) {
+                    x_mant0 = x_mant1;
+                    x_mant1 = (j) ? x->midpt_mant[j - 1] : 0ULL;
+
+                    x->midpt_mant[i] = (x_mant0 << leading_zeros) | (x_mant1 >> (APBAR2_LIMB_BITS - leading_zeros));
                 }
                 else
                 {
