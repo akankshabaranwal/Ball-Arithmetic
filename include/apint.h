@@ -111,9 +111,7 @@ static inline void apint_copyover(apint_ptr x_new, apint_ptr x_old, apint_size_t
     }
 }
 
-void apint_add_test();
-void apint_sub_test();
 void apint_mult_test();
-void apint_add_karatsuba_test();
+void apint_mult_test1();
 
 #endif /* !APINT_H */
