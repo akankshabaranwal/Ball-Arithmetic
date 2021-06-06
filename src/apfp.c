@@ -698,7 +698,6 @@ bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
         }
         else{
             apint_minus(x->mant, a->mant, x->mant);
-
         }
         size_t pos;
         size_t i;
@@ -842,7 +841,7 @@ bool apfp_sub_optim1(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     return is_exact;
 }
 
-bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+bool apfp_sub_optim2(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     // After swap, `a` is guaranteed to have largest exponent
     bool swapped = false;
@@ -978,16 +977,12 @@ bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     {
         x->mant->sign = -x->mant->sign;
     }
-    if(MIDDLE_LEFT(x) !=0 && (apint_getlimb(x->mant, 0) & 0x1ull) != 0)
-        is_exact = false;
 
-    //adjust_alignment(x);
     return is_exact;
 }
 
-//a-b
-//optimization 1. Merged to 1.
-bool apfp_sub_segfault(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+
+bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     // After swap, `a` is guaranteed to have largest exponent
     bool swapped = false;
@@ -999,7 +994,6 @@ bool apfp_sub_segfault(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     }
     // Align `b` mantissa to `a` given exponent difference
     apfp_exp_t factor = a->exp - b->exp;
-    //apint_copy(x->mant, b->mant);
     for (int i = 0; i < b->mant->length; i+=4)
     {
         x->mant->limbs[i] = b->mant->limbs[i];
@@ -1008,14 +1002,20 @@ bool apfp_sub_segfault(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
         x->mant->limbs[i+3] = b->mant->limbs[i+3];
     }
     x->mant->sign = b->mant->sign;
+    int midlength = (b->mant->length/2)+1;
+    int maxlength = b->mant->length;
+    size_t pos;
+    size_t i;
+    size_t overflow;
 
+    int mid_pos_bitwise_val = MID_POS_BITWISE(x);
     if(factor)
     {
         int full_limbs_shifted = factor / APINT_LIMB_BITS;
         factor -= full_limbs_shifted * APINT_LIMB_BITS;
 
         int full_limbs_shifted_1 = full_limbs_shifted-1;
-        for (int i = full_limbs_shifted; i  < x->mant->length; i+=2)
+        for (int i = full_limbs_shifted; i  < x->mant->length-1; i+=2)
         {
             x->mant->limbs[i-full_limbs_shifted] = x->mant->limbs[i];
             x->mant->limbs[i-full_limbs_shifted_1] = x->mant->limbs[i+1];
@@ -1031,52 +1031,43 @@ bool apfp_sub_segfault(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
             x->mant->limbs[x->mant->length - 1] >>= factor;
         }
     }
-
     unsigned char carry1 = 0;
     unsigned char carry2 = 0;
     unsigned char carry3 = 0;
     unsigned char carry4 = 0;
-    int midlength = (b->mant->length/2)+1;
-
-    unsigned char borrow1 = 0;
-    unsigned char borrow2 = 0;
-    unsigned char borrow3 = 0;
-    unsigned char borrow4 = 0;
-
-    int is_greater1,is_greater2,is_greater3,is_greater4 ;
-    int is_greater=0;
+    x->exp = a->exp;
     if(x->mant->sign == a->mant->sign)
     {
-        for (int i = midlength; i >= 0; i-=4)
+        apint_minus(x->mant, a->mant, x->mant); //sign is set here
+        for(i = midlength; i >= 0; i--)
         {
-            is_greater1=(a->mant->limbs[i] > x->mant->limbs[i]);
-            is_greater2=(a->mant->limbs[i-1] > x->mant->limbs[i-1]);
-            is_greater3=(a->mant->limbs[i-2] > x->mant->limbs[i-2]);
-            is_greater4=(a->mant->limbs[i-3] > x->mant->limbs[i-3]);
-            is_greater = is_greater | is_greater1|is_greater2|is_greater3|is_greater4;
-        }
-        if (is_greater) // a > b so a-b
-        {
-            x->mant->sign = a->mant->sign;
-            for (apint_size_t i = 0; i < a->mant->length; i+=4)
+            if(x->mant->limbs[i] > 0)
             {
-                borrow1 = _subborrow_u64(borrow4, a->mant->limbs[i], x->mant->limbs[i], &x->mant->limbs[i]);
-                borrow2 = _subborrow_u64(borrow1, a->mant->limbs[i+1], x->mant->limbs[i+1], &x->mant->limbs[i+1]);
-                borrow3 = _subborrow_u64(borrow2, a->mant->limbs[i+2], x->mant->limbs[i+2], &x->mant->limbs[i+2]);
-                borrow4 = _subborrow_u64(borrow3, a->mant->limbs[i+3], x->mant->limbs[i+3], &x->mant->limbs[i+3]);
+                break;
             }
         }
-        else // b > a so -(b-a)
+        pos = APINT_LIMB_BITS * (maxlength-i-1);
+        int xsize = maxlength * APINT_LIMB_BITS;
+        int bitpos = __builtin_clzll(x->mant->limbs[i]);
+        pos = pos + bitpos;
+        overflow = (xsize-pos);
+        overflow = mid_pos_bitwise_val - overflow;
+        int full_limbs_shifted = overflow / APINT_LIMB_BITS;
+        overflow -= full_limbs_shifted * APINT_LIMB_BITS;
+        int full_limbs_shifted_1 = full_limbs_shifted + 1;
+        for (i = maxlength - 1; i >= full_limbs_shifted - 1; i -= 2)
         {
-            x->mant->sign = -b->mant->sign;
-            for (apint_size_t i = 0; i < a->mant->length; i++)
-            {
-                borrow1 = _subborrow_u64(borrow4, x->mant->limbs[i], x->mant->limbs[i], &x->mant->limbs[i]);
-                borrow2 = _subborrow_u64(borrow1, x->mant->limbs[i+1], x->mant->limbs[i+1], &x->mant->limbs[i+1]);
-                borrow3 = _subborrow_u64(borrow2, x->mant->limbs[i+2], x->mant->limbs[i+2], &x->mant->limbs[i+2]);
-                borrow4 = _subborrow_u64(borrow3, x->mant->limbs[i+3], x->mant->limbs[i+3], &x->mant->limbs[i+3]);
-            }
+            x->mant->limbs[i] = x->mant->limbs[i - full_limbs_shifted];
+            x->mant->limbs[i - 1] = x->mant->limbs[i - full_limbs_shifted_1];
         }
+        if (overflow) {
+            int rightshiftamt = (APINT_LIMB_BITS - overflow);
+            for ( i = maxlength - 1; i > 0; i--) {
+                x->mant->limbs[i] = (x->mant->limbs[i] << overflow) + (x->mant->limbs[i - 1] >> rightshiftamt);
+            }
+            x->mant->limbs[0] <<= overflow;
+        }
+        x->exp -= (apfp_exp_t) overflow;
     }
     else
     {
@@ -1087,6 +1078,45 @@ bool apfp_sub_segfault(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
             carry3 = _addcarryx_u64(carry2, x->mant->limbs[i+2], a->mant->limbs[i+2], &x->mant->limbs[i+2]);
             carry4 = _addcarryx_u64(carry3, x->mant->limbs[i+3], a->mant->limbs[i+3], &x->mant->limbs[i+3]);
         }
+        for(i = midlength; i >= 0; i--)
+        {
+            if(x->mant->limbs[i] > 0)
+            {
+                break;
+            }
+        }
+        pos = APINT_LIMB_BITS * (maxlength-i-1);
+        int xsize = maxlength * APINT_LIMB_BITS;
+        int bitpos = __builtin_clzll(x->mant->limbs[i]);
+        pos = pos + bitpos;
+        overflow = (xsize-pos);
+        if (MIDDLE_LEFT(x))
+        {
+            overflow -= mid_pos_bitwise_val;
+            int leftshiftamt = (APINT_LIMB_BITS - overflow);
+            for (int i = 0; i < midlength; i+=4)
+            {
+                x->mant->limbs[i] = (x->mant->limbs[i] >> overflow) + (x->mant->limbs[i + 1] << leftshiftamt);
+                x->mant->limbs[i+1] = (x->mant->limbs[i+1] >> overflow) + (x->mant->limbs[i + 2] << leftshiftamt);
+                x->mant->limbs[i+2] = (x->mant->limbs[i+2] >> overflow) + (x->mant->limbs[i + 3] << leftshiftamt);
+                x->mant->limbs[i+3] = (x->mant->limbs[i+3] >> overflow) + (x->mant->limbs[i + 4] << leftshiftamt);
+            }
+            x->mant->limbs[x->mant->length - 1] >>= overflow;
+            x->exp += (apfp_exp_t) overflow;
+        }
+        else if (overflow < mid_pos_bitwise_val)
+        {
+            overflow = mid_pos_bitwise_val - overflow;
+            int rightshiftamt = (APINT_LIMB_BITS - overflow);
+            for (int i = midlength ; i > 3; i-=4) {
+                x->mant->limbs[i] = (x->mant->limbs[i] << overflow) + (x->mant->limbs[i - 1] >> rightshiftamt);
+                x->mant->limbs[i-1] = (x->mant->limbs[i-1] << overflow) + (x->mant->limbs[i - 2] >> rightshiftamt);
+                x->mant->limbs[i-2] = (x->mant->limbs[i-2] << overflow) + (x->mant->limbs[i - 3] >> rightshiftamt);
+                x->mant->limbs[i-3] = (x->mant->limbs[i-3] << overflow) + (x->mant->limbs[i - 4] >> rightshiftamt);
+            }
+            x->mant->limbs[0] <<= overflow;
+            x->exp -= (apfp_exp_t) overflow;
+        }
         x->mant->sign = a->mant->sign;
     }
 
@@ -1094,11 +1124,7 @@ bool apfp_sub_segfault(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     {
         x->mant->sign = -x->mant->sign;
     }
-    x->exp = a->exp;
-    //if(MIDDLE_LEFT(x) !=0 && (apint_getlimb(x->mant, 0) & 0x1ull) != 0)
-    //    is_exact = false;
 
-    adjust_alignment(x);
     return is_exact;
 }
 
