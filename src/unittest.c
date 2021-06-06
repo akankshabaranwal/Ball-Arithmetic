@@ -942,7 +942,7 @@ TEST_GROUP(ball_arithmetic, {
 
             // From arblib mid point needs to be: 9.86960440109
             ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 1), 0x9de9e64df22ef2d2llu);
-            ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 0), 0x56e26cd9808c1ac7llu);
+            ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 0), 0x56e26cd9808c1ac6llu);
             ASSERT_EQUAL_L(apbar_get_midpt_exp(apbar_test[2]), -124l);
 
             // From arblib radius is: 958528343 * 2^-153
@@ -969,7 +969,7 @@ TEST_GROUP(ball_arithmetic, {
 
             // From arblib mid point needs to be: 9.86960440109
             ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 1), 0x9de9e64df22ef2d2llu);
-            ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 0), 0x56e26cd9808c1ac7llu);
+            ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 0), 0x56e26cd9808c1ac6llu);
             ASSERT_EQUAL_L(apbar_get_midpt_exp(apbar_test[2]), -124l);
 
             // From arblib radius is: 958528343 * 2^-153

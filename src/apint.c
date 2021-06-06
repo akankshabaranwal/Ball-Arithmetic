@@ -327,8 +327,7 @@ int apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
             // make sure we don't try to set something in x that is outside of its precision
             if ((i + j) < x->length) {
                 carry = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]);
-                x->limbs[i + j] += carry;
-                x->limbs[i + j] += _mulx_u64(a->limbs[j], b->limbs[i], &overflow);
+                carry += _addcarryx_u64(0, x->limbs[i + j], _mulx_u64(a->limbs[j], b->limbs[i], &overflow), &x->limbs[i + j]);
             }
         }
     }
@@ -353,8 +352,7 @@ int apint_mul_unroll(apint_ptr x, apint_srcptr a, apint_srcptr b)
             // make sure we don't try to set something in x that is outside of its precision
             if ((i + j) < x->length) {
                 carry = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]);
-                x->limbs[i + j] += carry;
-                x->limbs[i + j] += _mulx_u64(a->limbs[j], b->limbs[i], &overflow);
+                carry += _addcarryx_u64(0, x->limbs[i + j], _mulx_u64(a->limbs[j], b->limbs[i], &overflow), &x->limbs[i + j]);
             }
         }
     }
