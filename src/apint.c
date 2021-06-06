@@ -100,7 +100,7 @@ size_t apint_detectfirst1(apint_ptr x)
 }
 
 // right shift
-bool apint_shiftr(apint_ptr x, unsigned int shift)
+bool apint_shiftr_base(apint_ptr x, unsigned int shift)
 {
     assert(x->limbs);
 
@@ -132,6 +132,119 @@ bool apint_shiftr(apint_ptr x, unsigned int shift)
 
     for (int i = 0; i < x->length - 1; ++i) {
         x->limbs[i] = (x->limbs[i] >> shift) + (x->limbs[i+1] << (APINT_LIMB_BITS - shift));
+    }
+    x->limbs[x->length - 1] >>= shift;
+    return did_shift;
+}
+
+//First optimization. Removed branching. Reorganized function calls.
+bool apint_shiftr_optim1(apint_ptr x, unsigned int shift)
+{
+    assert(x->limbs);
+
+    if (!shift) return false;
+
+    int full_limbs_shifted = shift / APINT_LIMB_BITS;
+    shift -= full_limbs_shifted * APINT_LIMB_BITS;
+
+    bool did_shift = false;
+    if(full_limbs_shifted<x->length)
+    {
+        for (int j = 0; j < full_limbs_shifted; ++j)
+        {
+            if (apint_getlimb(x,j) != 0)
+            {
+                did_shift = true;
+                break;
+            }
+        }
+    }
+    for (int i = 0; i < x->length; ++i)
+    {
+        if (i + full_limbs_shifted < x->length) {
+            x->limbs[i] = x->limbs[i+full_limbs_shifted];
+        }
+    }
+
+    if (!shift) return did_shift;
+    did_shift = __builtin_ctzl(x->limbs[0]) >= shift;
+
+    for (int i = 0; i < x->length - 1; ++i) {
+        x->limbs[i] = (x->limbs[i] >> shift) + (x->limbs[i+1] << (APINT_LIMB_BITS - shift));
+    }
+
+    x->limbs[x->length - 1] >>= shift;
+    return did_shift;
+}
+
+//Second optimization. Removing branching.
+bool apint_shiftr_optim2(apint_ptr x, unsigned int shift)
+{
+    assert(x->limbs);
+
+    if (!shift) return false;
+
+    int full_limbs_shifted = shift / APINT_LIMB_BITS;
+    shift -= full_limbs_shifted * APINT_LIMB_BITS;
+
+    bool did_shift = false;
+
+    if(full_limbs_shifted<x->length)
+    {
+        for (int j = 0; j < full_limbs_shifted; ++j)
+        {
+                did_shift = did_shift|x->limbs[j];
+        }
+    }
+
+    for (int i = full_limbs_shifted; i  < x->length; i++)
+    {
+            x->limbs[i-full_limbs_shifted] = x->limbs[i];
+    }
+
+    if (!shift) return did_shift;
+    did_shift = __builtin_ctzl(x->limbs[0]) >= shift;
+
+    for (int i = 0; i < x->length - 1; ++i) {
+        x->limbs[i] = (x->limbs[i] >> shift) + (x->limbs[i+1] << (APINT_LIMB_BITS - shift));
+    }
+
+    x->limbs[x->length - 1] >>= shift;
+    return did_shift;
+}
+
+//Third optimization. Unrolling, considering mid pt, removing unnecessary calls?
+bool apint_shiftr(apint_ptr x, unsigned int shift)
+{
+    assert(x->limbs);
+
+    if (!shift) return false;
+
+    int full_limbs_shifted = shift / APINT_LIMB_BITS;
+    shift -= full_limbs_shifted * APINT_LIMB_BITS;
+
+    bool did_shift = false;
+
+    if(full_limbs_shifted<x->length)
+    {
+        for (int j = 0; j < full_limbs_shifted; ++j)
+        {
+            did_shift = did_shift|x->limbs[j];
+        }
+    }
+
+    int full_limbs_shifted_1 = full_limbs_shifted-1;
+    for (int i = full_limbs_shifted; i  < x->length; i+=2)
+    {
+        x->limbs[i-full_limbs_shifted] = x->limbs[i];
+        x->limbs[i-full_limbs_shifted_1] = x->limbs[i+1];
+    }
+
+    if (!shift) return did_shift;
+
+    int leftshiftamt =  (APINT_LIMB_BITS - shift);
+    for (int i = 0; i < x->length - 1; ++i) {
+        x->limbs[i] = (x->limbs[i] >> shift) + (x->limbs[i+1] << leftshiftamt);
     }
 
     x->limbs[x->length - 1] >>= shift;
@@ -186,26 +299,27 @@ void apint_shiftl_optim1(apint_ptr x, unsigned int shift){
     x->limbs[0] <<= shift;
 }
 
-// Optimization 2. Loop unrolling. Can be unrolled more maybe?
+// Optimization 2. Loop unrolling. Type casting to same data type. Unroll more
 void apint_shiftl(apint_ptr x, unsigned int shift){
     assert(x->limbs);
     if (shift == 0) return;
 
     int full_limbs_shifted = shift / APINT_LIMB_BITS;
     shift -= full_limbs_shifted * APINT_LIMB_BITS;
-
+    int full_limbs_shifted_1 = full_limbs_shifted + 1;
     for (int i = x->length - 1; i >= full_limbs_shifted-1; i-=2) {
         x->limbs[i] = x->limbs[i-full_limbs_shifted];
-        x->limbs[i-1] = x->limbs[i-full_limbs_shifted-1];
+        //x->limbs[i-1] = x->limbs[i-full_limbs_shifted-1];
+        x->limbs[i-1] = x->limbs[i-full_limbs_shifted_1];
     }
 
     if (!shift)
         return;
 
+    int rightshiftamt = (APINT_LIMB_BITS - shift);
     for (int i = x->length - 1; i > 0; i--) {
-        x->limbs[i] = (x->limbs[i] << shift) + (x->limbs[i-1] >> (APINT_LIMB_BITS - shift));
+        x->limbs[i] = (x->limbs[i] << shift) + (x->limbs[i-1] >> rightshiftamt);
     }
-
     x->limbs[0] <<= shift;
 }
 
