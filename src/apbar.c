@@ -185,14 +185,16 @@ static inline void add_error_bound(apbar_ptr res, apint_size_t prec)
 //assumes that c, a, b are already allocated
 // This is not the complete base
 // Maybe have different plots showing how optimizing shiftl or shiftr improved the performance etc for the base case
-void apbar_add_base(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+
+//Base version
+void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 {
     assert(a);
     assert(b);
     assert(c);
 
     // midpoint computation (should round towards 0)
-    bool is_exact = apfp_add_base(c->midpt, a->midpt, b->midpt);
+    bool is_exact = apfp_add(c->midpt, a->midpt, b->midpt);
 
     // radius computation (should round towards +inf)
     rad_add(c->rad, a->rad, b->rad);
@@ -200,9 +202,6 @@ void apbar_add_base(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
     // error bound computation (should round towards +inf)
     if (!is_exact) add_error_bound(c, p);
 }
-
-// apbar_add shiftl base v/s shiftl optimal??
-// apbar add shiftr base v/s shiftr optimal??
 
 void apbar_add_optim1(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 {
@@ -220,7 +219,7 @@ void apbar_add_optim1(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t 
     if (!is_exact) add_error_bound(c, p);
 }
 
-void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+void apbar_add_optim2(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 {
     assert(a);
     assert(b);

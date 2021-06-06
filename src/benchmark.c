@@ -93,10 +93,10 @@ void barith_add_base(unsigned int prec)
 {
     for (size_t i = 0; i < BENCHMARK_ITER; i++)
     {
-        apbar_add_base(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_add_base(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_add_base(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_add_base(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add(apbar_out, apbar_in1, apbar_in2, prec);
     }
 }
 

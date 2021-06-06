@@ -136,7 +136,7 @@ static inline bool adjust_alignment(apfp_ptr x)
     return is_exact;
 }
 
-bool apfp_add_base(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     assert(x->mant->length == a->mant->length);
     assert(x->mant->length == b->mant->length);
@@ -553,7 +553,7 @@ bool apfp_add_optim3(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 
 // Unrolling
 // added ILP
-bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+bool apfp_add_optim4(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     assert(x->mant->length == a->mant->length);
     assert(x->mant->length == b->mant->length);
@@ -735,7 +735,7 @@ bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 }
 
 //a-b
-bool apfp_sub_base(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     // After swap, `a` is guaranteed to have largest exponent
     bool swapped = false;
@@ -982,7 +982,7 @@ bool apfp_sub_optim2(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 }
 
 
-bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+bool apfp_sub_optim3(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     // After swap, `a` is guaranteed to have largest exponent
     bool swapped = false;

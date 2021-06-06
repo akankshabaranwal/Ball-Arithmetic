@@ -73,7 +73,7 @@ void apint_copy(apint_ptr dst, apint_srcptr src)
 
 // detect the position of first 1
 // naive method
-size_t apint_detectfirst1_base(apint_ptr x)
+size_t apint_detectfirst1(apint_ptr x)
 {
     //Iterate over the limbs
     size_t i;
@@ -98,7 +98,7 @@ size_t apint_detectfirst1_base(apint_ptr x)
 }
 
 // Optimization 1
-size_t apint_detectfirst1(apint_ptr x)
+size_t apint_detectfirst1_optim1(apint_ptr x)
 {
     //Iterate over the limbs
     size_t i;
@@ -120,44 +120,6 @@ size_t apint_detectfirst1(apint_ptr x)
     return (xsize-pos);
 }
 
-// right shift
-bool apint_shiftr_base(apint_ptr x, unsigned int shift)
-{
-    assert(x->limbs);
-
-    if (!shift) return false;
-
-    uint full_limbs_shifted = shift / APINT_LIMB_BITS;
-    shift -= full_limbs_shifted * APINT_LIMB_BITS;
-
-    bool did_shift = false;
-
-    //printf("shift is %d \n", shift);
-    for (int i = 0; i < x->length; ++i) {
-        if (i + full_limbs_shifted < x->length) {
-            if (i == 0) {
-                for (int j = 0; j < full_limbs_shifted; ++j) {
-                    if (x->limbs[j] != 0) did_shift = true;
-                }
-            }
-            x->limbs[i] = x->limbs[i+full_limbs_shifted];
-            //printf("assign full limb here %d \n", full_limbs_shifted);
-        }
-        else {
-            x->limbs[i] = 0;
-        }
-    }
-
-    if (!shift) return did_shift;
-    did_shift |= __builtin_ctzl(x->limbs[0]) >= shift;
-
-    for (int i = 0; i < x->length - 1; ++i) {
-        x->limbs[i] = (x->limbs[i] >> shift) + (x->limbs[i+1] << (APINT_LIMB_BITS - shift));
-    }
-
-    x->limbs[x->length - 1] >>= shift;
-    return did_shift;
-}
 
 bool apint_shiftr_copy(apint_ptr dest, apint_srcptr src, unsigned int shift)
 {
@@ -192,7 +154,7 @@ bool apint_shiftr_copy(apint_ptr dest, apint_srcptr src, unsigned int shift)
 
 
 //First optimization. Removed branching. Reorganized function calls.
-bool apint_shiftr_optim1(apint_ptr x, unsigned int shift)
+bool apint_shiftr(apint_ptr x, unsigned int shift)
 {
     assert(x->limbs);
 
@@ -232,44 +194,10 @@ bool apint_shiftr_optim1(apint_ptr x, unsigned int shift)
 }
 
 //Second optimization. Removing branching.
-bool apint_shiftr_optim2(apint_ptr x, unsigned int shift)
-{
-    assert(x->limbs);
-
-    if (!shift) return false;
-
-    int full_limbs_shifted = shift / APINT_LIMB_BITS;
-    shift -= full_limbs_shifted * APINT_LIMB_BITS;
-
-    bool did_shift = false;
-
-    if(full_limbs_shifted<x->length)
-    {
-        for (int j = 0; j < full_limbs_shifted; ++j)
-        {
-            did_shift = did_shift|x->limbs[j];
-        }
-    }
-
-    for (int i = full_limbs_shifted; i  < x->length; i++)
-    {
-        x->limbs[i-full_limbs_shifted] = x->limbs[i];
-    }
-
-    if (!shift) return did_shift;
-    did_shift = __builtin_ctzl(x->limbs[0]) >= shift;
-
-    for (int i = 0; i < x->length - 1; ++i) {
-        x->limbs[i] = (x->limbs[i] >> shift) + (x->limbs[i+1] << (APINT_LIMB_BITS - shift));
-    }
-
-    x->limbs[x->length - 1] >>= shift;
-    return did_shift;
-}
 
 // Third optimization. Unrolling, considering mid pt, removing unnecessary calls which don't break unit tests?
 // Someone can check if its okay to do this.
-bool apint_shiftr(apint_ptr x, unsigned int shift)
+bool apint_shiftr_optim1(apint_ptr x, unsigned int shift)
 {
     assert(x->limbs);
 
@@ -299,7 +227,7 @@ bool apint_shiftr(apint_ptr x, unsigned int shift)
     return did_shift;
 }
 
-void apint_shiftl_base(apint_ptr x, unsigned int shift){
+void apint_shiftl(apint_ptr x, unsigned int shift){
     assert(x->limbs);
     if (shift == 0) return;
 
@@ -348,7 +276,7 @@ void apint_shiftl_optim1(apint_ptr x, unsigned int shift){
 }
 
 // Optimization 2. Loop unrolling. Type casting to same data type. Unroll more
-void apint_shiftl(apint_ptr x, unsigned int shift){
+void apint_shiftl_optim2(apint_ptr x, unsigned int shift){
     assert(x->limbs);
     if (shift == 0) return;
 
@@ -429,7 +357,7 @@ char apint_plus_portable(apint_ptr x, apint_srcptr a, apint_srcptr b)
     return carry;
 }
 
-unsigned char apint_plus_base(apint_ptr x, apint_srcptr a, apint_srcptr b)
+unsigned char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length);
@@ -444,7 +372,7 @@ unsigned char apint_plus_base(apint_ptr x, apint_srcptr a, apint_srcptr b)
 }
 
 //Optimization 1. Just midpt
-unsigned char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
+unsigned char apint_plus_optim1(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length);
@@ -460,7 +388,7 @@ unsigned char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
 }
 
 // |a| - |b|. Do not handle sign here.
-unsigned char apint_minus_base(apint_ptr x, apint_srcptr a, apint_srcptr b)
+unsigned char apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length); // only handle same lengths for now
@@ -488,7 +416,7 @@ unsigned char apint_minus_base(apint_ptr x, apint_srcptr a, apint_srcptr b)
     return borrow;
 }
 
-unsigned char apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
+unsigned char apint_minus_optim1(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length); // only handle same lengths for now
@@ -535,6 +463,7 @@ unsigned char apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
     }
     return borrow;
 }
+
 int apint_is_greater(apint_srcptr a, apint_srcptr b)
 {
     //Works only for same length a, b
