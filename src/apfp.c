@@ -655,6 +655,7 @@ bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
         }
     }
     else{
+        //TODO: Probably some bug here. This if condition shouldn't be required
         if (x->mant->sign == 1)
         {
             apint_minus(x->mant, x->mant, a->mant);
@@ -698,7 +699,7 @@ bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 }
 
 //a-b
-bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+bool apfp_sub_base(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     // After swap, `a` is guaranteed to have largest exponent
     bool swapped = false;
@@ -720,6 +721,124 @@ bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     x->exp = a->exp;
     if(MIDDLE_LEFT(x) !=0 && (apint_getlimb(x->mant, 0) & 0x1ull) != 0)
         is_exact = false;
+
+    adjust_alignment(x);
+    return is_exact;
+}
+
+//a-b
+//optimization 1. Merged to 1.
+bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+{
+    // After swap, `a` is guaranteed to have largest exponent
+    bool swapped = false;
+    bool is_exact = true;
+    if (b->exp > a->exp)
+    {
+        apfp_srcptr t = a; a = b; b = t;
+        swapped = true;
+    }
+    // Align `b` mantissa to `a` given exponent difference
+    apfp_exp_t factor = a->exp - b->exp;
+    //apint_copy(x->mant, b->mant);
+    for (int i = 0; i < b->mant->length; i+=4)
+    {
+        x->mant->limbs[i] = b->mant->limbs[i];
+        x->mant->limbs[i+1] = b->mant->limbs[i+1];
+        x->mant->limbs[i+2] = b->mant->limbs[i+2];
+        x->mant->limbs[i+3] = b->mant->limbs[i+3];
+    }
+    x->mant->sign = b->mant->sign;
+
+    if(factor)
+    {
+        int full_limbs_shifted = factor / APINT_LIMB_BITS;
+        factor -= full_limbs_shifted * APINT_LIMB_BITS;
+
+        int full_limbs_shifted_1 = full_limbs_shifted-1;
+        for (int i = full_limbs_shifted; i  < x->mant->length; i+=2)
+        {
+            x->mant->limbs[i-full_limbs_shifted] = x->mant->limbs[i];
+            x->mant->limbs[i-full_limbs_shifted_1] = x->mant->limbs[i+1];
+        }
+
+        if (factor)
+        {
+            int leftshiftamt = (APINT_LIMB_BITS - factor);
+            for (int i = 0; i < x->mant->length - 1; ++i)
+            {
+                x->mant->limbs[i] = (x->mant->limbs[i] >> factor) + (x->mant->limbs[i + 1] << leftshiftamt);
+            }
+            x->mant->limbs[x->mant->length - 1] >>= factor;
+        }
+    }
+
+    unsigned char carry1 = 0;
+    unsigned char carry2 = 0;
+    unsigned char carry3 = 0;
+    unsigned char carry4 = 0;
+    int midlength = (b->mant->length/2)+1;
+    int maxlength = b->mant->length;
+
+    unsigned char borrow1 = 0;
+    unsigned char borrow2 = 0;
+    unsigned char borrow3 = 0;
+    unsigned char borrow4 = 0;
+
+    int is_greater1,is_greater2,is_greater3,is_greater4 ;
+    int is_greater=0;
+    if(x->mant->sign == a->mant->sign)
+    {
+        for (int i = midlength; i >= 0; i-=4)
+        {
+            is_greater1=(a->mant->limbs[i] > x->mant->limbs[i]);
+            is_greater2=(a->mant->limbs[i-1] > x->mant->limbs[i-1]);
+            is_greater3=(a->mant->limbs[i-2] > x->mant->limbs[i-2]);
+            is_greater4=(a->mant->limbs[i-3] > x->mant->limbs[i-3]);
+            is_greater = is_greater | is_greater1|is_greater2|is_greater3|is_greater4;
+        }
+        if (is_greater) // a > b so a-b
+        {
+            x->mant->sign = a->mant->sign;
+            for (apint_size_t i = 0; i < a->mant->length; i+=4)
+            {
+                borrow1 = _subborrow_u64(borrow4, a->mant->limbs[i], x->mant->limbs[i], &x->mant->limbs[i]);
+                borrow2 = _subborrow_u64(borrow1, a->mant->limbs[i+1], x->mant->limbs[i+1], &x->mant->limbs[i+1]);
+                borrow3 = _subborrow_u64(borrow2, a->mant->limbs[i+2], x->mant->limbs[i+2], &x->mant->limbs[i+2]);
+                borrow4 = _subborrow_u64(borrow3, a->mant->limbs[i+3], x->mant->limbs[i+3], &x->mant->limbs[i+3]);
+            }
+        }
+        else // b > a so -(b-a)
+        {
+            x->mant->sign = -b->mant->sign;
+            for (apint_size_t i = 0; i < a->mant->length; i++)
+            {
+                borrow1 = _subborrow_u64(borrow4, x->mant->limbs[i], x->mant->limbs[i], &x->mant->limbs[i]);
+                borrow2 = _subborrow_u64(borrow1, x->mant->limbs[i+1], x->mant->limbs[i+1], &x->mant->limbs[i+1]);
+                borrow3 = _subborrow_u64(borrow2, x->mant->limbs[i+2], x->mant->limbs[i+2], &x->mant->limbs[i+2]);
+                borrow4 = _subborrow_u64(borrow3, x->mant->limbs[i+3], x->mant->limbs[i+3], &x->mant->limbs[i+3]);
+            }
+        }
+    }
+    else
+    {
+        for (apint_size_t i = 0; i < midlength; i+=4)
+        {
+            carry1 = _addcarryx_u64(carry4, x->mant->limbs[i], a->mant->limbs[i], &x->mant->limbs[i]);
+            carry2 = _addcarryx_u64(carry1, x->mant->limbs[i+1], a->mant->limbs[i+1], &x->mant->limbs[i+1]);
+            carry3 = _addcarryx_u64(carry2, x->mant->limbs[i+2], a->mant->limbs[i+2], &x->mant->limbs[i+2]);
+            carry4 = _addcarryx_u64(carry3, x->mant->limbs[i+3], a->mant->limbs[i+3], &x->mant->limbs[i+3]);
+        }
+        x->mant->sign = a->mant->sign;
+    }
+
+    if(swapped)
+    {
+        x->mant->sign = -x->mant->sign;
+    }
+    x->exp = a->exp;
+    //if(MIDDLE_LEFT(x) !=0 && (apint_getlimb(x->mant, 0) & 0x1ull) != 0)
+    //    is_exact = false;
 
     adjust_alignment(x);
     return is_exact;
