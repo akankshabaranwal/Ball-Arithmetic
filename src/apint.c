@@ -460,7 +460,7 @@ unsigned char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
 }
 
 // |a| - |b|. Do not handle sign here.
-unsigned char apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
+unsigned char apint_minus_base(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length); // only handle same lengths for now
@@ -488,6 +488,53 @@ unsigned char apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
     return borrow;
 }
 
+unsigned char apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
+{
+    assert(x->limbs && a->limbs && b->limbs);
+    assert(a->length == b->length); // only handle same lengths for now
+    assert(a->length <= x->length);
+    unsigned char borrow = 0;
+    int midlength = (b->length/2)+1;
+    int is_greater1,is_greater2,is_greater3,is_greater4 ;
+    int is_greater=0;
+    unsigned char borrow1 = 0;
+    unsigned char borrow2 = 0;
+    unsigned char borrow3 = 0;
+    unsigned char borrow4 = 0;
+    for (int i = midlength; i >= 0; i-=4)
+    {
+        is_greater1=(a->limbs[i] > b->limbs[i]);
+        is_greater2=(a->limbs[i-1] > b->limbs[i-1]);
+        is_greater3=(a->limbs[i-2] > b->limbs[i-2]);
+        is_greater4=(a->limbs[i-3] > b->limbs[i-3]);
+        is_greater = is_greater | is_greater1|is_greater2|is_greater3|is_greater4;
+    }
+    if (is_greater) // a > b so a-b
+    {
+        //printf("Yes is greater\n");
+        x->sign = a->sign;
+        for (apint_size_t i = 0; i < a->length; i+=4)
+        {
+            borrow1 = _subborrow_u64(borrow4, a->limbs[i], b->limbs[i], &x->limbs[i]);
+            borrow2 = _subborrow_u64(borrow1, a->limbs[i+1], b->limbs[i+1], &x->limbs[i+1]);
+            borrow3 = _subborrow_u64(borrow2, a->limbs[i+2], b->limbs[i+2], &x->limbs[i+2]);
+            borrow4 = _subborrow_u64(borrow3, a->limbs[i+3], b->limbs[i+3], &x->limbs[i+3]);
+        }
+    }
+    else // b > a so -(b-a)
+    {
+        //printf("No swapped it\n");
+        x->sign = -b->sign;
+        for (apint_size_t i = 0; i < a->length; i+=4)
+        {
+            borrow1 = _subborrow_u64(borrow4, b->limbs[i], a->limbs[i], &x->limbs[i]);
+            borrow2 = _subborrow_u64(borrow1, b->limbs[i+1], a->limbs[i+1], &x->limbs[i+1]);
+            borrow3 = _subborrow_u64(borrow2, b->limbs[i+2], a->limbs[i+2], &x->limbs[i+2]);
+            borrow4 = _subborrow_u64(borrow3, b->limbs[i+3], a->limbs[i+3], &x->limbs[i+3]);
+        }
+    }
+    return borrow;
+}
 int apint_is_greater(apint_srcptr a, apint_srcptr b)
 {
     //Works only for same length a, b

@@ -602,7 +602,13 @@ bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     unsigned char carry2 = 0;
     unsigned char carry3 = 0;
     unsigned char carry4 = 0;
+    unsigned char borrow1 = 0;
+    unsigned char borrow2 = 0;
+    unsigned char borrow3 = 0;
+    unsigned char borrow4 = 0;
 
+    int is_greater1,is_greater2,is_greater3,is_greater4 ;
+    int is_greater=0;
     if (x->mant->sign == a->mant->sign)
     {
         for (apint_size_t i = 0; i < midlength; i+=4)
@@ -658,10 +664,41 @@ bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
         //TODO: Probably some bug here. This if condition shouldn't be required
         if (x->mant->sign == 1)
         {
-            apint_minus(x->mant, x->mant, a->mant);
+            //apint_minus(x->mant, x->mant, a->mant);
+            for (int i = midlength; i >= 0; i-=4)
+            {
+                is_greater1=(a->mant->limbs[i] > x->mant->limbs[i]);
+                is_greater2=(a->mant->limbs[i-1] > x->mant->limbs[i-1]);
+                is_greater3=(a->mant->limbs[i-2] > x->mant->limbs[i-2]);
+                is_greater4=(a->mant->limbs[i-3] > x->mant->limbs[i-3]);
+                is_greater = is_greater | is_greater1|is_greater2|is_greater3|is_greater4;
+            }
+            if (is_greater) // a > b so a-b
+            {
+                x->mant->sign = a->mant->sign;
+                for (apint_size_t i = 0; i < a->mant->length; i+=4)
+                {
+                    borrow1 = _subborrow_u64(borrow4, a->mant->limbs[i], x->mant->limbs[i], &x->mant->limbs[i]);
+                    borrow2 = _subborrow_u64(borrow1, a->mant->limbs[i+1], x->mant->limbs[i+1], &x->mant->limbs[i+1]);
+                    borrow3 = _subborrow_u64(borrow2, a->mant->limbs[i+2], x->mant->limbs[i+2], &x->mant->limbs[i+2]);
+                    borrow4 = _subborrow_u64(borrow3, a->mant->limbs[i+3], x->mant->limbs[i+3], &x->mant->limbs[i+3]);
+                }
+            }
+            else // b > a so -(b-a)
+            {
+                x->mant->sign = -a->mant->sign;
+                for (apint_size_t i = 0; i < a->mant->length; i++)
+                {
+                    borrow1 = _subborrow_u64(borrow4, x->mant->limbs[i], x->mant->limbs[i], &x->mant->limbs[i]);
+                    borrow2 = _subborrow_u64(borrow1, x->mant->limbs[i+1], x->mant->limbs[i+1], &x->mant->limbs[i+1]);
+                    borrow3 = _subborrow_u64(borrow2, x->mant->limbs[i+2], x->mant->limbs[i+2], &x->mant->limbs[i+2]);
+                    borrow4 = _subborrow_u64(borrow3, x->mant->limbs[i+3], x->mant->limbs[i+3], &x->mant->limbs[i+3]);
+                }
+            }
         }
         else{
             apint_minus(x->mant, a->mant, x->mant);
+
         }
         size_t pos;
         size_t i;
@@ -778,7 +815,6 @@ bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     unsigned char carry3 = 0;
     unsigned char carry4 = 0;
     int midlength = (b->mant->length/2)+1;
-    int maxlength = b->mant->length;
 
     unsigned char borrow1 = 0;
     unsigned char borrow2 = 0;
