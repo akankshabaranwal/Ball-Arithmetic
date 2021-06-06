@@ -182,6 +182,10 @@ static void int_mul_OPT1(uint prec)
         apint_mul_OPT1(out, in1, in2);
     }
 }
+static void int_mul_unroll(uint prec)
+{
+    ITERATE(apint_mul_unroll(out, in1, in2));
+}
 
 static void int_mul_portable(uint prec)
 {
@@ -268,6 +272,7 @@ BENCHMARK_END_TABLE(int_plus)
 BENCHMARK_BEGIN_TABLE(int_mul)
     BENCHMARK_FUNCTION(int_mul, int_init, int_cleanup, 1.0, 8, 24)
     BENCHMARK_FUNCTION(int_mul_OPT1, int_init, int_cleanup, 1.0, 8, 24)
+    BENCHMARK_FUNCTION(int_mul_unroll, int_init, int_cleanup, 1.0, 8, 24)
     // BENCHMARK_FUNCTION(int_mul_portable, int_init, int_cleanup, 1.0, 8, 17)
     // BENCHMARK_FUNCTION(int_mul_karatsuba, int_init, int_cleanup, 1.0, 8, 17)
     // BENCHMARK_FUNCTION(int_mul_karatsuba_extend_basecase, int_init, int_cleanup, 1.0, 8, 17)
