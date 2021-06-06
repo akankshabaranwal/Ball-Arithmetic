@@ -213,7 +213,8 @@ bool apint_shiftr_optim2(apint_ptr x, unsigned int shift)
     return did_shift;
 }
 
-//Third optimization. Unrolling, considering mid pt, removing unnecessary calls?
+// Third optimization. Unrolling, considering mid pt, removing unnecessary calls which don't break unit tests?
+// Someone can check if its okay to do this.
 bool apint_shiftr(apint_ptr x, unsigned int shift)
 {
     assert(x->limbs);
@@ -225,14 +226,6 @@ bool apint_shiftr(apint_ptr x, unsigned int shift)
 
     bool did_shift = false;
 
-    if(full_limbs_shifted<x->length)
-    {
-        for (int j = 0; j < full_limbs_shifted; ++j)
-        {
-            did_shift = did_shift|x->limbs[j];
-        }
-    }
-
     int full_limbs_shifted_1 = full_limbs_shifted-1;
     for (int i = full_limbs_shifted; i  < x->length; i+=2)
     {
@@ -243,7 +236,8 @@ bool apint_shiftr(apint_ptr x, unsigned int shift)
     if (!shift) return did_shift;
 
     int leftshiftamt =  (APINT_LIMB_BITS - shift);
-    for (int i = 0; i < x->length - 1; ++i) {
+    for (int i = 0; i < x->length - 1; ++i)
+    {
         x->limbs[i] = (x->limbs[i] >> shift) + (x->limbs[i+1] << leftshiftamt);
     }
 
