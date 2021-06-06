@@ -2,7 +2,7 @@
 #include <apfp.h>
 #include <apbar.h>
 
-static const int NUM_RUNS = 100000;
+static const int NUM_RUNS = 10000;
 static const int PRECISION = 131072;
 
 int main()
@@ -11,7 +11,6 @@ int main()
     profile_func = 'a'; //select the function to profile here.
     // a is addition
     // s is subtraction
-    // m is multiplication
 
     apbar_t apbar_test[3];
     apbar_init(apbar_test[0], PRECISION);
@@ -47,16 +46,10 @@ int main()
                 apbar_sub(apbar_test[0], apbar_test[1], apbar_test[2], 128);
                 break;
             }
-            case 'm':
-            {
-                apbar_mul(apbar_test[2], apbar_test[1], apbar_test[0], 128);
-                apbar_mul(apbar_test[0], apbar_test[1], apbar_test[2], 128);
-                break;
-            }
         }
     }
 
-    apbar_print_msg("pi - -pi is:", apbar_test[2]);
+  //  apbar_print_msg("pi - -pi is:", apbar_test[2]);
 
     apbar_free(apbar_test[0]);
     apbar_free(apbar_test[1]);

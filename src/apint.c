@@ -138,7 +138,7 @@ bool apint_shiftr(apint_ptr x, unsigned int shift)
     return did_shift;
 }
 
-void apint_shiftl(apint_ptr x, unsigned int shift){
+void apint_shiftl_base(apint_ptr x, unsigned int shift){
     assert(x->limbs);
     if (shift == 0) return;
 
@@ -152,6 +152,51 @@ void apint_shiftl(apint_ptr x, unsigned int shift){
         else {
             x->limbs[i] = 0;
         }
+    }
+
+    if (!shift)
+        return;
+
+    for (int i = x->length - 1; i > 0; i--) {
+        x->limbs[i] = (x->limbs[i] << shift) + (x->limbs[i-1] >> (APINT_LIMB_BITS - shift));
+    }
+
+    x->limbs[0] <<= shift;
+}
+
+// Optimization 1. Removing unnecessary computations.
+void apint_shiftl_optim1(apint_ptr x, unsigned int shift){
+    assert(x->limbs);
+    if (shift == 0) return;
+
+    int full_limbs_shifted = shift / APINT_LIMB_BITS;
+    shift -= full_limbs_shifted * APINT_LIMB_BITS;
+
+    for (int i = x->length - 1; i >= full_limbs_shifted; i--) {
+            x->limbs[i] = x->limbs[i-full_limbs_shifted];
+    }
+
+    if (!shift)
+        return;
+
+    for (int i = x->length - 1; i > 0; i--) {
+        x->limbs[i] = (x->limbs[i] << shift) + (x->limbs[i-1] >> (APINT_LIMB_BITS - shift));
+    }
+
+    x->limbs[0] <<= shift;
+}
+
+// Optimization 2. Loop unrolling. Can be unrolled more maybe?
+void apint_shiftl(apint_ptr x, unsigned int shift){
+    assert(x->limbs);
+    if (shift == 0) return;
+
+    int full_limbs_shifted = shift / APINT_LIMB_BITS;
+    shift -= full_limbs_shifted * APINT_LIMB_BITS;
+
+    for (int i = x->length - 1; i >= full_limbs_shifted-1; i-=2) {
+        x->limbs[i] = x->limbs[i-full_limbs_shifted];
+        x->limbs[i-1] = x->limbs[i-full_limbs_shifted-1];
     }
 
     if (!shift)
@@ -179,7 +224,7 @@ unsigned char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
             overflow = apint_minus(x, b, a);
         }
         else
-        { //only b is negative.
+        {
             overflow = apint_minus(x, a, b);
         }
     }
@@ -237,7 +282,7 @@ unsigned char apint_plus_base(apint_ptr x, apint_srcptr a, apint_srcptr b)
 }
 
 //Optimization 1. Just midpt
-unsigned char apint_plus_optim1(apint_ptr x, apint_srcptr a, apint_srcptr b)
+unsigned char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length);
@@ -248,39 +293,6 @@ unsigned char apint_plus_optim1(apint_ptr x, apint_srcptr a, apint_srcptr b)
     for (apint_size_t i = 0; i < midpt; i++)
     {
         carry = _addcarryx_u64(carry, a->limbs[i], b->limbs[i], &x->limbs[i]);
-    }
-    return carry;
-}
-
-//Optimization 2. Increasing ILP. Does not work. Chain dependency.
-unsigned char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
-{
-    assert(x->limbs && a->limbs && b->limbs);
-    assert(a->length == b->length);
-    assert(a->length <= x->length);
-
-    int midpt = (a->length /2) + 1;
-    unsigned char carry = 0;
-    unsigned char carry1 = 0;
-    unsigned char carry01 = 0;
-    unsigned char carry02 = 0;
-    unsigned char carry11 = 0;
-    unsigned char carry12 = 0;
-    int midmidpt = midpt/2;
-
-    for (apint_size_t i = 0; i < midpt;)
-    {
-        if(carry1)
-            carry = _addcarryx_u64(1, a->limbs[i], b->limbs[i], &x->limbs[i]);
-        else
-            carry = _addcarryx_u64(0, a->limbs[i], b->limbs[i], &x->limbs[i]);
-
-        if(carry)
-            carry1 = _addcarryx_u64(1, a->limbs[i+1], b->limbs[i+1], &x->limbs[i+1]);
-        else
-            carry1 = _addcarryx_u64(0, a->limbs[i+1], b->limbs[i+1], &x->limbs[i+1]);
-
-        i+=2;
     }
     return carry;
 }
