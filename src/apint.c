@@ -396,6 +396,11 @@ int apint_mul_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b)
                     carry = _addcarryx_u64(carry3, x->limbs[i + j + 3], overflow3, &x->limbs[i + j + 3]);
                     carry += _addcarryx_u64(0, x->limbs[i + j + 3], temp3, &x->limbs[i + j + 3]);
                 }
+                else if (i + j < x->length)
+                {
+                    x->limbs[i + j] += overflow + carry;
+                    x->limbs[i + j] += _mulx_u64(a->limbs[j], b->limbs[i], &overflow1);
+                }
             }
         }
     }
@@ -486,7 +491,7 @@ uint64_t apint_mul_karatsuba(apint_ptr x, apint_srcptr a, apint_srcptr b)
 
     // if lengths small enough, return a*b
     if (a->length <= 1 || b->length <= 1) // they have to be the same length anyways
-        return apint_mul_karatsuba_base_case(x, a, b);
+        return apint_mul(x, a, b);
 
     uint64_t overflow = apint_mul_karatsuba_recurse(x, a, b); // Although I don't think there will be overflow here
     return overflow;                                          // this returns a unit64_t
@@ -499,8 +504,8 @@ uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b
 {
     // if lengths small enough, return a*b
     // karatsuba_base_case handles different precision input and output because it is needed
-    if (a->length == 1 || b->length == 1)
-        return apint_mul_karatsuba_base_case(x, a, b);
+    if (a->length <= 1 || b->length <= 1)
+        return apint_mul(x, a, b);
 
     // d = floor(max(length(a), length(b)) / 2)
     apint_size_t d = floor(max(a->length, b->length) / 2); // They're the same length anyways
@@ -605,7 +610,7 @@ uint64_t apint_mul_karatsuba_base_case(apint_ptr x, apint_srcptr a, apint_srcptr
         x->sign = 1;
     else
         x->sign = -1;
-    printf("size of: %d\n", APINT_LIMB_BYTES);
+
     for (apint_size_t i = 0; i < b->length; i++)
     {
         overflow = 0;
@@ -613,12 +618,8 @@ uint64_t apint_mul_karatsuba_base_case(apint_ptr x, apint_srcptr a, apint_srcptr
         for (apint_size_t j = 0; j < a->length; j++)
         {
             // make sure we don't try to set something in x that is outside of its precision
-            if ((i + j) < x->length)
-            {
-                carry = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]);
-                x->limbs[i + j] += carry;
-                x->limbs[i + j] += _mulx_u64(a->limbs[j], b->limbs[i], &overflow);
-            }
+            carry = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]);
+            carry += _addcarryx_u64(0, x->limbs[i + j], _mulx_u64(a->limbs[j], b->limbs[i], &overflow), &x->limbs[i + j]);
         }
     }
     return (int)overflow;
@@ -636,7 +637,7 @@ uint64_t apint_mul_karatsuba_extend_basecase(apint_ptr x, apint_srcptr a, apint_
 
     // if lengths small enough, return a*b
     if (a->length <= 1 || b->length <= 1) // they have to be the same length anyways
-        return apint_mul_karatsuba_base_case(x, a, b);
+        return apint_mul(x, a, b);
 
     uint64_t overflow = apint_mul_karatsuba_recurse_extend_basecase(x, a, b); // Although I don't think there will be overflow here
     return overflow;                                                          // this returns a unit64_t
@@ -655,7 +656,7 @@ uint64_t apint_mul_karatsuba_recurse_extend_basecase(apint_ptr x, apint_srcptr a
     // karatsuba_base_case handles different precision input and output because it is needed
     // 10 saw improvements
     if (a->length <= 8 || b->length <= 8)
-        return apint_mul_karatsuba_base_case(x, a, b);
+        return apint_mul(x, a, b);
 
     // d = floor(max(length(a), length(b)) / 2)
     apint_size_t d = floor(max(a->length, b->length) / 2); // They're the same length anyways
@@ -755,7 +756,7 @@ uint64_t apint_mul_karatsuba_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b)
 
     // if lengths small enough, return a*b
     if (a->length <= 1 || b->length <= 1) // they have to be the same length anyways
-        return apint_mul_karatsuba_base_case(x, a, b);
+        return apint_mul(x, a, b);
 
     uint64_t overflow = apint_mul_karatsuba_recurse_OPT1(x, a, b); // Although I don't think there will be overflow here
     return overflow;                                               // this returns a unit64_t
@@ -770,7 +771,7 @@ uint64_t apint_mul_karatsuba_recurse_OPT1(apint_ptr x, apint_srcptr a, apint_src
     // if lengths small enough, return a*b
     // karatsuba_base_case handles different precision input and output because it is needed
     if (a->length <= 8 || b->length <= 8)
-        return apint_mul_karatsuba_base_case(x, a, b);
+        return apint_mul(x, a, b);
 
     // d = floor(max(length(a), length(b)) / 2)
     apint_size_t d = floor(max(a->length, b->length) / 2); // They're the same length anyways
