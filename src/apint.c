@@ -356,6 +356,9 @@ void apint_div(apint_ptr x, apint_srcptr a, apint_srcptr b)
     // keep trying greatest powers of 2 and if it doesnt work shift, otherwise multiply (well its by 1 anyways), but just subtract
 }
 
+/*
+Was supposed to be used for karatsuba adding when two lengths are different, but apint_add seems to work?
+*/
 char apint_add_karatsuba(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
@@ -364,8 +367,6 @@ char apint_add_karatsuba(apint_ptr x, apint_srcptr a, apint_srcptr b)
     a has to be the bigger one because when we pass in a_high,
     it will always be greater or equal because of how we calculate "d"
     */
-    // printf("add_karatsuba a length: %d\n", a->length);
-    // printf("add_karatsuba b length: %d\n", b->length);
     assert(a->length >= b->length);
 
     char carry = 0;
@@ -449,8 +450,8 @@ uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b
     apint_init(a_add, (max(a_high->length, a_low->length)) * 64);
     apint_init(b_add, (max(b_high->length, b_low->length)) * 64);
 
-    a_add_overflow = apint_add_karatsuba(a_add, a_high, a_low); // a_high and a_low have to be the same length for now ASSUMPTION
-    b_add_overflow = apint_add_karatsuba(b_add, b_high, b_low); // a_high and a_low have to be the same length for now
+    a_add_overflow = apint_add(a_add, a_high, a_low); // a_high and a_low have to be the same length for now ASSUMPTION
+    b_add_overflow = apint_add(b_add, b_high, b_low); // a_high and a_low have to be the same length for now
 
     apint_mul_karatsuba_recurse(z0, a_low, b_low);
     apint_mul_karatsuba_recurse(z1, a_add, b_add);   // THE LENGTH NEVER DECREASES, ok now it decreases, so its fine
@@ -484,8 +485,8 @@ uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b
     // x = z2 * 2 ^ (2 * d) + (z1 - z2 - z0) * 2 ^ (d) + z0;
     apint_t temp_x;
     apint_init(temp_x, (x->length) * 64);
-    apint_add_karatsuba(temp_x, z2, second_operand);
-    apint_add_karatsuba(x, temp_x, z0);
+    apint_add(temp_x, z2, second_operand);
+    apint_add(x, temp_x, z0);
 
     // FREE EVERYTHING ELSE
     apint_free(z0);
@@ -594,8 +595,8 @@ uint64_t apint_mul_karatsuba_recurse_extend_basecase(apint_ptr x, apint_srcptr a
     apint_init(a_add, (max(a_high->length, a_low->length)) * 64);
     apint_init(b_add, (max(b_high->length, b_low->length)) * 64);
 
-    a_add_overflow = apint_add_karatsuba(a_add, a_high, a_low); // a_high and a_low have to be the same length for now ASSUMPTION
-    b_add_overflow = apint_add_karatsuba(b_add, b_high, b_low); // a_high and a_low have to be the same length for now
+    a_add_overflow = apint_add(a_add, a_high, a_low); // a_high and a_low have to be the same length for now ASSUMPTION
+    b_add_overflow = apint_add(b_add, b_high, b_low); // a_high and a_low have to be the same length for now
 
     apint_mul_karatsuba_recurse_extend_basecase(z0, a_low, b_low);
     apint_mul_karatsuba_recurse_extend_basecase(z1, a_add, b_add);   // THE LENGTH NEVER DECREASES, ok now it decreases, so its fine
@@ -627,8 +628,8 @@ uint64_t apint_mul_karatsuba_recurse_extend_basecase(apint_ptr x, apint_srcptr a
     // x = z2 * 2 ^ (2 * d) + (z1 - z2 - z0) * 2 ^ (d) + z0;
     apint_t temp_x;
     apint_init(temp_x, (x->length) * 64);
-    apint_add_karatsuba(temp_x, z2, second_operand);
-    apint_add_karatsuba(x, temp_x, z0);
+    apint_add(temp_x, z2, second_operand);
+    apint_add(x, temp_x, z0);
 
     // FREE EVERYTHING ELSE
     apint_free(z0);
@@ -722,8 +723,8 @@ uint64_t apint_mul_karatsuba_recurse_OPT1(apint_ptr x, apint_srcptr a, apint_src
     apint_init(a_add, (max(a_high->length, a_low->length)) * 64);
     apint_init(b_add, (max(b_high->length, b_low->length)) * 64);
 
-    a_add_overflow = apint_add_karatsuba(a_add, a_high, a_low); // a_high and a_low have to be the same length for now ASSUMPTION
-    b_add_overflow = apint_add_karatsuba(b_add, b_high, b_low); // a_high and a_low have to be the same length for now
+    a_add_overflow = apint_add(a_add, a_high, a_low); // a_high and a_low have to be the same length for now ASSUMPTION
+    b_add_overflow = apint_add(b_add, b_high, b_low); // a_high and a_low have to be the same length for now
 
     apint_mul_karatsuba_recurse_OPT1(z0, a_low, b_low);
     apint_mul_karatsuba_recurse_OPT1(z1, a_add, b_add);   // THE LENGTH NEVER DECREASES, ok now it decreases, so its fine
@@ -795,8 +796,8 @@ uint64_t apint_mul_karatsuba_recurse_OPT1(apint_ptr x, apint_srcptr a, apint_src
     // x = z2 * 2 ^ (2 * d) + (z1 - z2 - z0) * 2 ^ (d) + z0;
     apint_t temp_x;
     apint_init(temp_x, (x->length) * 64);
-    apint_add_karatsuba(temp_x, z2, second_operand);
-    apint_add_karatsuba(x, temp_x, z0);
+    apint_add(temp_x, z2, second_operand);
+    apint_add(x, temp_x, z0);
 
     // FREE EVERYTHING ELSE
     apint_free(z0);

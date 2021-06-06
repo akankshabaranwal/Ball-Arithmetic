@@ -30,7 +30,9 @@ void apint_mult_test()
     a->sign = 1;
     b->sign = 1;
 
-    apint_mul_karatsuba(x, a, b);
+    // apint_mul_karatsuba(x, a, b);
+    // apint_mul_karatsuba_extend_basecase(x, a, b);
+    apint_mul_karatsuba_OPT1(x, a, b);
     // apint_mul(x, a, b);
 
     printf("0x%llx 0x%llx\n", apint_getlimb(x, 1), apint_getlimb(x, 0));
