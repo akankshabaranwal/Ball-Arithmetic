@@ -173,7 +173,6 @@ bool apint_shiftr_copy(apint_ptr dest, apint_srcptr src, unsigned int shift)
 
     bool did_shift = false;
 
-    //printf("shift is %d \n", shift);
     for (int i = 0; i < src->length; ++i) {
         if (i + full_limbs_shifted < src->length) {
             if (i == 0) {
@@ -182,7 +181,6 @@ bool apint_shiftr_copy(apint_ptr dest, apint_srcptr src, unsigned int shift)
                 }
             }
             dest->limbs[i] = (src->limbs[i+full_limbs_shifted] >> shift) + (src->limbs[i+full_limbs_shifted+1] << (APINT_LIMB_BITS - shift));
-            //printf("assign full limb here %d \n", full_limbs_shifted);
         }
         else {
             dest->limbs[i] = 0;
@@ -192,6 +190,7 @@ bool apint_shiftr_copy(apint_ptr dest, apint_srcptr src, unsigned int shift)
     dest->limbs[src->length - 1] = src->limbs[src->length-1] >> shift;
     return did_shift || __builtin_ctzl(src->limbs[0]) >= shift;
 }
+
 
 //First optimization. Removed branching. Reorganized function calls.
 bool apint_shiftr_optim1(apint_ptr x, unsigned int shift)

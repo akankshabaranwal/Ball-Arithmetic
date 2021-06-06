@@ -154,13 +154,61 @@ bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     apfp_exp_t factor = a->exp - b->exp;
 
     // We could easily combine shift and copy here
-    apint_copy(x->mant, b->mant);
-    apint_shiftr(x->mant, factor); // right shift mantissa of b
+
+    for (int i = 0; i < b->mant->length; i+=4)
+    {
+        x->mant->limbs[i] = b->mant->limbs[i];
+        x->mant->limbs[i+1] = b->mant->limbs[i+1];
+        x->mant->limbs[i+2] = b->mant->limbs[i+2];
+        x->mant->limbs[i+3] = b->mant->limbs[i+3];
+    }
+    x->mant->sign = b->mant->sign;
+
+    if(factor)
+    {
+    int full_limbs_shifted = factor / APINT_LIMB_BITS;
+    factor -= full_limbs_shifted * APINT_LIMB_BITS;
+
+    int full_limbs_shifted_1 = full_limbs_shifted-1;
+    for (int i = full_limbs_shifted; i  < x->mant->length; i+=2)
+    {
+        x->mant->limbs[i-full_limbs_shifted] = x->mant->limbs[i];
+        x->mant->limbs[i-full_limbs_shifted_1] = x->mant->limbs[i+1];
+    }
+
+    if (factor)
+        {
+        int leftshiftamt = (APINT_LIMB_BITS - factor);
+        for (int i = 0; i < x->mant->length - 1; ++i)
+        {
+            x->mant->limbs[i] = (x->mant->limbs[i] >> factor) + (x->mant->limbs[i + 1] << leftshiftamt);
+        }
+        x->mant->limbs[x->mant->length - 1] >>= factor;
+        }
+    }
 
     // Add mantissa, shift by carry and update exponent
     apint_add(x->mant, x->mant, a->mant);
+/*
+    if (x->mant->sign == x->mant->sign)
+    {
+        apint_plus(x, a, b);
+        x->mant->sign = x->mant->sign;
+    }
+    else
+    {
+        if (x->mant->sign == -1) //only a is negative. so equivalent to b-a.
+        {
+            apint_minus(x, b, a);
+        }
+        else
+        {
+            apint_minus(x, a, b);
+        }
+    }*/
+
     x->exp = a->exp;
-    if(MIDDLE_LEFT(x) != 0 && (apint_getlimb(x->mant, 0) & 0x1ull) != 0)
+    if(MIDDLE_LEFT(x) != 0 && (x->mant->limbs[0]& 0x1ull) != 0)
         is_exact = false;
 
     adjust_alignment(x);
