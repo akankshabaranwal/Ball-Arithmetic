@@ -136,6 +136,39 @@ static inline bool adjust_alignment(apfp_ptr x)
     return is_exact;
 }
 
+bool apfp_add_base(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+{
+    assert(x->mant->length == a->mant->length);
+    assert(x->mant->length == b->mant->length);
+
+    bool swapped = false;
+    bool is_exact = true;
+    // After swap, `a` is guaranteed to have largest exponent
+    if (b->exp > a->exp)
+    {
+        apfp_srcptr t = a; a = b; b = t;
+        swapped = true;
+    }
+
+    // Align `b` mantissa to `a` given exponent difference
+    apfp_exp_t factor = a->exp - b->exp;
+
+    // We could easily combine shift and copy here
+    apint_copy(x->mant, b->mant);
+    apint_shiftr(x->mant, factor); // right shift mantissa of b
+
+    // Add mantissa, shift by carry and update exponent
+    apint_add(x->mant, x->mant, a->mant);
+    x->exp = a->exp;
+    if(MIDDLE_LEFT(x) != 0 && (apint_getlimb(x->mant, 0) & 0x1ull) != 0)
+        is_exact = false;
+
+    adjust_alignment(x);
+
+    return is_exact;
+
+}
+
 // Collapsed all functions to 1.
 bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
