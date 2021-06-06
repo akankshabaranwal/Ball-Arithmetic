@@ -16,12 +16,13 @@ if ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
     message(WARNING "Profiling flags are set and profile target added.")
 endif()
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
+
 include_directories(include)
 
 add_executable(arblib-test
-        src/arb-test.c
+    src/arb-test.c
 )
-
 target_link_libraries(arblib-test arb flint)
 
 set(BALL_ARITH_SRC
@@ -30,19 +31,15 @@ set(BALL_ARITH_SRC
     src/apbar.c
 )
 
-
 add_executable(benchmark
     ${BALL_ARITH_SRC}
     src/benchmark.c
 )
+target_link_libraries(benchmark flint gmp arb)
 
 add_executable(unit-test
     ${BALL_ARITH_SRC}
     src/unittest.c
-)
-
-add_executable(apbar2-example
-    src/apbar2-example.c
 )
 
 add_executable(karatsuba
@@ -58,6 +55,10 @@ add_executable(profile-karatsuba
 add_executable(profile-apbar
         ${BALL_ARITH_SRC}
         src/profile_apbar.c
+)
+
+add_executable(apbar2-example
+    src/apbar2-example.c
 )
 
 target_link_libraries(unit-test flint gmp arb)

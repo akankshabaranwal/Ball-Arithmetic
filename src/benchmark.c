@@ -10,8 +10,7 @@
 static double bench(benchmark_fun_t f, unsigned int prec)
 {
     /* Warm up the cpu. */
-    for (int i = 0; i < BENCHMARK_WARMUPS; ++i)
-    {
+    for (int i = 0; i < BENCHMARK_WARMUPS; ++i) {
         f(prec);
     }
 
@@ -140,8 +139,7 @@ static void int_init(uint prec)
     // apint_init(out, 2 * prec);
 
     size_t limbs = prec / APINT_LIMB_BITS;
-    for (int i = 0; i < limbs; ++i)
-    {
+    for (int i = 0; i < limbs; ++i) {
         apint_setlimb(in1, i, urand());
         apint_setlimb(in2, i, urand());
     }
@@ -156,32 +154,28 @@ static void int_cleanup(uint prec)
 
 static void int_plus(uint prec)
 {
-    for (size_t i = 0; i < BENCHMARK_ITER; ++i)
-    {
+    for (size_t i = 0; i < BENCHMARK_ITER; ++i) {
         apint_plus(out, in1, in2);
     }
 }
 
 static void int_plus_portable(uint prec)
 {
-    for (size_t i = 0; i < BENCHMARK_ITER; ++i)
-    {
+    for (size_t i = 0; i < BENCHMARK_ITER; ++i) {
         apint_plus_portable(out, in1, in2);
     }
 }
 
 static void int_mul(uint prec)
 {
-    for (size_t i = 0; i < BENCHMARK_ITER; ++i)
-    {
+    for (size_t i = 0; i < BENCHMARK_ITER; ++i) {
         apint_mul(out, in1, in2);
     }
 }
 
 static void int_mul_portable(uint prec)
 {
-    for (size_t i = 0; i < BENCHMARK_ITER; ++i)
-    {
+    for (size_t i = 0; i < BENCHMARK_ITER; ++i) {
         apint_mul_portable(out, in1, in2);
     }
 }
@@ -212,14 +206,14 @@ static void int_mul_karatsuba_opt1(uint prec)
 
 BENCHMARK_BEGIN_SUITE()
 BENCHMARK_BEGIN_TABLE(def)
-BENCHMARK_FUNCTION(arblib_add, arblib_init, arblib_deinit, 4.0, 8, 17)
-BENCHMARK_FUNCTION(barith_add, barith_init, barith_deinit, 4.0, 8, 17)
-BENCHMARK_FUNCTION(barith2_add, barith2_init, barith2_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(arblib_add, arblib_init, arblib_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith_add, barith_init, barith_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith2_add, barith2_init, barith2_deinit, 4.0, 8, 17)
 BENCHMARK_END_TABLE(def)
 
 BENCHMARK_BEGIN_TABLE(int_plus)
-BENCHMARK_FUNCTION(int_plus, int_init, int_cleanup, 1.0, 8, 17)
-BENCHMARK_FUNCTION(int_plus_portable, int_init, int_cleanup, 1.0, 8, 17)
+    BENCHMARK_FUNCTION(int_plus, int_init, int_cleanup, 1.0, 8, 17)
+    BENCHMARK_FUNCTION(int_plus_portable, int_init, int_cleanup, 1.0, 8, 17)
 BENCHMARK_END_TABLE(int_plus)
 
 BENCHMARK_BEGIN_TABLE(int_mul)
@@ -234,12 +228,10 @@ BENCHMARK_END_SUITE()
 int main(int argc, char const *argv[])
 {
     const char *suite_name;
-    if (argc < 2)
-    {
+    if (argc < 2) {
         suite_name = "def";
     }
-    else
-    {
+    else {
         suite_name = argv[1];
     }
     BENCHMARK_FOREACH(current, suite_name)
