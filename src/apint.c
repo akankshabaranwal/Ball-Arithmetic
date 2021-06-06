@@ -298,6 +298,10 @@ int apint_is_greater(apint_srcptr a, apint_srcptr b)
     return 0;
 }
 
+/*
+- maybe unrolling
+- making sure that b->length or a->length is the smaller one, but I think they're both the same
+*/
 int apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     //TODO: check if these checks are needed anywhere else in the code.
@@ -306,7 +310,9 @@ int apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
     assert(a->length == x->length);
 
     unsigned long long overflow;
+    unsigned long long temp;
     unsigned char carry;
+    unsigned char carry1;
     if (a->sign == b->sign)
         x->sign = 1;
     else
@@ -316,17 +322,21 @@ int apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
     {
         overflow = 0;
         carry = 0;
-        for (apint_size_t j = 0; j < a->length; j++)
+        apint_size_t j;
+        for (j = 0; j < a->length; j++)
         {
             // make sure we don't try to set something in x that is outside of its precision
             if ((i + j) < x->length)
             {
+                // carry = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]);
+                // x->limbs[i + j] += carry;
+                // x->limbs[i + j] += _mulx_u64(a->limbs[j], b->limbs[i], &overflow);
                 carry = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]);
-                x->limbs[i + j] += carry;
-                x->limbs[i + j] += _mulx_u64(a->limbs[j], b->limbs[i], &overflow);
+                carry += _addcarryx_u64(0, x->limbs[i + j], _mulx_u64(a->limbs[j], b->limbs[i], &overflow), &x->limbs[i + j]);
             }
         }
     }
+
     return (int)overflow;
 }
 
@@ -338,6 +348,13 @@ int apint_mul_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b)
     assert(a->length == x->length);
 
     unsigned long long overflow;
+    unsigned long long overflow1;
+    unsigned long long overflow2;
+    unsigned long long overflow3;
+    unsigned long long temp;
+    unsigned long long temp1;
+    unsigned long long temp2;
+    unsigned long long temp3;
     unsigned char carry;
     unsigned char carry1;
     unsigned char carry2;
@@ -349,23 +366,9 @@ int apint_mul_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b)
 
     if (a->length <= 4 || b->length <= 4) // a and b should be same length
     {
-        for (apint_size_t i = 0; i < b->length; i++)
-        {
-            overflow = 0;
-            carry = 0;
-            for (apint_size_t j = 0; j < a->length; j++)
-            {
-                // make sure we don't try to set something in x that is outside of its precision
-                if ((i + j) < x->length)
-                {
-                    carry = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]);
-                    x->limbs[i + j] += carry;
-                    x->limbs[i + j] += _mulx_u64(a->limbs[j], b->limbs[i], &overflow);
-                }
-            }
-        }
+        return apint_mul(x, a, b);
     }
-    else // Loop unrolling if size is greater than 8
+    else // Loop unrolling if size is greater than 4
     {
         for (apint_size_t i = 0; i < b->length; i += 1) // doing 1 for now
         {
@@ -374,14 +377,24 @@ int apint_mul_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b)
             for (apint_size_t j = 0; j < a->length; j += 4)
             {
                 // make sure we don't try to set something in x that is outside of its precision
-                if ((i + j) < x->length)
+                if ((i + j + 3) < x->length)
                 {
-                    carry = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]);
-                    x->limbs[i + j] += carry;
-                    x->limbs[i + j] += _mulx_u64(a->limbs[j], b->limbs[i], &overflow);
-                    carry = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]);
-                    x->limbs[i + j] += carry;
-                    x->limbs[i + j] += _mulx_u64(a->limbs[j], b->limbs[i], &overflow);
+                    carry1 = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]); // needs to be done first because dependent on previous overflow
+                    temp = _mulx_u64(a->limbs[j], b->limbs[i], &overflow1);
+                    temp1 = _mulx_u64(a->limbs[j + 1], b->limbs[i], &overflow2);
+                    temp2 = _mulx_u64(a->limbs[j + 2], b->limbs[i], &overflow3);
+                    temp3 = _mulx_u64(a->limbs[j + 3], b->limbs[i], &overflow);
+
+                    carry1 += _addcarryx_u64(0, x->limbs[i + j], temp, &x->limbs[i + j]);
+
+                    carry2 = _addcarryx_u64(carry1, x->limbs[i + j + 1], overflow1, &x->limbs[i + j + 1]);
+                    carry2 += _addcarryx_u64(0, x->limbs[i + j + 1], temp1, &x->limbs[i + j + 1]);
+
+                    carry3 = _addcarryx_u64(carry2, x->limbs[i + j + 2], overflow2, &x->limbs[i + j + 2]);
+                    carry3 += _addcarryx_u64(0, x->limbs[i + j + 2], temp2, &x->limbs[i + j + 2]);
+
+                    carry = _addcarryx_u64(carry3, x->limbs[i + j + 3], overflow3, &x->limbs[i + j + 3]);
+                    carry += _addcarryx_u64(0, x->limbs[i + j + 3], temp3, &x->limbs[i + j + 3]);
                 }
             }
         }
@@ -586,23 +599,29 @@ uint64_t apint_mul_karatsuba_base_case(apint_ptr x, apint_srcptr a, apint_srcptr
     assert(a->length == b->length); // only handle same lengths for now
     // assert((a->length + b->length) <= x->length); // output can be different precision than input due to recursion and not wanting to lose precision during recursion
 
-    // I don't think there would be an overflow for multiplication because the biggest possible number takes up bits equal to the sum of bits in a and b
-    uint64_t overflow = 0;
-
+    unsigned long long overflow;
+    unsigned char carry;
+    if (a->sign == b->sign)
+        x->sign = 1;
+    else
+        x->sign = -1;
+    printf("size of: %d\n", APINT_LIMB_BYTES);
     for (apint_size_t i = 0; i < b->length; i++)
     {
+        overflow = 0;
+        carry = 0;
         for (apint_size_t j = 0; j < a->length; j++)
         {
-            if ((i + j) < x->length) // make sure we don't try to set something in x that is outside of its precision
+            // make sure we don't try to set something in x that is outside of its precision
+            if ((i + j) < x->length)
             {
-                x->limbs[i + j] += overflow;
+                carry = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]);
+                x->limbs[i + j] += carry;
                 x->limbs[i + j] += _mulx_u64(a->limbs[j], b->limbs[i], &overflow);
             }
         }
-        if ((i + a->length) < x->length)
-            x->limbs[i + a->length] += overflow;
     }
-    return overflow; // This overflow doesn't actually mean anything then if we drop the higher bits of the result anyways
+    return (int)overflow;
 }
 
 /* -------------------------------------- OPTIMIZATIONS BELOW (Extend Recursive Basecase) --------------------------------------  */
@@ -744,6 +763,7 @@ uint64_t apint_mul_karatsuba_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b)
 
 /*
 This is a recursive method, it seems like apint_add is still the bottleneck
+- benefits are from loops for inlining, method calls in loops
 */
 uint64_t apint_mul_karatsuba_recurse_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {

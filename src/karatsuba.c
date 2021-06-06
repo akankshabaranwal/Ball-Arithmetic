@@ -69,13 +69,13 @@ void apint_mult_test1()
     apint_setlimb(x, 14, 0x0000);
     apint_setlimb(x, 15, 0x0000);
 
-    apint_setlimb(a, 0, 0x3108); // 0x8 0x0 * 0x0 0x2 = 0x10 0x0
-    apint_setlimb(a, 1, 0x1000);
-    apint_setlimb(a, 2, 0x3108);
-    apint_setlimb(a, 3, 0x0F00);
-    apint_setlimb(a, 4, 0x3108);
-    apint_setlimb(a, 5, 0x0F00);
-    apint_setlimb(a, 6, 0x3108);
+    apint_setlimb(a, 0, 0xFFFFFFFFFFFFFFFF); // 0x8 0x0 * 0x0 0x2 = 0x10 0x0
+    apint_setlimb(a, 1, 0x0);
+    apint_setlimb(a, 2, 0x0);
+    apint_setlimb(a, 3, 0x0);
+    apint_setlimb(a, 4, 0x0);
+    apint_setlimb(a, 5, 0x0);
+    apint_setlimb(a, 6, 0x0000);
     apint_setlimb(a, 7, 0x0000);
     apint_setlimb(a, 8, 0x0000);
     apint_setlimb(a, 9, 0x0000);
@@ -87,14 +87,14 @@ void apint_mult_test1()
     apint_setlimb(a, 15, 0x0000);
 
     // if we have 0x1 0x0, what does this number actually represent???
-    apint_setlimb(b, 0, 0x3108); // 0x8 0x0 * 0x0 0x2 = 0x10 0x0
-    apint_setlimb(b, 1, 0x0400);
-    apint_setlimb(b, 2, 0x3108);
-    apint_setlimb(b, 3, 0x0200);
-    apint_setlimb(b, 4, 0x3108);
-    apint_setlimb(b, 5, 0x0010);
-    apint_setlimb(b, 6, 0x3108);
-    apint_setlimb(b, 7, 0x0000);
+    apint_setlimb(b, 0, 0xFFFFFFFFFFFFFFFF); // 0x8 0x0 * 0x0 0x2 = 0x10 0x0
+    apint_setlimb(b, 1, 0x0);
+    apint_setlimb(b, 2, 0x0);
+    apint_setlimb(b, 3, 0x0);
+    apint_setlimb(b, 4, 0x0);
+    apint_setlimb(b, 5, 0x0);
+    apint_setlimb(b, 6, 0x0);
+    apint_setlimb(b, 7, 0x0);
     apint_setlimb(b, 8, 0x0000);
     apint_setlimb(b, 9, 0x0000);
     apint_setlimb(b, 10, 0x0000);
@@ -113,7 +113,7 @@ void apint_mult_test1()
     // apint_mul_karatsuba_OPT1(x, a, b);
     apint_mul(x, a, b);
 
-    for (int i = 0; i < x->length; i++)
+    for (int i = x->length - 1; i >= 0; i--)
     {
         printf("0x%llx ", apint_getlimb(x, i));
     }
