@@ -60,21 +60,44 @@ void apint_free(apint_t x)
 void apint_copy(apint_ptr dst, apint_srcptr src)
 {
     assert(dst->length >= src->length);
-    /*
-    dst->length = src->length;
-    dst->limbs = realloc(dst->limbs, src->length * APINT_LIMB_BYTES);
-    memcpy(dst->limbs, src->limbs, src->length * APINT_LIMB_BYTES);
-    */
     int i;
-    for (i = 0; i < src->length; i++)
+    for (i = 0; i < src->length; i+=4)
     {
         dst->limbs[i] = src->limbs[i];
+        dst->limbs[i+1] = src->limbs[i+1];
+        dst->limbs[i+2] = src->limbs[i+2];
+        dst->limbs[i+3] = src->limbs[i+3];
     }
     dst->sign = src->sign;
 }
 
 // detect the position of first 1
 // naive method
+size_t apint_detectfirst1_base(apint_ptr x)
+{
+    //Iterate over the limbs
+    size_t i;
+    size_t pos;
+    apint_limb_t number;
+    pos = 0;
+    for(i = x->length - 1; i >= 0; i--) {
+        if(x->limbs[i] > 0) {
+            // There's a 1 somewhere here
+            number = x->limbs[i];
+            while(1) {
+                if (number & APINT_MSB) {
+                    return x->length * APINT_LIMB_BITS - pos;
+                }
+                number <<= 1;
+                pos++;
+            }
+        }
+        pos += APINT_LIMB_BITS;
+    }
+    return x->length * APINT_LIMB_BITS - pos;
+}
+
+// Optimization 1
 size_t apint_detectfirst1(apint_ptr x)
 {
     //Iterate over the limbs
@@ -98,6 +121,7 @@ size_t apint_detectfirst1(apint_ptr x)
     }
     return x->length * APINT_LIMB_BITS - pos;
 }
+
 
 // right shift
 bool apint_shiftr_base(apint_ptr x, unsigned int shift)
