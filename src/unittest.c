@@ -880,14 +880,14 @@ TEST_GROUP(apbar2, {
     WITH_SETUP(apbar2_test_setup);
     WITH_TEARDOWN(apbar2_test_teardown);
 
-    TEST_CASE(set to double, {
+    TEST_CASE(apbar2: set to double, {
         apbar2_set_d(apbar2_test[0], 2.71828);
 
         ASSERT_EQUAL_L(apbar2_get_midpt_exp(apbar2_test[0]), 1l);
         ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[0], 3) >> 11, 0x15BF0995AAF790llu);
     });
 
-    TEST_CASE(add two numbers, {
+    TEST_CASE(apbar2: add two numbers, {
         // Need to re-precision
         apbar2_free(apbar2_test[0]);
         apbar2_free(apbar2_test[1]);
@@ -912,6 +912,261 @@ TEST_GROUP(apbar2, {
 
         //Check value of exponent and sign
         ASSERT_EQUAL_L(apbar2_get_midpt_exp(apbar2_test[2]), -125l);
+    });
+
+    TEST_CASE(apbar2: apbar2_add addition with positive numbers 1.000...00 X 2^10 + 1.000...00 X 2^10, {
+        apbar2_set_midpt_limb(apbar2_test[0], 3, 0x8000000000000000LLU);
+        apbar2_set_midpt_limb(apbar2_test[0], 2, 0);
+        apbar2_set_midpt_limb(apbar2_test[0], 1, 0);
+        apbar2_set_midpt_limb(apbar2_test[0], 0, 0);
+        apbar2_set_midpt_exp(apbar2_test[0], 10);
+        apbar2_set_sign(apbar2_test[0], 0);
+
+        apbar2_set_midpt_limb(apbar2_test[1], 3, 0x8000000000000000LLU);
+        apbar2_set_midpt_limb(apbar2_test[1], 2, 0);
+        apbar2_set_midpt_limb(apbar2_test[1], 1, 0);
+        apbar2_set_midpt_limb(apbar2_test[1], 0, 0);
+        apbar2_set_midpt_exp(apbar2_test[1], 10);
+        apbar2_set_sign(apbar2_test[1], 0);
+
+        apbar2_add(apbar2_test[2], apbar2_test[0], apbar2_test[1], 256);
+
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 3), 0x8000000000000000LLU);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 2), 0);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 1), 0);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 0), 0);
+
+        ASSERT_EQUAL_L(apbar2_get_midpt_exp(apbar2_test[2]), 11);
+        ASSERT_EQUAL_I(apbar2_get_sign(apbar2_test[2]), 0);
+    });
+
+    TEST_CASE(apbar2: apbar2_add addition with positive numbers 1.111...11 X 2^10 + 1.111...11 X 2^10, {
+        apbar2_set_midpt_limb(apbar2_test[0], 3, 0xffffffffffffffffLLU);
+        apbar2_set_midpt_limb(apbar2_test[0], 2, 0xffffffffffffffffLLU);
+        apbar2_set_midpt_limb(apbar2_test[0], 1, 0xffffffffffffffffLLU);
+        apbar2_set_midpt_limb(apbar2_test[0], 0, 0xffffffffffffffffLLU);
+        apbar2_set_midpt_exp(apbar2_test[0], 10);
+        apbar2_set_sign(apbar2_test[0], 0);
+
+        apbar2_set_midpt_limb(apbar2_test[1], 3, 0xffffffffffffffffLLU);
+        apbar2_set_midpt_limb(apbar2_test[1], 2, 0xffffffffffffffffLLU);
+        apbar2_set_midpt_limb(apbar2_test[1], 1, 0xffffffffffffffffLLU);
+        apbar2_set_midpt_limb(apbar2_test[1], 0, 0xffffffffffffffffLLU);
+        apbar2_set_midpt_exp(apbar2_test[1], 10);
+        apbar2_set_sign(apbar2_test[1], 0);
+
+        apbar2_add(apbar2_test[2], apbar2_test[0], apbar2_test[1], 256);
+
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 3), 0xffffffffffffffffLLU);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 2), 0xffffffffffffffffLLU);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 1), 0xffffffffffffffffLLU);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 0), 0xffffffffffffffffLLU);
+
+        ASSERT_EQUAL_L(apbar2_get_midpt_exp(apbar2_test[2]), 11);
+        ASSERT_EQUAL_I(apbar2_get_sign(apbar2_test[2]), 0);
+    });
+
+    TEST_CASE(apbar2: apbar2_add addition with positive numbers 1.000...01 X 2^256 + 1.000...00 X 2^1, {
+        apbar2_set_midpt_limb(apbar2_test[0], 3, 0x8000000000000000LLU);
+        apbar2_set_midpt_limb(apbar2_test[0], 2, 0);
+        apbar2_set_midpt_limb(apbar2_test[0], 1, 0);
+        apbar2_set_midpt_limb(apbar2_test[0], 0, 1);
+        apbar2_set_midpt_exp(apbar2_test[0], 256);
+        apbar2_set_sign(apbar2_test[0], 0);
+
+        apbar2_set_midpt_limb(apbar2_test[1], 3, 0x8000000000000000LLU);
+        apbar2_set_midpt_limb(apbar2_test[1], 2, 0);
+        apbar2_set_midpt_limb(apbar2_test[1], 1, 0);
+        apbar2_set_midpt_limb(apbar2_test[1], 0, 1);
+        apbar2_set_midpt_exp(apbar2_test[1], 1);
+        apbar2_set_sign(apbar2_test[1], 0);
+
+        apbar2_add(apbar2_test[2], apbar2_test[0], apbar2_test[1], 256);
+
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 3), 0x8000000000000000LLU);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 2), 0);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 1), 0);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 0), 2);
+
+        ASSERT_EQUAL_L(apbar2_get_midpt_exp(apbar2_test[2]), 256);
+        ASSERT_EQUAL_I(apbar2_get_sign(apbar2_test[2]), 0);
+    });
+
+    TEST_CASE(apbar2: apbar2_add with positive and negative number 1.000...00 X 2^256 + -1.000...00 X 2^192, {
+        apbar2_set_d(apbar2_test[0], 1.0);
+        apbar2_set_midpt_exp(apbar2_test[0], 256);
+        apbar2_set_sign(apbar2_test[0], 0);
+
+        apbar2_set_d(apbar2_test[1], 1.0);
+        apbar2_set_midpt_exp(apbar2_test[1], 192);
+        apbar2_set_sign(apbar2_test[1], 1);
+
+        apbar2_add(apbar2_test[2], apbar2_test[0], apbar2_test[1], 256);
+
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 3), 0xffffffffffffffffLLU);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 2), 0);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 1), 0);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 0), 0);
+
+        ASSERT_EQUAL_L(apbar2_get_midpt_exp(apbar2_test[2]), 255);
+        ASSERT_EQUAL_I(apbar2_get_sign(apbar2_test[2]), 0);
+    });
+
+    TEST_CASE(apbar2: subtraction with positive numbers a-b a>b, {
+        apbar2_set_d(apbar2_test[0], 1.0);
+        apbar2_set_midpt_exp(apbar2_test[0], 256);
+        apbar2_set_sign(apbar2_test[0], 0);
+
+        apbar2_set_d(apbar2_test[1], 1.0);
+        apbar2_set_midpt_exp(apbar2_test[1], 192);
+        apbar2_set_sign(apbar2_test[1], 0);
+
+        apbar2_sub(apbar2_test[2], apbar2_test[0], apbar2_test[1], 256);
+
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 3), 0xffffffffffffffffLLU);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 2), 0);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 1), 0);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 0), 0);
+
+        ASSERT_EQUAL_L(apbar2_get_midpt_exp(apbar2_test[2]), 255);
+        ASSERT_EQUAL_I(apbar2_get_sign(apbar2_test[2]), 0);
+    });
+
+    TEST_CASE(apbar2: subtraction with positive numbers a-b a<b, {
+        apbar2_set_d(apbar2_test[0], 1.0);
+        apbar2_set_midpt_exp(apbar2_test[0], 192);
+        apbar2_set_sign(apbar2_test[0], 0);
+
+        apbar2_set_d(apbar2_test[1], 1.0);
+        apbar2_set_midpt_exp(apbar2_test[1], 256);
+        apbar2_set_sign(apbar2_test[1], 0);
+
+        apbar2_sub(apbar2_test[2], apbar2_test[0], apbar2_test[1], 256);
+
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 3), 0xffffffffffffffffLLU);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 2), 0);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 1), 0);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 0), 0);
+
+        ASSERT_EQUAL_L(apbar2_get_midpt_exp(apbar2_test[2]), 255);
+        ASSERT_EQUAL_I(apbar2_get_sign(apbar2_test[2]), 1);
+    });
+
+    TEST_CASE(apbar2: subtraction with positive numbers a-b a>b 2pi - pi, {
+        apbar2_set_midpt_limb(apbar2_test[0], 3, 0xC90FDAA22168C234LLU);
+        apbar2_set_midpt_limb(apbar2_test[0], 2, 0xC4C6628B80DC1CD1LLU);
+        apbar2_set_midpt_limb(apbar2_test[0], 1, 0);
+        apbar2_set_midpt_limb(apbar2_test[0], 0, 0);
+        apbar2_set_midpt_exp(apbar2_test[0], -125);
+        apbar2_set_sign(apbar2_test[0], 0);
+
+        apbar2_set_midpt_limb(apbar2_test[1], 3, 0xC90FDAA22168C234LLU);
+        apbar2_set_midpt_limb(apbar2_test[1], 2, 0xC4C6628B80DC1CD1LLU);
+        apbar2_set_midpt_limb(apbar2_test[1], 1, 0);
+        apbar2_set_midpt_limb(apbar2_test[1], 0, 0);
+        apbar2_set_midpt_exp(apbar2_test[1], -126);
+        apbar2_set_sign(apbar2_test[1], 0);
+
+        apbar2_sub(apbar2_test[2], apbar2_test[0], apbar2_test[1], 256);
+
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 3), 0xC90FDAA22168C234LLU);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 2), 0xC4C6628B80DC1CD1LLU);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 1), 0);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 0), 0);
+
+        ASSERT_EQUAL_L(apbar2_get_midpt_exp(apbar2_test[2]), -126);
+        ASSERT_EQUAL_I(apbar2_get_sign(apbar2_test[2]), 0);
+    });
+
+    TEST_CASE(apbar2: subtraction with positive - negative number a-b a>b, {
+        apbar2_set_midpt_limb(apbar2_test[0], 3, 0x8000000000000000LLU);
+        apbar2_set_midpt_limb(apbar2_test[0], 2, 0);
+        apbar2_set_midpt_limb(apbar2_test[0], 1, 0);
+        apbar2_set_midpt_limb(apbar2_test[0], 0, 1);
+        apbar2_set_midpt_exp(apbar2_test[0], 256);
+        apbar2_set_sign(apbar2_test[0], 0);
+
+        apbar2_set_midpt_limb(apbar2_test[1], 3, 0x8000000000000000LLU);
+        apbar2_set_midpt_limb(apbar2_test[1], 2, 0);
+        apbar2_set_midpt_limb(apbar2_test[1], 1, 0);
+        apbar2_set_midpt_limb(apbar2_test[1], 0, 0);
+        apbar2_set_midpt_exp(apbar2_test[1], 1);
+        apbar2_set_sign(apbar2_test[1], 1);
+
+        apbar2_sub(apbar2_test[2], apbar2_test[0], apbar2_test[1], 256);
+
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 3), 0x8000000000000000LLU);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 2), 0);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 1), 0);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 0), 2);
+
+        ASSERT_EQUAL_L(apbar2_get_midpt_exp(apbar2_test[2]), 256);
+        ASSERT_EQUAL_I(apbar2_get_sign(apbar2_test[2]), 0);
+    });
+
+    TEST_CASE(apbar2: subtraction with negative - positive number a-b a>b, {
+        apbar2_set_midpt_limb(apbar2_test[0], 3, 0x8000000000000000LLU);
+        apbar2_set_midpt_limb(apbar2_test[0], 2, 0);
+        apbar2_set_midpt_limb(apbar2_test[0], 1, 0);
+        apbar2_set_midpt_limb(apbar2_test[0], 0, 1);
+        apbar2_set_midpt_exp(apbar2_test[0], 256);
+        apbar2_set_sign(apbar2_test[0], 1);
+
+        apbar2_set_midpt_limb(apbar2_test[1], 3, 0x8000000000000000LLU);
+        apbar2_set_midpt_limb(apbar2_test[1], 2, 0);
+        apbar2_set_midpt_limb(apbar2_test[1], 1, 0);
+        apbar2_set_midpt_limb(apbar2_test[1], 0, 0);
+        apbar2_set_midpt_exp(apbar2_test[1], 1);
+        apbar2_set_sign(apbar2_test[1], 0);
+
+        apbar2_sub(apbar2_test[2], apbar2_test[0], apbar2_test[1], 256);
+
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 3), 0x8000000000000000LLU);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 2), 0);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 1), 0);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 0), 2);
+
+        ASSERT_EQUAL_L(apbar2_get_midpt_exp(apbar2_test[2]), 256);
+        ASSERT_EQUAL_I(apbar2_get_sign(apbar2_test[2]), 1);
+    });
+
+    TEST_CASE(apbar2: subtract with differing signs and overflow, {
+        apbar2_set_midpt_limb(apbar2_test[0], 3, 0xffffffffffffffffLLU);
+        apbar2_set_midpt_exp(apbar2_test[0], 255);
+        apbar2_set_sign(apbar2_test[0], 0);
+
+        apbar2_set_midpt_limb(apbar2_test[1], 3, 0x8000000000000000LLU);
+        apbar2_set_midpt_exp(apbar2_test[1], 192);
+        apbar2_set_sign(apbar2_test[1], 1);
+
+        apbar2_sub(apbar2_test[2], apbar2_test[0], apbar2_test[1], 256);
+
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 3), 0x8000000000000000LLU);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 2), 0);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 1), 0);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 0), 0);
+
+        ASSERT_EQUAL_L(apbar2_get_midpt_exp(apbar2_test[2]), 256);
+        ASSERT_EQUAL_I(apbar2_get_sign(apbar2_test[2]), 0);
+    });
+
+    TEST_CASE(apbar2: pi * pi, {
+        apbar2_set_midpt_limb(apbar2_test[0], 3, 0xc90fdaa22168c234LLU);
+        apbar2_set_midpt_limb(apbar2_test[0], 2, 0xc4c6628b80dc1cd1LLU);
+        apbar2_set_midpt_limb(apbar2_test[0], 1, 0x29024e088a67cc74LLU);
+        apbar2_set_midpt_limb(apbar2_test[0], 0, 0x020bbea63b139b22LLU);
+        apbar2_set_midpt_exp(apbar2_test[0], 1);
+        apbar2_set_sign(apbar2_test[0], 0);
+
+        apbar2_copy(apbar2_test[1], apbar2_test[0]);
+
+        apbar2_mul(apbar2_test[2], apbar2_test[1], apbar2_test[0], 256);
+
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 3), 0x9de9e64df22ef2d2LLU);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 2), 0x56e26cd9808c1ac7LLU);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 1), 0x08566a3fe0d0a228LLU);
+        ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_test[2], 0), 0x6682210253c7368eLLU);
+        ASSERT_EQUAL_L(apbar2_get_midpt_exp(apbar2_test[2]), 3);
     });
 });
 
