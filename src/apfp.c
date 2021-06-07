@@ -953,8 +953,9 @@ bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     return is_exact;
 }
 
+
 //Optimization 1
-bool apfp_sub_optim1(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+bool apfp_sub_merged(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     // After swap, `a` is guaranteed to have largest exponent
     bool swapped = false;
@@ -1032,7 +1033,7 @@ bool apfp_sub_optim1(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     return is_exact;
 }
 
-bool apfp_sub_optim2(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+bool apfp_sub_scalar(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     // After swap, `a` is guaranteed to have largest exponent
     bool swapped = false;
@@ -1173,7 +1174,7 @@ bool apfp_sub_optim2(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 }
 
 
-bool apfp_sub_optim3(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+bool apfp_sub_unroll(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     // After swap, `a` is guaranteed to have largest exponent
     bool swapped = false;

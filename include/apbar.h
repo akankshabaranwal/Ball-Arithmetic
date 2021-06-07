@@ -55,6 +55,9 @@ void apbar_add_unroll(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t 
 
 void apbar_add_optim1(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
 void apbar_sub(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
+void apbar_sub_merged(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
+void apbar_sub_scalar(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
+void apbar_sub_unroll(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
 
 void apbar_mul(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
 void apbar_mul_no_rad_exp(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);

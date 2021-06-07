@@ -40,10 +40,12 @@ bool apfp_add_detect1(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
 bool apfp_add_plus(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
 bool apfp_add_scalar(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
 bool apfp_add_unrolled(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
-
 bool apfp_add_merged(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
 
 bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
+bool apfp_sub_merged(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
+bool apfp_sub_scalar(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
+bool apfp_sub_unroll(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
 bool apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
 bool apfp_mul_unroll(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
 

@@ -202,7 +202,6 @@ void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
     // error bound computation (should round towards +inf)
     if (!is_exact) add_error_bound(c, p);
 }
-
 //With shiftr optimized
 void apbar_add_shiftr(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 {
@@ -219,8 +218,6 @@ void apbar_add_shiftr(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t 
     // error bound computation (should round towards +inf)
     if (!is_exact) add_error_bound(c, p);
 }
-
-
 //With shiftl optimized as well
 void apbar_add_shiftl(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 {
@@ -237,7 +234,6 @@ void apbar_add_shiftl(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t 
     // error bound computation (should round towards +inf)
     if (!is_exact) add_error_bound(c, p);
 }
-
 //With plus optimized
 void apbar_add_plus(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 {
@@ -254,7 +250,6 @@ void apbar_add_plus(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
     // error bound computation (should round towards +inf)
     if (!is_exact) add_error_bound(c, p);
 }
-
 //With detec1 optimized
 void apbar_add_detect1(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 {
@@ -271,7 +266,6 @@ void apbar_add_detect1(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t
     // error bound computation (should round towards +inf)
     if (!is_exact) add_error_bound(c, p);
 }
-
 //With functions merged
 // Removed some overlapping computations
 void apbar_add_merged(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
@@ -289,7 +283,6 @@ void apbar_add_merged(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t 
     // error bound computation (should round towards +inf)
     if (!is_exact) add_error_bound(c, p);
 }
-
 //With functions merged
 // Scalar replacement, simplification of functions. Unnecessary workload removed
 void apbar_add_scalar(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
@@ -307,7 +300,6 @@ void apbar_add_scalar(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t 
     // error bound computation (should round towards +inf)
     if (!is_exact) add_error_bound(c, p);
 }
-
 //With functions merged
 // Unrolling
 void apbar_add_unroll(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
@@ -335,6 +327,57 @@ void apbar_sub(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 
     // midpoint computation (should round towards 0)
     bool is_exact = apfp_sub(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    rad_add(c->rad, a->rad, b->rad);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) add_error_bound(c, p);
+}
+
+//assumes that c, a, b are already allocated
+void apbar_sub_merged(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_sub_merged(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    rad_add(c->rad, a->rad, b->rad);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) add_error_bound(c, p);
+}
+
+//assumes that c, a, b are already allocated
+void apbar_sub_scalar(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_sub_scalar(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    rad_add(c->rad, a->rad, b->rad);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) add_error_bound(c, p);
+}
+
+//assumes that c, a, b are already allocated
+void apbar_sub_unroll(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_sub_unroll(c->midpt, a->midpt, b->midpt);
 
     // radius computation (should round towards +inf)
     rad_add(c->rad, a->rad, b->rad);

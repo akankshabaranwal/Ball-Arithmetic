@@ -187,6 +187,39 @@ void barith_sub(unsigned int prec)
     }
 }
 
+void barith_sub_merged(unsigned int prec)
+{
+    for (size_t i = 0; i < BENCHMARK_ITER; i++)
+    {
+        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
+    }
+}
+
+void barith_sub_scalar(unsigned int prec)
+{
+    for (size_t i = 0; i < BENCHMARK_ITER; i++)
+    {
+        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
+    }
+}
+
+void barith_sub_unroll(unsigned int prec)
+{
+    for (size_t i = 0; i < BENCHMARK_ITER; i++)
+    {
+        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
+    }
+}
+
 static apbar2_t apbar2_out, apbar2_in1, apbar2_in2;
 
 void barith2_init(unsigned int prec)
@@ -355,7 +388,7 @@ BENCHMARK_BEGIN_TABLE(def)
 BENCHMARK_END_TABLE(def)
 
 BENCHMARK_BEGIN_TABLE(ball_add)
-                BENCHMARK_FUNCTION(arblib_add, arblib_init, arblib_deinit, 4.0, 8, 17)
+                //BENCHMARK_FUNCTION(arblib_add, arblib_init, arblib_deinit, 4.0, 8, 17)
                 BENCHMARK_FUNCTION(barith_add, barith_init, barith_deinit, 4.0, 8, 17)
                 BENCHMARK_FUNCTION(barith_add_shiftr, barith_init, barith_deinit, 4.0, 8, 17)
                 BENCHMARK_FUNCTION(barith_add_shiftl, barith_init, barith_deinit, 4.0, 8, 17)
@@ -368,10 +401,11 @@ BENCHMARK_BEGIN_TABLE(ball_add)
 BENCHMARK_END_TABLE(ball_add)
 
 BENCHMARK_BEGIN_TABLE(ball_sub)
-                BENCHMARK_FUNCTION(arblib_sub, arblib_init, arblib_deinit, 4.0, 8, 17)
-                //BENCHMARK_FUNCTION(barith_add_base, barith_init, barith_deinit, 4.0, 8, 17)
-                //BENCHMARK_FUNCTION(barith_add_optim1, barith_init, barith_deinit, 4.0, 8, 17)
+                //BENCHMARK_FUNCTION(arblib_sub, arblib_init, arblib_deinit, 4.0, 8, 17)
                 BENCHMARK_FUNCTION(barith_sub, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_sub_merged, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_sub_scalar, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_sub_unroll, barith_init, barith_deinit, 4.0, 8, 17)
                 BENCHMARK_FUNCTION(barith2_sub, barith2_init, barith2_deinit, 4.0, 8, 17)
 BENCHMARK_END_TABLE(ball_sub)
 
