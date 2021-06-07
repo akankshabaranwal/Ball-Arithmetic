@@ -907,8 +907,8 @@ uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b
     d = d * 64; // in the beginning we split by d, but d is a limb, which is 64 bits
 
     // INLINE THE SHIFTS
-    apint_shiftl(z2, (2 * d));       // multiply by 2 because of Karatsuba algorithm
-    apint_shiftl(second_operand, d); // TODO: INLINE
+    apint_shiftl_base(z2, (2 * d));       // multiply by 2 because of Karatsuba algorithm
+    apint_shiftl_base(second_operand, d); // TODO: INLINE
 
     // x = z2 * 2 ^ (2 * d) + (z1 - z2 - z0) * 2 ^ (d) + z0;
     apint_t temp_x;
@@ -1189,7 +1189,7 @@ uint64_t apint_mul_karatsuba_recurse_OPT1(apint_ptr x, apint_srcptr a, apint_src
     d = d * 64; // in the beginning we split by d, but d is a limb, which is 64 bits
     // INLINE THE SHIFTS
     // apint_shiftl(z2, (2 * d));       // multiply by 2 because of Karatsuba algorithm
-    uint full_limbs_shifted = d / APINT_LIMB_BITS;
+    uint full_limbs_shifted = d / APINT_LIMB_BITS; // TODO
     d -= full_limbs_shifted * APINT_LIMB_BITS;
     for (int i = z2->length - 1; i >= 0; i--)
     {
@@ -1342,9 +1342,9 @@ uint64_t apint_mul_karatsuba_recurse_OPT2(apint_ptr x, apint_srcptr a, apint_src
     apint_sub(second_operand, z1, first_operand);
 
     // Shift results appropriately, should be stored in z2 and second_operand
-    d = d * 64;                // in the beginning we split by d, but d is a limb, which is 64 bits
-    apint_shiftl(z2, (2 * d)); // multiply by 2 because of Karatsuba algorithm
-    apint_shiftl(second_operand, d);
+    d = d * 64;                      // in the beginning we split by d, but d is a limb, which is 64 bits
+    apint_shiftl(z2, (2 * d));       // multiply by 2 because of Karatsuba algorithm
+    apint_shiftl(second_operand, d); // this is the most optimized shiftl method!!!!!
 
     // x = z2 * 2 ^ (2 * d) + (z1 - z2 - z0) * 2 ^ (d) + z0;
     apint_t temp_x;
