@@ -67,6 +67,18 @@ void arblib_sub(unsigned int prec)
         arb_sub(arb_out, arb_in1, arb_in2, prec);
     }
 }
+
+void arblib_mul(unsigned int prec)
+{
+    for (size_t i = 0; i < BENCHMARK_ITER; i++)
+    {
+        arb_mul(arb_out, arb_in1, arb_in2, prec);
+        arb_mul(arb_out, arb_in1, arb_in2, prec);
+        arb_mul(arb_out, arb_in1, arb_in2, prec);
+        arb_mul(arb_out, arb_in1, arb_in2, prec);
+    }
+}
+
 static apbar_t apbar_out, apbar_in1, apbar_in2;
 
 void barith_init(unsigned int prec)
@@ -262,6 +274,17 @@ void barith2_sub(unsigned int prec)
     }
 }
 
+void barith2_mul(unsigned int prec)
+{
+    for (size_t i = 0; i < BENCHMARK_ITER; i++)
+    {
+        apbar2_mul(apbar2_out, apbar2_in1, apbar2_in2, prec);
+        apbar2_mul(apbar2_out, apbar2_in1, apbar2_in2, prec);
+        apbar2_mul(apbar2_out, apbar2_in1, apbar2_in2, prec);
+        apbar2_mul(apbar2_out, apbar2_in1, apbar2_in2, prec);
+    }
+}
+
 // gyorgy: Added a wrapper for whatever we use for random limb generation so
 //         that it's easier to change if we need to
 static apint_limb_t urand()
@@ -387,13 +410,17 @@ BENCHMARK_BEGIN_TABLE(def)
     BENCHMARK_FUNCTION(barith2_add, barith2_init, barith2_deinit, 4.0, 8, 17)
 BENCHMARK_END_TABLE(def)
 
-BENCHMARK_BEGIN_TABLE(ball_add)
-                //BENCHMARK_FUNCTION(arblib_add, arblib_init, arblib_deinit, 4.0, 8, 17)
+BENCHMARK_BEGIN_TABLE(ball_add_micro)
                 BENCHMARK_FUNCTION(barith_add, barith_init, barith_deinit, 4.0, 8, 17)
                 BENCHMARK_FUNCTION(barith_add_shiftr, barith_init, barith_deinit, 4.0, 8, 17)
                 BENCHMARK_FUNCTION(barith_add_shiftl, barith_init, barith_deinit, 4.0, 8, 17)
                 BENCHMARK_FUNCTION(barith_add_plus, barith_init, barith_deinit, 4.0, 8, 17)
                 BENCHMARK_FUNCTION(barith_add_detect1, barith_init, barith_deinit, 4.0, 8, 17)
+BENCHMARK_END_TABLE(ball_add_micro)
+
+BENCHMARK_BEGIN_TABLE(ball_add)
+                //BENCHMARK_FUNCTION(arblib_add, arblib_init, arblib_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_add, barith_init, barith_deinit, 4.0, 8, 17)
                 BENCHMARK_FUNCTION(barith_add_merged, barith_init, barith_deinit, 4.0, 8, 17)
                 BENCHMARK_FUNCTION(barith_add_scalar, barith_init, barith_deinit, 4.0, 8, 17)
                 BENCHMARK_FUNCTION(barith_add_unroll, barith_init, barith_deinit, 4.0, 8, 17)
@@ -408,6 +435,21 @@ BENCHMARK_BEGIN_TABLE(ball_sub)
                 BENCHMARK_FUNCTION(barith_sub_unroll, barith_init, barith_deinit, 4.0, 8, 17)
                 BENCHMARK_FUNCTION(barith2_sub, barith2_init, barith2_deinit, 4.0, 8, 17)
 BENCHMARK_END_TABLE(ball_sub)
+
+BENCHMARK_BEGIN_TABLE(compare_add_arblib)
+                BENCHMARK_FUNCTION(arblib_add, arblib_init, arblib_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith2_add, barith2_init, barith2_deinit, 4.0, 8, 17)
+BENCHMARK_END_TABLE(compare_add_arblib)
+
+BENCHMARK_BEGIN_TABLE(compare_subtract_arblib)
+                BENCHMARK_FUNCTION(arblib_sub, arblib_init, arblib_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith2_sub, barith2_init, barith2_deinit, 4.0, 8, 17)
+BENCHMARK_END_TABLE(compare_subtract_arblib)
+
+BENCHMARK_BEGIN_TABLE(compare_mult_arblib)
+                BENCHMARK_FUNCTION(arblib_mul, arblib_init, arblib_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith2_mul, barith2_init, barith2_deinit, 4.0, 8, 17)
+BENCHMARK_END_TABLE(compare_mult_arblib)
 
 BENCHMARK_BEGIN_TABLE(int_plus)
     BENCHMARK_FUNCTION(int_plus, int_init, int_cleanup, 1.0, 8, 17)
