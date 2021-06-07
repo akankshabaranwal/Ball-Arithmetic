@@ -160,36 +160,36 @@ bool apint_shiftr(apint_ptr x, unsigned int shift)
 
     if (!shift) return false;
 
-    int full_limbs_shifted = shift / APINT_LIMB_BITS;
+    uint full_limbs_shifted = shift / APINT_LIMB_BITS;
     shift -= full_limbs_shifted * APINT_LIMB_BITS;
 
     bool did_shift = false;
-    if(full_limbs_shifted<x->length)
-    {
-        for (int j = 0; j < full_limbs_shifted; ++j)
-        {
-            if (apint_getlimb(x,j) != 0)
-            {
-                did_shift = true;
-                break;
-            }
-        }
-    }
-    for (int i = 0; i < x->length; ++i)
-    {
+
+    //printf("shift is %d \n", shift);
+    for (int i = 0; i < x->length; ++i) {
         if (i + full_limbs_shifted < x->length) {
+            if (i == 0) {
+                for (int j = 0; j < full_limbs_shifted; ++j) {
+                    if (x->limbs[j] != 0) did_shift = true;
+                }
+            }
             x->limbs[i] = x->limbs[i+full_limbs_shifted];
+            //printf("assign full limb here %d \n", full_limbs_shifted);
+        }
+        else {
+            x->limbs[i] = 0;
         }
     }
 
     if (!shift) return did_shift;
-    did_shift = __builtin_ctzl(x->limbs[0]) >= shift;
+    did_shift |= __builtin_ctzl(x->limbs[0]) >= shift;
 
     for (int i = 0; i < x->length - 1; ++i) {
         x->limbs[i] = (x->limbs[i] >> shift) + (x->limbs[i+1] << (APINT_LIMB_BITS - shift));
     }
 
     x->limbs[x->length - 1] >>= shift;
+
     return did_shift;
 }
 
@@ -316,6 +316,27 @@ unsigned char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
         else
         {
             overflow = apint_minus(x, a, b);
+        }
+    }
+    return overflow;
+}
+unsigned char apint_add_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
+{
+    unsigned char overflow;
+    if (a->sign == b->sign)
+    {
+        overflow = apint_plus_optim1(x, a, b);
+        x->sign = a->sign;
+    }
+    else
+    {
+        if (a->sign == -1) //only a is negative. so equivalent to b-a.
+        {
+            overflow = apint_minus_optim1(x, b, a);
+        }
+        else
+        {
+            overflow = apint_minus_optim1(x, a, b);
         }
     }
     return overflow;

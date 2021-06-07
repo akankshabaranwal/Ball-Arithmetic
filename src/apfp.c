@@ -92,7 +92,7 @@ void apfp_print_msg(const char *msg, apfp_srcptr value){
     printf("\n");
 }
 
-static inline bool adjust_alignment_base(apfp_ptr x)
+static inline bool adjust_alignment(apfp_ptr x)
 {
     bool is_exact = true;
     size_t overflow = apint_detectfirst1(x->mant);
@@ -112,9 +112,73 @@ static inline bool adjust_alignment_base(apfp_ptr x)
     }
     return is_exact;
 }
-
 //first optimization
-static inline bool adjust_alignment(apfp_ptr x)
+static inline bool adjust_alignment_shiftr(apfp_ptr x)
+{
+    bool is_exact = true;
+    size_t overflow = apint_detectfirst1(x->mant);
+
+    int mid_pos_bitwise_val = MID_POS_BITWISE(x);
+    if (overflow > mid_pos_bitwise_val)
+    {
+        overflow -= mid_pos_bitwise_val;
+        is_exact = apint_shiftr_optim1(x->mant, overflow);
+        x->exp += (apfp_exp_t) overflow;
+    }
+    else if (overflow < mid_pos_bitwise_val)
+    {
+        // Can't shift off bits here
+        overflow = mid_pos_bitwise_val - overflow;
+        apint_shiftl(x->mant, overflow);
+        x->exp -= (apfp_exp_t) overflow;
+    }
+    return is_exact;
+}
+static inline bool adjust_alignment_shiftl(apfp_ptr x)
+{
+    bool is_exact = true;
+    size_t overflow = apint_detectfirst1(x->mant);
+
+    int mid_pos_bitwise_val = MID_POS_BITWISE(x);
+    if (overflow > mid_pos_bitwise_val)
+    {
+        overflow -= mid_pos_bitwise_val;
+        is_exact = apint_shiftr_optim1(x->mant, overflow);
+        x->exp += (apfp_exp_t) overflow;
+    }
+    else if (overflow < mid_pos_bitwise_val)
+    {
+        // Can't shift off bits here
+        overflow = mid_pos_bitwise_val - overflow;
+        apint_shiftl_optim2(x->mant, overflow);
+        x->exp -= (apfp_exp_t) overflow;
+    }
+    return is_exact;
+}
+
+static inline bool adjust_alignment_detect1(apfp_ptr x)
+{
+    bool is_exact = true;
+    size_t overflow = apint_detectfirst1_optim1(x->mant);
+
+    int mid_pos_bitwise_val = MID_POS_BITWISE(x);
+    if (overflow > mid_pos_bitwise_val)
+    {
+        overflow -= mid_pos_bitwise_val;
+        is_exact = apint_shiftr_optim1(x->mant, overflow);
+        x->exp += (apfp_exp_t) overflow;
+    }
+    else if (overflow < mid_pos_bitwise_val)
+    {
+        // Can't shift off bits here
+        overflow = mid_pos_bitwise_val - overflow;
+        apint_shiftl_optim2(x->mant, overflow);
+        x->exp -= (apfp_exp_t) overflow;
+    }
+    return is_exact;
+}
+//first optimization
+static inline bool adjust_alignment_optim1(apfp_ptr x)
 {
     bool is_exact = true;
     size_t overflow = apint_detectfirst1(x->mant);
@@ -168,8 +232,135 @@ bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     return is_exact;
 }
 
+//With the most optimized shiftr
+bool apfp_add_shiftr(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+{
+    assert(x->mant->length == a->mant->length);
+    assert(x->mant->length == b->mant->length);
+
+    bool swapped = false;
+    bool is_exact = true;
+    // After swap, `a` is guaranteed to have largest exponent
+    if (b->exp > a->exp)
+    {
+        apfp_srcptr t = a; a = b; b = t;
+        swapped = true;
+    }
+
+    // Align `b` mantissa to `a` given exponent difference
+    apfp_exp_t factor = a->exp - b->exp;
+
+    // We could easily combine shift and copy here
+    apint_copy(x->mant, b->mant);
+    apint_shiftr_optim1(x->mant, factor); // right shift mantissa of b
+
+    // Add mantissa, shift by carry and update exponent
+    apint_add(x->mant, x->mant, a->mant);
+    x->exp = a->exp;
+    if(MIDDLE_LEFT(x) != 0 && (apint_getlimb(x->mant, 0) & 0x1ull) != 0)
+        is_exact = false;
+
+    adjust_alignment_shiftr(x);
+
+    return is_exact;
+}
+bool apfp_add_shiftl(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+{
+    assert(x->mant->length == a->mant->length);
+    assert(x->mant->length == b->mant->length);
+
+    bool swapped = false;
+    bool is_exact = true;
+    // After swap, `a` is guaranteed to have largest exponent
+    if (b->exp > a->exp)
+    {
+        apfp_srcptr t = a; a = b; b = t;
+        swapped = true;
+    }
+
+    // Align `b` mantissa to `a` given exponent difference
+    apfp_exp_t factor = a->exp - b->exp;
+
+    // We could easily combine shift and copy here
+    apint_copy(x->mant, b->mant);
+    apint_shiftr_optim1(x->mant, factor); // right shift mantissa of b
+
+    // Add mantissa, shift by carry and update exponent
+    apint_add(x->mant, x->mant, a->mant);
+    x->exp = a->exp;
+    if(MIDDLE_LEFT(x) != 0 && (apint_getlimb(x->mant, 0) & 0x1ull) != 0)
+        is_exact = false;
+
+    adjust_alignment_shiftl(x);
+
+    return is_exact;
+}
+
+bool apfp_add_plus(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+{
+    assert(x->mant->length == a->mant->length);
+    assert(x->mant->length == b->mant->length);
+
+    bool swapped = false;
+    bool is_exact = true;
+    // After swap, `a` is guaranteed to have largest exponent
+    if (b->exp > a->exp)
+    {
+        apfp_srcptr t = a; a = b; b = t;
+        swapped = true;
+    }
+
+    // Align `b` mantissa to `a` given exponent difference
+    apfp_exp_t factor = a->exp - b->exp;
+
+    // We could easily combine shift and copy here
+    apint_copy(x->mant, b->mant);
+    apint_shiftr_optim1(x->mant, factor); // right shift mantissa of b
+
+    // Add mantissa, shift by carry and update exponent
+    apint_add_plus(x->mant, x->mant, a->mant);
+    x->exp = a->exp;
+    if(MIDDLE_LEFT(x) != 0 && (apint_getlimb(x->mant, 0) & 0x1ull) != 0)
+        is_exact = false;
+
+    adjust_alignment_shiftl(x);
+
+    return is_exact;
+}
+
+bool apfp_add_detect1(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+{
+    assert(x->mant->length == a->mant->length);
+    assert(x->mant->length == b->mant->length);
+
+    bool swapped = false;
+    bool is_exact = true;
+    // After swap, `a` is guaranteed to have largest exponent
+    if (b->exp > a->exp)
+    {
+        apfp_srcptr t = a; a = b; b = t;
+        swapped = true;
+    }
+
+    // Align `b` mantissa to `a` given exponent difference
+    apfp_exp_t factor = a->exp - b->exp;
+
+    // We could easily combine shift and copy here
+    apint_copy(x->mant, b->mant);
+    apint_shiftr_optim1(x->mant, factor); // right shift mantissa of b
+
+    // Add mantissa, shift by carry and update exponent
+    apint_add_plus(x->mant, x->mant, a->mant);
+    x->exp = a->exp;
+    if(MIDDLE_LEFT(x) != 0 && (apint_getlimb(x->mant, 0) & 0x1ull) != 0)
+        is_exact = false;
+
+    adjust_alignment_detect1(x);
+
+    return is_exact;
+}
 // Collapsed all functions to 1.
-bool apfp_add_optim1(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+bool apfp_add_merged(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     assert(x->mant->length == a->mant->length);
     assert(x->mant->length == b->mant->length);
@@ -297,7 +488,7 @@ bool apfp_add_optim1(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 }
 
 // Collapsed all functions to 1.
-bool apfp_add_optim2(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+bool apfp_add_scalar(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     assert(x->mant->length == a->mant->length);
     assert(x->mant->length == b->mant->length);
@@ -553,7 +744,7 @@ bool apfp_add_optim3(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 
 // Unrolling
 // added ILP
-bool apfp_add_optim4(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+bool apfp_add_unrolled(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     assert(x->mant->length == a->mant->length);
     assert(x->mant->length == b->mant->length);
@@ -1142,7 +1333,6 @@ bool apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     {
         apfp_set_neg(x);
     }
-
     return is_exact;
 }
 
