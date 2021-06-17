@@ -37,10 +37,13 @@ void apint_to_fmpz(fmpz_t res, apint_srcptr src);
 static inline apint_limb_t apint_getlimb(apint_srcptr x, apint_size_t offset);
 
 unsigned char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b);
+unsigned char apint_add_plus(apint_ptr x, apint_srcptr a, apint_srcptr b);
 unsigned char apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b);
 char apint_plus_portable(apint_ptr x, apint_srcptr a, apint_srcptr b);
 unsigned char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b);
+unsigned char apint_plus_optim1(apint_ptr x, apint_srcptr a, apint_srcptr b);
 unsigned char apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b);
+unsigned char apint_minus_optim1(apint_ptr x, apint_srcptr a, apint_srcptr b);
 int apint_is_greater(apint_srcptr a, apint_srcptr b);
 void apint_mul_portable(apint_ptr x, apint_srcptr a, apint_srcptr b);
 int apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b);
@@ -66,9 +69,13 @@ uint64_t apint_mul_karatsuba_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b);
 uint64_t apint_mul_karatsuba_recurse_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b);
 
 bool apint_shiftr(apint_ptr x, unsigned int shift);
+bool apint_shiftr_optim1(apint_ptr x, unsigned int shift);
 bool apint_shiftr_copy(apint_ptr dest, apint_srcptr src, unsigned int shift);
 void apint_shiftl(apint_ptr x, unsigned int shift);
+void apint_shiftl_optim1(apint_ptr x, unsigned int shift);
+void apint_shiftl_optim2(apint_ptr x, unsigned int shift);
 size_t apint_detectfirst1(apint_ptr x);
+size_t apint_detectfirst1_optim1(apint_ptr x);
 
 static inline void apint_setmsb(apint_ptr x)
 {
