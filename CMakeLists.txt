@@ -47,6 +47,12 @@ add_executable(apbar2-example
 )
 target_link_libraries(apbar2-example flint gmp arb)
 
+add_executable(rooflineanalysis
+        ${BALL_ARITH_SRC}
+        src/roofline_multiprecision.c
+        )
+target_link_libraries(rooflineanalysis flint gmp arb)
+
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
     add_executable(profile-apbar
         ${BALL_ARITH_SRC}

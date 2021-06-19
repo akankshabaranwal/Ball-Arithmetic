@@ -2,13 +2,14 @@
 #include <apfp.h>
 #include <apbar.h>
 
-static const int NUM_RUNS = 10000;
-static const int PRECISION = 4096;
+static const int NUM_RUNS = 10000000;
+static const int PRECISION = 64;
 
 int main()
 {
     char profile_func;
     profile_func = 'a'; //select the function to profile here.
+
     // a is addition
     // s is subtraction
     // m is multiplication
@@ -32,31 +33,38 @@ int main()
     apbar_test[1]->midpt->mant->sign=1;
 
     apbar_print_msg("pi is:", apbar_test[0]);
+
+
     for(int i=0; i<NUM_RUNS; i++)
     {
         switch(profile_func)
         {
             case 'a':
             {
-                apbar_add(apbar_test[2], apbar_test[1], apbar_test[0], 128);
-                apbar_add(apbar_test[0], apbar_test[1], apbar_test[2], 128);
+                apbar_add(apbar_test[2], apbar_test[1], apbar_test[0], PRECISION);
+                //apbar_add(apbar_test[0], apbar_test[1], apbar_test[2], PRECISION);
+                break;
+            }
+            case 'a2':
+            {
+
                 break;
             }
             case 's':
             {
-                apbar_sub(apbar_test[2], apbar_test[1], apbar_test[0], 128);
-                apbar_sub(apbar_test[0], apbar_test[1], apbar_test[2], 128);
+                apbar_sub(apbar_test[2], apbar_test[1], apbar_test[0], PRECISION);
+                //apbar_sub(apbar_test[0], apbar_test[1], apbar_test[2], PRECISION);
                 break;
             }
             case 'm':
             {
                 apbar_mul(apbar_test[2], apbar_test[1], apbar_test[0], PRECISION);
-                apbar_mul(apbar_test[0], apbar_test[1], apbar_test[2], PRECISION);
+                //apbar_mul(apbar_test[0], apbar_test[1], apbar_test[2], PRECISION);
                 break;
             }
             case 'o': {
                 apbar_mul_no_rad_exp(apbar_test[2], apbar_test[1], apbar_test[0], PRECISION);
-                apbar_mul_no_rad_exp(apbar_test[0], apbar_test[1], apbar_test[2], PRECISION);
+                //apbar_mul_no_rad_exp(apbar_test[0], apbar_test[1], apbar_test[2], PRECISION);
                 break;
             }
         }
