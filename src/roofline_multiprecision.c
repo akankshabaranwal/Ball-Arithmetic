@@ -1,7 +1,6 @@
 #include <apbar2.h>
 
 static const int NUM_RUNS = 1000000;
-static const int PRECISION = 64;
 
 void run_apbar2_add_p64(apbar2_t in1, apbar2_t in2, apbar2_t out)
 {
@@ -9,9 +8,9 @@ void run_apbar2_add_p64(apbar2_t in1, apbar2_t in2, apbar2_t out)
     for(int i=0; i<NUM_RUNS; i++)
     {
         apbar2_add(out,in1,in2,64);
-        apbar2_add(out,in1,in2,64);
-        apbar2_add(out,in1,in2,64);
-        apbar2_add(out,in1,in2,64);
+        apbar2_add(out,in1,out,64);
+        apbar2_add(out,in1,out,64);
+        apbar2_add(out,in1,out,64);
     }
 }
 
