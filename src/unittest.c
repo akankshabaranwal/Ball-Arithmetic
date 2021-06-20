@@ -1357,11 +1357,87 @@ TEST_GROUP(apbar2, {
     });
 });
 
+
+apbar2_t apbar2_add4_a[4];
+apbar2_t apbar2_add4_b[4];
+apbar2_t apbar2_add4_x[4];
+
+static void apbar2_add4_test_setup() {
+    for (size_t i = 0; i < 4; i++)
+    {
+        apbar2_init(apbar2_add4_a[i], 256);
+        apbar2_init(apbar2_add4_b[i], 256);
+        apbar2_init(apbar2_add4_x[i], 256);
+    }
+}
+
+static void apbar2_add4_test_teardown() {
+    for (size_t i = 0; i < 4; i++)
+    {
+        apbar2_free(apbar2_add4_a[i]);
+        apbar2_free(apbar2_add4_b[i]);
+        apbar2_free(apbar2_add4_x[i]);
+    }
+}
+
+TEST_GROUP(apbar2_add4_test, {
+    WITH_SETUP(apbar2_add4_test_setup);
+    WITH_TEARDOWN(apbar2_add4_test_teardown);
+
+    TEST_CASE(apbar2_add4: add two numbers, {
+        // Need to re-precision
+        for (size_t i = 0; i < 4; i++)
+        {
+            apbar2_free(apbar2_add4_a[i]);
+            apbar2_free(apbar2_add4_b[i]);
+            apbar2_free(apbar2_add4_x[i]);
+        }
+
+        for (size_t i = 0; i < 4; i++)
+        {
+            apbar2_init(apbar2_add4_a[i], 128);
+            apbar2_init(apbar2_add4_b[i], 128);
+            apbar2_init(apbar2_add4_x[i], 128);
+        }
+
+        for (size_t i = 0; i < 4; i++)
+        {
+            // 1 * 2^-127
+            apbar2_set_midpt_limb(apbar2_add4_a[i], 1, APBAR2_LIMB_MSBMASK);
+            apbar2_set_midpt_exp(apbar2_add4_a[i], -127);
+        }
+
+        for (size_t i = 0; i < 4; i++)
+        {
+            // 16703571626015105435307505830654230989 * 2^-249
+            apbar2_set_midpt_limb(apbar2_add4_b[i], 1, 0xc90fdaa22168c234);
+            apbar2_set_midpt_limb(apbar2_add4_b[i], 0, 0xc4c6628b80dc1cd0);
+            apbar2_set_midpt_exp(apbar2_add4_b[i], -126);
+        }
+
+        apbar2_add4(apbar2_add4_x[0], apbar2_add4_a[0], apbar2_add4_b[0],
+                    apbar2_add4_x[1], apbar2_add4_a[1], apbar2_add4_b[1],
+                    apbar2_add4_x[2], apbar2_add4_a[2], apbar2_add4_b[2],
+                    apbar2_add4_x[3], apbar2_add4_a[3], apbar2_add4_b[3],
+                    128);
+
+        for (size_t i = 0; i < 4; i++)
+        {
+            ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_add4_x[i], 1), 0x8487ed5110b4611allu);
+            ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_add4_x[i], 0), 0x62633145c06e0e68llu);
+
+            // Check value of exponent and sign
+            ASSERT_EQUAL_L(apbar2_get_midpt_exp(apbar2_add4_x[i]), -125l);
+        }
+    });
+});
+
 void run_test_suite() {
     RUN_TEST_GROUP(apint);
     RUN_TEST_GROUP(apfp);
     RUN_TEST_GROUP(ball_arithmetic);
     RUN_TEST_GROUP(apbar2);
+    RUN_TEST_GROUP(apbar2_add4_test);
 }
 
 int main(int argc, char *argv[]) {

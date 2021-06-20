@@ -508,19 +508,15 @@ static inline void _add_unsigned_midpt4(apbar2_ptr x1, apbar2_srcptr a1, apbar2_
         __m256i x_mant1 = _mm256_add_epi64(a_mant, b_shifted);
         __m256i x_mant2 = _mm256_add_epi64(x_mant1, overflow);
 
-        __m256i xor1, xor2;
+        #define _mm256_cmpgt_epu64(a, b) \
+            _mm256_cmpgt_epi64( \
+                _mm256_xor_si256(a, _mm256_set1_epi64x(0x8000000000000000)), \
+                _mm256_xor_si256(b, _mm256_set1_epi64x(0x8000000000000000)) \
+            )
+        #define _mm256_cmplt_epu64(a, b) _mm256_cmpgt_epu64(b, a)
 
-        xor1 = _mm256_xor_si256(x_mant1, a_mant);
-        xor2 = _mm256_xor_si256(x_mant1, b_shifted);
-        __m256i overflow1 = _mm256_and_si256(xor1, xor2);
-        overflow1 = _mm256_srli_epi64(overflow1, 63);
-
-        xor1 = _mm256_xor_si256(x_mant2, x_mant1);
-        xor2 = _mm256_xor_si256(x_mant2, overflow);
-        __m256i overflow2 = _mm256_and_si256(xor1, xor2);
-        overflow2 = _mm256_srli_epi64(overflow2, 63);
-
-        overflow = _mm256_or_si256(overflow1, overflow2);
+        overflow = _mm256_cmplt_epu64(x_mant2, a_mant);
+        overflow = _mm256_srli_epi64(overflow, 63);
 
         alignas(32) uint64_t x_mant[4];
         _mm256_store_si256(x_mant, x_mant2);
