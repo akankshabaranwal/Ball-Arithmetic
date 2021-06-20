@@ -186,6 +186,23 @@ static inline void add_error_bound(apbar_ptr res, apint_size_t prec)
 // This is not the complete base
 // Maybe have different plots showing how optimizing shiftl or shiftr improved the performance etc for the base case
 
+//Portable apbar add
+void apbar_add_portable(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_add_portable(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    rad_add(c->rad, a->rad, b->rad);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) add_error_bound(c, p);
+}
+
 //Base version
 void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 {
@@ -202,6 +219,7 @@ void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
     // error bound computation (should round towards +inf)
     if (!is_exact) add_error_bound(c, p);
 }
+
 //With shiftr optimized
 void apbar_add_shiftr(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 {

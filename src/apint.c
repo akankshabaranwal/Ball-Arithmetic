@@ -302,6 +302,29 @@ void apint_shiftl_optim2(apint_ptr x, unsigned int shift){
     x->limbs[0] <<= shift;
 }
 
+// portable code
+unsigned char apint_add_portable(apint_ptr x, apint_srcptr a, apint_srcptr b)
+{
+    unsigned char overflow;
+    if (a->sign == b->sign)
+    {
+        overflow = apint_plus_portable(x, a, b);
+        x->sign = a->sign;
+    }
+    else
+    {
+        if (a->sign == -1) //only a is negative. so equivalent to b-a.
+        {
+            overflow = apint_minus(x, b, a);
+        }
+        else
+        {
+            overflow = apint_minus(x, a, b);
+        }
+    }
+    return overflow;
+}
+
 unsigned char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     unsigned char overflow;
@@ -323,6 +346,7 @@ unsigned char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
     }
     return overflow;
 }
+
 unsigned char apint_add_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     unsigned char overflow;

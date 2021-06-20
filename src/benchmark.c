@@ -141,6 +141,17 @@ void barith_add(unsigned int prec)
     }
 }
 
+void barith_add_portable(unsigned int prec)
+{
+    for (size_t i = 0; i < BENCHMARK_ITER; i++)
+    {
+        apbar_add_portable(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add_portable(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add_portable(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add_portable(apbar_out, apbar_in1, apbar_in2, prec);
+    }
+}
+
 void barith_add_scalar(unsigned int prec)
 {
     for (size_t i = 0; i < BENCHMARK_ITER; i++)
@@ -473,6 +484,7 @@ BENCHMARK_BEGIN_TABLE(def)
 BENCHMARK_END_TABLE(def)
 
 BENCHMARK_BEGIN_TABLE(ball_add_micro)
+    BENCHMARK_FUNCTION(barith_add_portable, barith_init, barith_deinit, 4.0, 8, 17)
     BENCHMARK_FUNCTION(barith_add, barith_init, barith_deinit, 4.0, 8, 17)
     BENCHMARK_FUNCTION(barith_add_shiftr, barith_init, barith_deinit, 4.0, 8, 17)
     BENCHMARK_FUNCTION(barith_add_shiftl, barith_init, barith_deinit, 4.0, 8, 17)
@@ -481,6 +493,7 @@ BENCHMARK_BEGIN_TABLE(ball_add_micro)
 BENCHMARK_END_TABLE(ball_add_micro)
 
 BENCHMARK_BEGIN_TABLE(ball_add_old)
+    BENCHMARK_FUNCTION(barith_add_portable, barith_init, barith_deinit, 4.0, 8, 17)
     BENCHMARK_FUNCTION(barith_add, barith_init, barith_deinit, 4.0, 8, 17)
     BENCHMARK_FUNCTION(barith_add_merged, barith_init, barith_deinit, 4.0, 8, 17)
     BENCHMARK_FUNCTION(barith_add_scalar, barith_init, barith_deinit, 4.0, 8, 17)

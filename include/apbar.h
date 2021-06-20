@@ -43,7 +43,7 @@ void apbar_print(apbar_srcptr value);
 void apbar_print_msg(const char *msg, apbar_srcptr value);
 void right_align_rad(rad_ptr rad);
 
-void apbar_add_base(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
+void apbar_add_portable(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
 void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
 void apbar_add_shiftr(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
 void apbar_add_shiftl(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);

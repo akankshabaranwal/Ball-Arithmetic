@@ -32,7 +32,7 @@ void apfp_set_neg(apfp_ptr x);
 void apfp_print(apfp_srcptr value);
 void apfp_print_msg(const char *msg, apfp_srcptr value);
 
-bool apfp_add_base(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
+bool apfp_add_portable(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
 bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
 bool apfp_add_shiftr(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
 bool apfp_add_shiftl(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
