@@ -172,7 +172,7 @@ static inline void apbar2_copy(apbar2_ptr dst, apbar2_srcptr src)
 static inline double _rad_error_bound(apbar2_srcptr x, apbar2_size_t prec)
 {
     int p = prec;
-    double eta = ldexp(1.0, 2 - (1 << sizeof(apbar2_exp_t) * 8) - p);
+    double eta = __DBL_MIN__;
     double eps = ldexp(1.0, -p);
     return (fabs(apbar2_get_d(x)) + eta) * eps;
 }
@@ -525,20 +525,20 @@ static inline void _add_unsigned_midpt4(apbar2_ptr x1, apbar2_srcptr a1, apbar2_
         alignas(32) uint64_t x_mant[4];
         _mm256_store_si256(x_mant, x_mant2);
 
-        x1->midpt_mant[i] = x_mant[3];
-        x2->midpt_mant[i] = x_mant[2];
-        x3->midpt_mant[i] = x_mant[1];
-        x4->midpt_mant[i] = x_mant[0];
+        x1->midpt_mant[i] = x_mant[0];
+        x2->midpt_mant[i] = x_mant[1];
+        x3->midpt_mant[i] = x_mant[2];
+        x4->midpt_mant[i] = x_mant[3];
 
         a_mant_addr = _mm256_add_epi64(a_mant_addr, limb_bytes);
     }
 
     _mm256_store_si256(overflows, overflow);
 
-    uint64_t overflow1 = overflows[3];
-    uint64_t overflow2 = overflows[2];
-    uint64_t overflow3 = overflows[1];
-    uint64_t overflow4 = overflows[0];
+    uint64_t overflow1 = overflows[0];
+    uint64_t overflow2 = overflows[1];
+    uint64_t overflow3 = overflows[2];
+    uint64_t overflow4 = overflows[3];
 
     // Update exponent in `x' accordingly.
     x1->midpt_exp = a1->midpt_exp + overflow1;
