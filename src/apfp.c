@@ -232,7 +232,7 @@ bool apfp_add_portable(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 
     return is_exact;
 }
-
+//With intrinsics
 bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     assert(x->mant->length == a->mant->length);
@@ -264,8 +264,7 @@ bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 
     return is_exact;
 }
-
-//With the most optimized shiftr
+//With the most optimized shiftr, vector intrinsics
 bool apfp_add_shiftr(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     assert(x->mant->length == a->mant->length);
@@ -297,6 +296,7 @@ bool apfp_add_shiftr(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 
     return is_exact;
 }
+//With the most optimized shiftl, shiftr, vector intrinsics
 bool apfp_add_shiftl(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     assert(x->mant->length == a->mant->length);
@@ -328,6 +328,7 @@ bool apfp_add_shiftl(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 
     return is_exact;
 }
+//With the most optimized plus shiftl, shiftr, vector intrinsics
 bool apfp_add_plus(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     assert(x->mant->length == a->mant->length);
@@ -359,6 +360,7 @@ bool apfp_add_plus(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 
     return is_exact;
 }
+//With the most optimized detect1, plus, shiftl, shiftr, vector intrinsics
 bool apfp_add_detect1(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     assert(x->mant->length == a->mant->length);
@@ -391,7 +393,10 @@ bool apfp_add_detect1(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     return is_exact;
 }
 
-// Collapsed all functions to 1.
+/* Optimizations:
+ * Collapsed all functions to 1.
+ * Removed redundant computations across function calls
+*/
 bool apfp_add_merged(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     assert(x->mant->length == a->mant->length);
@@ -470,7 +475,6 @@ bool apfp_add_merged(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     if (overflow > mid_pos_bitwise_val)
     {
         overflow -= mid_pos_bitwise_val;
-        //is_exact = apint_shiftr(x->mant, overflow);
         if (overflow)
         {
             int full_limbs_shifted = overflow / APINT_LIMB_BITS;
@@ -502,7 +506,6 @@ bool apfp_add_merged(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
             int full_limbs_shifted_1 = full_limbs_shifted + 1;
             for (int i = x->mant->length - 1; i >= full_limbs_shifted - 1; i -= 2) {
                 x->mant->limbs[i] = x->mant->limbs[i - full_limbs_shifted];
-                //x->limbs[i-1] = x->limbs[i-full_limbs_shifted-1];
                 x->mant->limbs[i - 1] = x->mant->limbs[i - full_limbs_shifted_1];
             }
 
@@ -519,7 +522,10 @@ bool apfp_add_merged(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     return is_exact;
 }
 
-// Collapsed all functions to 1.
+/* Optimizations:
+ * Scalar replacement
+ * Reduced number of iterations of some loops by incorporating mid point representation
+ */
 bool apfp_add_scalar(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     assert(x->mant->length == a->mant->length);
@@ -774,8 +780,11 @@ bool apfp_add_optim3(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     return is_exact;
 }
 
-// Unrolling
-// added ILP
+/* Optimizations:
+ * Added unrolling to minus and plus
+ * Reorganized code to merge few if else based on the sign
+ * Reduced the number of nested branches by duplicating code
+*/
 bool apfp_add_unrolled(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     assert(x->mant->length == a->mant->length);
@@ -887,7 +896,6 @@ bool apfp_add_unrolled(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
         //TODO: Probably some bug here. This if condition shouldn't be required
         if (x->mant->sign == 1)
         {
-            //apint_minus(x->mant, x->mant, a->mant);
             for (int i = midlength; i >= 0; i-=4)
             {
                 is_greater1=(a->mant->limbs[i] > x->mant->limbs[i]);
