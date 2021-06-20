@@ -379,6 +379,18 @@ static void int_mul(uint prec)
     }
 }
 
+static void int_mul_OPT1(uint prec)
+{
+    for (size_t i = 0; i < BENCHMARK_ITER; ++i)
+    {
+        apint_mul_OPT1(out, in1, in2);
+    }
+}
+static void int_mul_unroll(uint prec)
+{
+    ITERATE(apint_mul_unroll(out, in1, in2));
+}
+
 static void int_mul_portable(uint prec)
 {
     for (size_t i = 0; i < BENCHMARK_ITER; ++i) {
@@ -430,15 +442,27 @@ static void ball_cleanup(uint prec)
     apbar_free(ball_out);
 }
 
-static void ball_mull_vanilla(uint prec) {
+static void ball_mul_portable(uint prec) {
+    ITERATE(apbar_mul_portable(ball_out, ball_in1, ball_in2, prec));
+}
+
+static void ball_mul(uint prec) {
     ITERATE(apbar_mul(ball_out, ball_in1, ball_in2, prec));
 }
 
-static void ball_mull_no_exp(uint prec) {
+static void ball_mul_no_exp(uint prec) {
     ITERATE(apbar_mul_no_rad_exp(ball_out, ball_in1, ball_in2, prec));
 }
-static void ball_mull_unroll(uint prec) {
+static void ball_mul_unroll(uint prec) {
     ITERATE(apbar_mul_unroll(ball_out, ball_in1, ball_in2, prec));
+}
+
+static void int_mul_karatsuba_opt1(uint prec)
+{
+    for (size_t i = 0; i < BENCHMARK_ITER; ++i)
+    {
+        apint_mul_karatsuba_OPT1(out, in1, in2);
+    }
 }
 
 BENCHMARK_BEGIN_SUITE()
@@ -516,10 +540,26 @@ BENCHMARK_BEGIN_TABLE(int_mul)
 BENCHMARK_END_TABLE(int_mul)
 
 BENCHMARK_BEGIN_TABLE(apbar_mul)
-    BENCHMARK_FUNCTION(ball_mull_vanilla, ball_init, ball_cleanup, 1.0, 8, 17)
-    BENCHMARK_FUNCTION(ball_mull_no_exp, ball_init, ball_cleanup, 1.0, 8, 17)
-    BENCHMARK_FUNCTION(ball_mull_unroll, ball_init, ball_cleanup, 1.0, 8, 17)
+    BENCHMARK_FUNCTION(ball_mul_portable, ball_init, ball_cleanup, 1.0, 8, 18)
+    BENCHMARK_FUNCTION(ball_mul, ball_init, ball_cleanup, 1.0, 8, 18)
+    BENCHMARK_FUNCTION(ball_mul_no_exp, ball_init, ball_cleanup, 1.0, 8, 18)
+    BENCHMARK_FUNCTION(ball_mul_unroll, ball_init, ball_cleanup, 1.0, 8, 18)
 BENCHMARK_END_TABLE(apbar_mul)
+
+BENCHMARK_BEGIN_TABLE(apbar_mul_small)
+    BENCHMARK_FUNCTION(ball_mul_portable, ball_init, ball_cleanup, 1.0, 8, 12)
+    BENCHMARK_FUNCTION(ball_mul, ball_init, ball_cleanup, 1.0, 8, 12)
+    BENCHMARK_FUNCTION(ball_mul_no_exp, ball_init, ball_cleanup, 1.0, 8, 12)
+    BENCHMARK_FUNCTION(ball_mul_unroll, ball_init, ball_cleanup, 1.0, 8, 12)
+BENCHMARK_END_TABLE(apbar_mul_small)
+
+BENCHMARK_BEGIN_TABLE(apbar_mul_large)
+    BENCHMARK_FUNCTION(ball_mul_portable, ball_init, ball_cleanup, 1.0, 12, 18)
+    BENCHMARK_FUNCTION(ball_mul, ball_init, ball_cleanup, 1.0, 12, 18)
+    BENCHMARK_FUNCTION(ball_mul_no_exp, ball_init, ball_cleanup, 1.0, 12, 18)
+    BENCHMARK_FUNCTION(ball_mul_unroll, ball_init, ball_cleanup, 1.0, 12, 18)
+BENCHMARK_END_TABLE(apbar_mul_large)
+
 BENCHMARK_END_SUITE()
 
 int main(int argc, char const *argv[])

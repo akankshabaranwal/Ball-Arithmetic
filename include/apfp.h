@@ -47,6 +47,7 @@ bool apfp_sub_merged(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
 bool apfp_sub_scalar(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
 bool apfp_sub_unroll(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
 bool apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
+bool apfp_mul_portable(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
 bool apfp_mul_unroll(apfp_ptr x, apfp_srcptr a, apfp_srcptr b);
 
 #endif /* !APFP_H */

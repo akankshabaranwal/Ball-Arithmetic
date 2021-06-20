@@ -86,7 +86,8 @@ void apfp_print(apfp_srcptr value)
     fmpz_clear(man);
 }
 
-void apfp_print_msg(const char *msg, apfp_srcptr value){
+void apfp_print_msg(const char *msg, apfp_srcptr value)
+{
     printf("%s ", msg);
     apfp_print(value);
     printf("\n");
@@ -187,7 +188,7 @@ static inline bool adjust_alignment_optim1(apfp_ptr x)
     if (overflow > mid_pos_bitwise_val)
     {
         overflow -= mid_pos_bitwise_val;
-        is_exact = apint_shiftr(x->mant, overflow);
+        is_exact = !apint_shiftr(x->mant, overflow);
         x->exp += (apfp_exp_t) overflow;
     }
     else if (overflow < mid_pos_bitwise_val)
@@ -224,7 +225,7 @@ bool apfp_add(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     // Add mantissa, shift by carry and update exponent
     apint_add(x->mant, x->mant, a->mant);
     x->exp = a->exp;
-    if(MIDDLE_LEFT(x) != 0 && (apint_getlimb(x->mant, 0) & 0x1ull) != 0)
+    if (MIDDLE_LEFT(x) != 0 && (apint_getlimb(x->mant, 0) & 0x1ull) != 0)
         is_exact = false;
 
     adjust_alignment(x);
@@ -941,12 +942,11 @@ bool apfp_sub(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     apint_copy(x->mant, b->mant);
     apint_shiftr(x->mant, factor);
     apint_sub(x->mant, a->mant, x->mant); //x->mant->sign is set here
-    if(swapped)
-    {
-            x->mant->sign = -x->mant->sign;
+    if(swapped) {
+        x->mant->sign = -x->mant->sign;
     }
     x->exp = a->exp;
-    if(MIDDLE_LEFT(x) !=0 && (apint_getlimb(x->mant, 0) & 0x1ull) != 0)
+    if (MIDDLE_LEFT(x) != 0 && (apint_getlimb(x->mant, 0) & 0x1ull) != 0)
         is_exact = false;
 
     adjust_alignment(x);
@@ -1337,13 +1337,31 @@ bool apfp_mul(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     return is_exact;
 }
 
+bool apfp_mul_portable(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
+{
+    x->exp = a->exp + b->exp;
+    apint_mul_portable(x->mant, a->mant, b->mant);
+    bool is_exact = adjust_alignment(x);
+
+    if(a->mant->sign == b->mant->sign)
+    {
+        apfp_set_pos(x);
+    }
+    else
+    {
+        apfp_set_neg(x);
+    }
+
+    return is_exact;
+}
+
 bool apfp_mul_unroll(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
 {
     x->exp = a->exp + b->exp;
     apint_mul_unroll(x->mant, a->mant, b->mant);
     bool is_exact = adjust_alignment(x);
 
-    if(a->mant->sign == b->mant->sign)
+    if (a->mant->sign == b->mant->sign)
     {
         apfp_set_pos(x);
     }

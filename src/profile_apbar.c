@@ -8,7 +8,7 @@ static const int PRECISION = 4096;
 int main()
 {
     char profile_func;
-    profile_func = 'a'; //select the function to profile here.
+    profile_func = 'm'; //select the function to profile here.
     // a is addition
     // s is subtraction
     // m is multiplication
