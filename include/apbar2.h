@@ -515,8 +515,13 @@ static inline void _add_unsigned_midpt4(apbar2_ptr x1, apbar2_srcptr a1, apbar2_
             )
         #define _mm256_cmplt_epu64(a, b) _mm256_cmpgt_epu64(b, a)
 
-        overflow = _mm256_cmplt_epu64(x_mant2, a_mant);
-        overflow = _mm256_srli_epi64(overflow, 63);
+        __m256i overflow1 = _mm256_cmplt_epu64(x_mant1, a_mant);
+        overflow1 = _mm256_srli_epi64(overflow1, 63);
+
+        __m256i overflow2 = _mm256_cmplt_epu64(x_mant2, x_mant1);
+        overflow2 = _mm256_srli_epi64(overflow2, 63);
+
+        overflow = _mm256_or_si256(overflow1, overflow2);
 
         alignas(32) uint64_t x_mant[4];
         _mm256_store_si256(x_mant, x_mant2);
