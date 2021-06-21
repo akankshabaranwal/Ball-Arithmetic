@@ -392,6 +392,102 @@ static inline uint8_t _sub_unsigned_midpt(apbar2_ptr x, apbar2_srcptr a, apbar2_
     return underflow ^ swapped;
 }
 
+/* Optimizations:
+ * scalar replacement
+ * removed unnecessary branch and reduced loop iteration
+ */
+static inline uint8_t _sub_unsigned_midpt_optim1(apbar2_ptr x, apbar2_srcptr a, apbar2_srcptr b)
+{
+    assert(x->midpt_mant && a->midpt_mant && b->midpt_mant);
+    assert(x->midpt_size == a->midpt_size);
+    assert(x->midpt_size == b->midpt_size);
+
+    uint8_t swapped = 0;
+
+    // After swap, `a' is guaranteed to have largest exponent.
+    if (b->midpt_exp > a->midpt_exp)
+    {
+        apbar2_srcptr t = a; a = b; b = t;
+        swapped = 1;
+    }
+
+    // Subtract mantissas taking into account exponent difference.
+    apbar2_exp_t shift = a->midpt_exp - b->midpt_exp;
+    apbar2_size_t offset = shift / APBAR2_LIMB_BITS;
+    shift -= offset * APBAR2_LIMB_BITS;
+
+    uint8_t underflow = 0;
+    int last_non_zero = -1;
+
+    apbar2_limb_t b_mant0;
+    apbar2_limb_t b_mant1 = b->midpt_mant[offset];
+    apbar2_size_t lower_x;
+    apbar2_exp_t nshift = (APBAR2_LIMB_BITS - shift);
+    lower_x = APBAR2_LOWER(x);
+
+    for (apbar2_size_t i = 0; i <= lower_x; i++)
+    {
+        b_mant0 = b_mant1;
+        b_mant1 = b->midpt_mant[i + offset + 1];
+
+        unsigned long long lower = b_mant0 >> shift;
+        unsigned long long upper = shift ? b_mant1 << nshift : 0ULL;
+
+        // To-do: Scalar replacement? Multiple array access on `x->midpt_mant[i]'.
+        underflow = _subborrow_u64(underflow, a->midpt_mant[i], upper | lower, &x->midpt_mant[i]);
+        apbar2_limb_t result = x->midpt_mant[i];
+        if (result)
+        {
+            last_non_zero = i;
+        }
+    }
+    apbar2_size_t tmpi;
+    tmpi =1;
+    // Take two's complement in the case of an underflow.
+    if (underflow)
+    {
+        uint8_t carry = 0;
+        for (apbar2_size_t i = 0; i <= lower_x; i++)
+        {
+            // Add initial 1 in order to propagate two's complement.
+            carry = _addcarryx_u64(carry, ~x->midpt_mant[i], tmpi, &x->midpt_mant[i]);
+            apbar2_limb_t result = x->midpt_mant[i];
+            tmpi=0;
+            if (result)
+            {
+                last_non_zero = i;
+            }
+        }
+    }
+
+    // Left shift after subtraction so leading 1 is the MSB of lower-half.
+    if (last_non_zero >= 0)
+    {
+        unsigned long long leading_zeros = _lzcnt_u64(x->midpt_mant[last_non_zero]);
+        offset = lower_x - last_non_zero;
+        unsigned long long precompute = (APBAR2_LIMB_BITS - leading_zeros);
+        if (offset || leading_zeros)
+        {
+            apbar2_limb_t x_mant0;
+            apbar2_limb_t x_mant1 = x->midpt_mant[lower_x - offset];
+
+            for (apbar2_ssize_t i = lower_x; i > offset; i--)
+            {
+            int j = i - offset;
+            x_mant0 = x_mant1;
+            x_mant1 =  x->midpt_mant[j - 1];
+            x->midpt_mant[i] = (x_mant0 << leading_zeros) | (x_mant1 >> precompute);
+            }
+        }
+
+        x->midpt_exp = a->midpt_exp - (APBAR2_LIMB_BITS * offset) - leading_zeros;
+    }
+
+    // A final underflow signifies output of *unsigned* subtraction is negative.
+    return underflow ^ swapped;
+}
+
+
 static inline void apbar2_add(apbar2_ptr x, apbar2_srcptr a, apbar2_srcptr b, apbar2_size_t prec)
 {
     uint8_t is_inexact;
@@ -440,11 +536,11 @@ static inline void apbar2_add_optim1(apbar2_ptr x, apbar2_srcptr a, apbar2_srcpt
 
         if (b->sign)
         {
-            flipped = _sub_unsigned_midpt(x, a, b);
+            flipped = _sub_unsigned_midpt_optim1(x, a, b);
         }
         else
         {
-            flipped = _sub_unsigned_midpt(x, b, a);
+            flipped = _sub_unsigned_midpt_optim1(x, b, a);
         }
 
         x->sign = (flipped) ? !a->sign : a->sign;
@@ -462,6 +558,15 @@ static inline void apbar2_sub(apbar2_ptr x, apbar2_srcptr a, apbar2_srcptr b, ap
     apbar2_ptr b_cast = (apbar2_ptr) b;
     b_cast->sign = !b_cast->sign;
     apbar2_add(x, a, b, prec);
+    b_cast->sign = !b_cast->sign;
+}
+
+static inline void apbar2_sub_optim1(apbar2_ptr x, apbar2_srcptr a, apbar2_srcptr b, apbar2_size_t prec)
+{
+    // Temporarily patch b's sign to the opposite. (We have to de-const-ify...)
+    apbar2_ptr b_cast = (apbar2_ptr) b;
+    b_cast->sign = !b_cast->sign;
+    apbar2_add_optim1(x, a, b, prec);
     b_cast->sign = !b_cast->sign;
 }
 
