@@ -130,6 +130,8 @@ void barith_deinit(unsigned int prec)
     apbar_free(apbar_out);
 }
 
+
+//Keeping it for legacy purpose. Code with intrinsics
 void barith_add(unsigned int prec)
 {
     for (size_t i = 0; i < BENCHMARK_ITER; i++)
@@ -141,7 +143,31 @@ void barith_add(unsigned int prec)
     }
 }
 
-void barith_add_scalar(unsigned int prec)
+void barith_add_portable(unsigned int prec)
+{
+    for (size_t i = 0; i < BENCHMARK_ITER; i++)
+    {
+        apbar_add_portable(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add_portable(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add_portable(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add_portable(apbar_out, apbar_in1, apbar_in2, prec);
+    }
+}
+
+//Name of apbar add functions are misleading. See comments in apfp.c codes for optimization details.
+void barith_add_intrinsics(unsigned int prec)
+{
+    for (size_t i = 0; i < BENCHMARK_ITER; i++)
+    {
+        apbar_add(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add(apbar_out, apbar_in1, apbar_in2, prec);
+    }
+}
+
+//Name of apbar add functions are misleading. See comments in apfp.c codes for optimization details.
+void barith_add_midptrep(unsigned int prec)
 {
     for (size_t i = 0; i < BENCHMARK_ITER; i++)
     {
@@ -151,7 +177,9 @@ void barith_add_scalar(unsigned int prec)
         apbar_add_scalar(apbar_out, apbar_in1, apbar_in2, prec);
     }
 }
-void barith_add_unroll(unsigned int prec)
+
+//Name of apbar add functions are misleading. See comments in apfp_add codes for optimization details.
+void barith_add_nestedbranch(unsigned int prec)
 {
     for (size_t i = 0; i < BENCHMARK_ITER; i++)
     {
@@ -159,6 +187,18 @@ void barith_add_unroll(unsigned int prec)
         apbar_add_unroll(apbar_out, apbar_in1, apbar_in2, prec);
         apbar_add_unroll(apbar_out, apbar_in1, apbar_in2, prec);
         apbar_add_unroll(apbar_out, apbar_in1, apbar_in2, prec);
+    }
+}
+
+//Name of apbar add functions are misleading. See comments in apfp_add codes for optimization details.
+void barith_add_norad_noexp(unsigned int prec)
+{
+    for (size_t i = 0; i < BENCHMARK_ITER; i++)
+    {
+        apbar_add_unroll_norad_noexp(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add_unroll_norad_noexp(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add_unroll_norad_noexp(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add_unroll_norad_noexp(apbar_out, apbar_in1, apbar_in2, prec);
     }
 }
 
@@ -199,10 +239,10 @@ void barith_add_detect1(unsigned int prec)
 {
     for (size_t i = 0; i < BENCHMARK_ITER; i++)
     {
-        apbar_add_plus(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_add_plus(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_add_plus(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_add_plus(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add_detect1(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add_detect1(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add_detect1(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add_detect1(apbar_out, apbar_in1, apbar_in2, prec);
     }
 }
 
@@ -210,14 +250,14 @@ void barith_add_merged(unsigned int prec)
 {
     for (size_t i = 0; i < BENCHMARK_ITER; i++)
     {
-        apbar_add_plus(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_add_plus(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_add_plus(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_add_plus(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add_merged(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add_merged(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add_merged(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add_merged(apbar_out, apbar_in1, apbar_in2, prec);
     }
 }
 
-void barith_sub(unsigned int prec)
+void barith_sub_intrinsics(unsigned int prec)
 {
     for (size_t i = 0; i < BENCHMARK_ITER; i++)
     {
@@ -232,32 +272,77 @@ void barith_sub_merged(unsigned int prec)
 {
     for (size_t i = 0; i < BENCHMARK_ITER; i++)
     {
-        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_merged(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_merged(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_merged(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_merged(apbar_out, apbar_in1, apbar_in2, prec);
     }
 }
 
-void barith_sub_scalar(unsigned int prec)
+void barith_sub_midptrep(unsigned int prec)
 {
     for (size_t i = 0; i < BENCHMARK_ITER; i++)
     {
-        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_scalar(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_scalar(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_scalar(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_scalar(apbar_out, apbar_in1, apbar_in2, prec);
     }
 }
 
-void barith_sub_unroll(unsigned int prec)
+void barith_sub_nestedbranch(unsigned int prec)
 {
     for (size_t i = 0; i < BENCHMARK_ITER; i++)
     {
-        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_unroll(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_unroll(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_unroll(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_unroll(apbar_out, apbar_in1, apbar_in2, prec);
+    }
+}
+
+//Name of apbar add functions are misleading. See comments in apfp_add codes for optimization details.
+void barith_sub_norad_noexp(unsigned int prec)
+{
+    for (size_t i = 0; i < BENCHMARK_ITER; i++)
+    {
+        apbar_sub_unroll_norad_noexp(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_unroll_norad_noexp(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_unroll_norad_noexp(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_unroll_norad_noexp(apbar_out, apbar_in1, apbar_in2, prec);
+    }
+}
+
+void barith_sub_shiftr(unsigned int prec)
+{
+    for (size_t i = 0; i < BENCHMARK_ITER; i++)
+    {
+        apbar_sub_shiftr(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_shiftr(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_shiftr(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_shiftr(apbar_out, apbar_in1, apbar_in2, prec);
+    }
+}
+
+void barith_sub_shiftl(unsigned int prec)
+{
+    for (size_t i = 0; i < BENCHMARK_ITER; i++)
+    {
+        apbar_sub_shiftl(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_shiftl(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_shiftl(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_shiftl(apbar_out, apbar_in1, apbar_in2, prec);
+    }
+}
+
+void barith_sub_detect1(unsigned int prec)
+{
+    for (size_t i = 0; i < BENCHMARK_ITER; i++)
+    {
+        apbar_sub_detect1(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_detect1(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_detect1(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_detect1(apbar_out, apbar_in1, apbar_in2, prec);
     }
 }
 
@@ -473,34 +558,67 @@ BENCHMARK_BEGIN_TABLE(def)
 BENCHMARK_END_TABLE(def)
 
 BENCHMARK_BEGIN_TABLE(ball_add_micro)
+    BENCHMARK_FUNCTION(barith_add_portable, barith_init, barith_deinit, 4.0, 8, 17)
     BENCHMARK_FUNCTION(barith_add, barith_init, barith_deinit, 4.0, 8, 17)
     BENCHMARK_FUNCTION(barith_add_shiftr, barith_init, barith_deinit, 4.0, 8, 17)
     BENCHMARK_FUNCTION(barith_add_shiftl, barith_init, barith_deinit, 4.0, 8, 17)
-    BENCHMARK_FUNCTION(barith_add_plus, barith_init, barith_deinit, 4.0, 8, 17)
     BENCHMARK_FUNCTION(barith_add_detect1, barith_init, barith_deinit, 4.0, 8, 17)
 BENCHMARK_END_TABLE(ball_add_micro)
 
 BENCHMARK_BEGIN_TABLE(ball_add_old)
-    BENCHMARK_FUNCTION(barith_add, barith_init, barith_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith_add_portable, barith_init, barith_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith_add_intrinsics, barith_init, barith_deinit, 4.0, 8, 17)
     BENCHMARK_FUNCTION(barith_add_merged, barith_init, barith_deinit, 4.0, 8, 17)
-    BENCHMARK_FUNCTION(barith_add_scalar, barith_init, barith_deinit, 4.0, 8, 17)
-    BENCHMARK_FUNCTION(barith_add_unroll, barith_init, barith_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith_add_midptrep, barith_init, barith_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith_add_nestedbranch, barith_init, barith_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith_add_norad_noexp, barith_init, barith_deinit, 4.0, 8, 17)
 BENCHMARK_END_TABLE(ball_add_old)
 
+BENCHMARK_BEGIN_TABLE(ball_add_all)
+                BENCHMARK_FUNCTION(barith_add_portable, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_add_intrinsics, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_add_shiftr, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_add_shiftl, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_add_detect1, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_add_merged, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_add_midptrep, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_add_nestedbranch, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_add_norad_noexp, barith_init, barith_deinit, 4.0, 8, 17)
+BENCHMARK_END_TABLE(ball_add_all)
+
+BENCHMARK_BEGIN_TABLE(ball_sub_micro)
+                BENCHMARK_FUNCTION(barith_sub_intrinsics, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_sub_shiftr, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_sub_shiftl, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_sub_detect1, barith_init, barith_deinit, 4.0, 8, 17)
+BENCHMARK_END_TABLE(ball_sub_micro)
+
 BENCHMARK_BEGIN_TABLE(ball_sub_old)
-    BENCHMARK_FUNCTION(barith_sub, barith_init, barith_deinit, 4.0, 8, 17)
-    BENCHMARK_FUNCTION(barith_sub_merged, barith_init, barith_deinit, 4.0, 8, 17)
-    BENCHMARK_FUNCTION(barith_sub_scalar, barith_init, barith_deinit, 4.0, 8, 17)
-    BENCHMARK_FUNCTION(barith_sub_unroll, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_sub_intrinsics, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_sub_merged, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_sub_midptrep, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_sub_nestedbranch, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_sub_norad_noexp, barith_init, barith_deinit, 4.0, 8, 17)
 BENCHMARK_END_TABLE(ball_sub_old)
 
+BENCHMARK_BEGIN_TABLE(ball_sub_all)
+                BENCHMARK_FUNCTION(barith_sub_intrinsics, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_sub_shiftr, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_sub_shiftl, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_sub_detect1, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_sub_merged, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_sub_midptrep, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_sub_nestedbranch, barith_init, barith_deinit, 4.0, 8, 17)
+                BENCHMARK_FUNCTION(barith_sub_norad_noexp, barith_init, barith_deinit, 4.0, 8, 17)
+BENCHMARK_END_TABLE(ball_sub_all)
+
 BENCHMARK_BEGIN_TABLE(ball_add_new_old)
-    BENCHMARK_FUNCTION(barith_add_unroll, barith_init, barith_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith_add_nestedbranch, barith_init, barith_deinit, 4.0, 8, 17)
     BENCHMARK_FUNCTION(barith2_add, barith2_init, barith2_deinit, 4.0, 8, 17)
 BENCHMARK_END_TABLE(ball_add_new_old)
 
 BENCHMARK_BEGIN_TABLE(ball_sub_new_old)
-    BENCHMARK_FUNCTION(barith_add_unroll, barith_init, barith_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith_sub_nestedbranch, barith_init, barith_deinit, 4.0, 8, 17)
     BENCHMARK_FUNCTION(barith2_add, barith2_init, barith2_deinit, 4.0, 8, 17)
 BENCHMARK_END_TABLE(ball_sub_new_old)
 
@@ -511,13 +629,13 @@ BENCHMARK_END_TABLE(ball_mult_new_old)
 
 BENCHMARK_BEGIN_TABLE(compare_add_arblib)
     BENCHMARK_FUNCTION(arblib_add, arblib_init, arblib_deinit, 4.0, 8, 17)
-    BENCHMARK_FUNCTION(barith_add_unroll, barith_init, barith_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith_add_nestedbranch, barith_init, barith_deinit, 4.0, 8, 17)
     BENCHMARK_FUNCTION(barith2_add, barith2_init, barith2_deinit, 4.0, 8, 17)
 BENCHMARK_END_TABLE(compare_add_arblib)
 
 BENCHMARK_BEGIN_TABLE(compare_subtract_arblib)
     BENCHMARK_FUNCTION(arblib_sub, arblib_init, arblib_deinit, 4.0, 8, 17)
-    BENCHMARK_FUNCTION(barith_sub_unroll, barith_init, barith_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith_sub_nestedbranch, barith_init, barith_deinit, 4.0, 8, 17)
     BENCHMARK_FUNCTION(barith2_sub, barith2_init, barith2_deinit, 4.0, 8, 17)
 BENCHMARK_END_TABLE(compare_subtract_arblib)
 

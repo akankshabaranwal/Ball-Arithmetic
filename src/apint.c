@@ -96,7 +96,6 @@ size_t apint_detectfirst1(apint_ptr x)
     }
     return x->length * APINT_LIMB_BITS - pos;
 }
-
 // Optimization 1
 size_t apint_detectfirst1_optim1(apint_ptr x)
 {
@@ -119,7 +118,6 @@ size_t apint_detectfirst1_optim1(apint_ptr x)
     pos = pos + bitpos;
     return (xsize-pos);
 }
-
 
 bool apint_shiftr_copy(apint_ptr dest, apint_srcptr src, unsigned int shift)
 {
@@ -151,7 +149,6 @@ bool apint_shiftr_copy(apint_ptr dest, apint_srcptr src, unsigned int shift)
     dest->limbs[src->length - 1] = src->limbs[src->length-1] >> shift;
     return did_shift || __builtin_ctzl(src->limbs[0]) >= shift;
 }
-
 
 //First optimization. Removed branching. Reorganized function calls.
 bool apint_shiftr(apint_ptr x, unsigned int shift)
@@ -191,10 +188,11 @@ bool apint_shiftr(apint_ptr x, unsigned int shift)
     return did_shift;
 }
 
-//Second optimization. Removing branching.
-
-// Third optimization. Unrolling, considering mid pt, removing unnecessary calls which don't break unit tests?
-// Someone can check if its okay to do this.
+/* Optimizations:
+ * Unrolling by 2
+ * Reorganized if else to remove branching
+ * Not included: Mid point representation
+*/
 bool apint_shiftr_optim1(apint_ptr x, unsigned int shift)
 {
     assert(x->limbs);
@@ -214,6 +212,7 @@ bool apint_shiftr_optim1(apint_ptr x, unsigned int shift)
     }
 
     if (!shift) return did_shift;
+    did_shift |= __builtin_ctzl(x->limbs[0]) >= shift;
 
     int leftshiftamt =  (APINT_LIMB_BITS - shift);
     for (int i = 0; i < x->length - 1; ++i)
@@ -250,8 +249,9 @@ void apint_shiftl(apint_ptr x, unsigned int shift){
 
     x->limbs[0] <<= shift;
 }
-
-// Optimization 1. Removing unnecessary computations.
+/* Optimizations:
+ * Refer _optim2 for the most optimized version
+ */
 void apint_shiftl_optim1(apint_ptr x, unsigned int shift){
     assert(x->limbs);
     if (shift == 0) return;
@@ -273,7 +273,13 @@ void apint_shiftl_optim1(apint_ptr x, unsigned int shift){
     x->limbs[0] <<= shift;
 }
 
-// Optimization 2. Loop unrolling. Type casting to same data type. Unroll more
+/* Optimizations:
+ * Loop unrolling by a factor of 2
+ * Type casting to same data type
+ * Reorganized code to remove unnecessary branching
+ * Removed unnecessary loop iterations
+ * Scalar replacement
+*/
 void apint_shiftl_optim2(apint_ptr x, unsigned int shift){
     assert(x->limbs);
     if (shift == 0) return;
@@ -283,7 +289,6 @@ void apint_shiftl_optim2(apint_ptr x, unsigned int shift){
     int full_limbs_shifted_1 = full_limbs_shifted + 1;
     for (int i = x->length - 1; i >= full_limbs_shifted-1; i-=2) {
         x->limbs[i] = x->limbs[i-full_limbs_shifted];
-        //x->limbs[i-1] = x->limbs[i-full_limbs_shifted-1];
         x->limbs[i-1] = x->limbs[i-full_limbs_shifted_1];
     }
 
@@ -295,6 +300,29 @@ void apint_shiftl_optim2(apint_ptr x, unsigned int shift){
         x->limbs[i] = (x->limbs[i] << shift) + (x->limbs[i-1] >> rightshiftamt);
     }
     x->limbs[0] <<= shift;
+}
+
+// portable code
+unsigned char apint_add_portable(apint_ptr x, apint_srcptr a, apint_srcptr b)
+{
+    unsigned char overflow;
+    if (a->sign == b->sign)
+    {
+        overflow = apint_plus_portable(x, a, b);
+        x->sign = a->sign;
+    }
+    else
+    {
+        if (a->sign == -1) //only a is negative. so equivalent to b-a.
+        {
+            overflow = apint_minus_portable(x, b, a);
+        }
+        else
+        {
+            overflow = apint_minus_portable(x, a, b);
+        }
+    }
+    return overflow;
 }
 
 unsigned char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
@@ -318,6 +346,7 @@ unsigned char apint_add(apint_ptr x, apint_srcptr a, apint_srcptr b)
     }
     return overflow;
 }
+
 unsigned char apint_add_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     unsigned char overflow;
@@ -340,6 +369,22 @@ unsigned char apint_add_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
     return overflow;
 }
 
+unsigned char apint_sub_portable(apint_ptr x, apint_srcptr a, apint_srcptr b)
+{
+    unsigned char overflow;
+
+    if (a->sign == b->sign)
+    {
+        overflow = apint_minus_portable(x, a, b); //sign is set here
+    }
+    else
+    {
+        apint_plus_portable(x, a, b);
+        x->sign = a->sign;
+    }
+    return overflow;
+}
+
 unsigned char apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     unsigned char overflow;
@@ -351,6 +396,22 @@ unsigned char apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
     else
     {
         apint_plus(x, a, b);
+        x->sign = a->sign;
+    }
+    return overflow;
+}
+
+unsigned char apint_sub_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
+{
+    unsigned char overflow;
+
+    if (a->sign == b->sign)
+    {
+        overflow = apint_minus_optim1(x, a, b); //sign is set here
+    }
+    else
+    {
+        apint_plus_optim1(x, a, b);
         x->sign = a->sign;
     }
     return overflow;
@@ -386,8 +447,11 @@ unsigned char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
     }
     return carry;
 }
-
-//Optimization 1. Just midpt
+/* Optimizations compared to portable version
+ * Changed maximum iteration to midpoint
+ * Using vector intrinsics
+ * Unrolled by a factor of 4.
+ */
 unsigned char apint_plus_optim1(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
@@ -395,12 +459,45 @@ unsigned char apint_plus_optim1(apint_ptr x, apint_srcptr a, apint_srcptr b)
     assert(a->length <= x->length);
 
     int midpt = (a->length /2) + 1;
-    unsigned char carry = 0;
-    for (apint_size_t i = 0; i < midpt; i++)
+    unsigned char carry1 = 0;
+    unsigned char carry2 = 0;
+    unsigned char carry3 = 0;
+    unsigned char carry4 = 0;
+    for (apint_size_t i = 0; i < midpt; i+=4)
     {
-        carry = _addcarryx_u64(carry, a->limbs[i], b->limbs[i], &x->limbs[i]);
+        carry1 = _addcarryx_u64(carry4, a->limbs[i], b->limbs[i], &x->limbs[i]);
+        carry2 = _addcarryx_u64(carry1, a->limbs[i], b->limbs[i], &x->limbs[i]);
+        carry3 = _addcarryx_u64(carry2, a->limbs[i], b->limbs[i], &x->limbs[i]);
+        carry4 = _addcarryx_u64(carry3, a->limbs[i], b->limbs[i], &x->limbs[i]);
     }
-    return carry;
+    return carry4;
+}
+
+// |a| - |b|. Do not handle sign here.
+unsigned char apint_minus_portable(apint_ptr x, apint_srcptr a, apint_srcptr b)
+{
+    assert(x->limbs && a->limbs && b->limbs);
+    assert(a->length == b->length); // only handle same lengths for now
+    assert(a->length <= x->length);
+    unsigned char borrow = 0;
+
+    if (apint_is_greater(a, b)) // a > b so a-b
+    {
+        x->sign = a->sign;
+        for (apint_size_t i = 0; i < a->length; i++)
+        {
+            borrow = _subborrow_u64(borrow, a->limbs[i], b->limbs[i], &x->limbs[i]);
+        }
+    }
+    else // b > a so -(b-a)
+    {
+        x->sign = -b->sign;
+        for (apint_size_t i = 0; i < a->length; i++)
+        {
+            borrow = _subborrow_u64(borrow, b->limbs[i], a->limbs[i], &x->limbs[i]);
+        }
+    }
+    return borrow;
 }
 
 // |a| - |b|. Do not handle sign here.
@@ -429,7 +526,11 @@ unsigned char apint_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
     }
     return borrow;
 }
-
+/* Optimizations:
+ * Changed to mid length
+ * Unrolled by a factor of 4
+ * Replaced the is greater comparison function call and unrolled it
+ */
 unsigned char apint_minus_optim1(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
@@ -473,7 +574,7 @@ unsigned char apint_minus_optim1(apint_ptr x, apint_srcptr a, apint_srcptr b)
             borrow4 = _subborrow_u64(borrow3, b->limbs[i+3], a->limbs[i+3], &x->limbs[i+3]);
         }
     }
-    return borrow;
+    return borrow4;
 }
 
 int apint_is_greater(apint_srcptr a, apint_srcptr b)
