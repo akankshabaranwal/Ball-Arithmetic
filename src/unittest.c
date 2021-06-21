@@ -291,6 +291,141 @@ TEST_GROUP(apint, {
 
     });
 
+    TEST_CASE(portable subtraction with positive numbers a-b a>b, {
+            apint_setlimb(apint_test[0], 3, 4);
+            apint_setlimb(apint_test[0], 2, 6);
+            apint_setlimb(apint_test[0], 1, 2);
+            apint_setlimb(apint_test[0], 0, 5);
+            apint_test[0]->sign = 1;
+
+            apint_setlimb(apint_test[1], 3, 3);
+            apint_setlimb(apint_test[1], 2, 2);
+            apint_setlimb(apint_test[1], 1, 1);
+            apint_setlimb(apint_test[1], 0, 0);
+            apint_test[1]->sign = 1;
+
+            apint_sub_portable(apint_test[2], apint_test[0], apint_test[1]);
+
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 1llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 4llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 1llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 5llu);
+            ASSERT_EQUAL_I(apint_test[2]->sign, 1);
+    });
+
+    TEST_CASE(portable subtraction with positive numbers a-b a<b, {
+
+            apint_setlimb(apint_test[0], 3, 3);
+            apint_setlimb(apint_test[0], 2, 2);
+            apint_setlimb(apint_test[0], 1, 1);
+            apint_setlimb(apint_test[0], 0, 0);
+            apint_test[0]->sign = 1;
+
+            apint_setlimb(apint_test[1], 3, 4);
+            apint_setlimb(apint_test[1], 2, 6);
+            apint_setlimb(apint_test[1], 1, 2);
+            apint_setlimb(apint_test[1], 0, 5);
+            apint_test[1]->sign = 1;
+
+            apint_sub_portable(apint_test[2], apint_test[0], apint_test[1]);
+
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 1llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 4llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 1llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 5llu);
+            ASSERT_EQUAL_I(apint_test[2]->sign, -1);
+    });
+
+    TEST_CASE(portable subtraction with positive - negative number a-b a>b, {
+            apint_setlimb(apint_test[0], 3, 4);
+            apint_setlimb(apint_test[0], 2, 6);
+            apint_setlimb(apint_test[0], 1, 2);
+            apint_setlimb(apint_test[0], 0, 5);
+            apint_test[0]->sign = 1;
+
+            apint_setlimb(apint_test[1], 3, 3);
+            apint_setlimb(apint_test[1], 2, 2);
+            apint_setlimb(apint_test[1], 1, 1);
+            apint_setlimb(apint_test[1], 0, 0);
+            apint_test[1]->sign = -1;
+
+            apint_sub_portable(apint_test[2], apint_test[0], apint_test[1]);
+
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 7llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 8llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 3llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 5llu);
+            ASSERT_EQUAL_I(apint_test[2]->sign, 1);
+    });
+
+    TEST_CASE(portable subtraction with negative - positive number a-b a>b, {
+            apint_setlimb(apint_test[0], 3, 4);
+            apint_setlimb(apint_test[0], 2, 6);
+            apint_setlimb(apint_test[0], 1, 2);
+            apint_setlimb(apint_test[0], 0, 5);
+            apint_test[0]->sign = -1;
+
+            apint_setlimb(apint_test[1], 3, 3);
+            apint_setlimb(apint_test[1], 2, 2);
+            apint_setlimb(apint_test[1], 1, 1);
+            apint_setlimb(apint_test[1], 0, 0);
+            apint_test[1]->sign = 1;
+
+            apint_sub_portable(apint_test[2], apint_test[0], apint_test[1]);
+
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 7llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 8llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 3llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 5llu);
+            ASSERT_EQUAL_I(apint_test[2]->sign, -1);
+    });
+
+    TEST_CASE(portable subtraction with borrow, {
+            apint_setlimb(apint_test[0], 3, 1);
+            apint_setlimb(apint_test[0], 2, 0);
+            apint_setlimb(apint_test[0], 1, 0);
+            apint_setlimb(apint_test[0], 0, 0);
+            apint_test[0]->sign = 1;
+
+            apint_setlimb(apint_test[1], 3, 0);
+            apint_setlimb(apint_test[1], 2, 0);
+            apint_setlimb(apint_test[1], 1, 0);
+            apint_setlimb(apint_test[1], 0, 1);
+            apint_test[1]->sign = 1;
+
+            unsigned char borrow = apint_sub_portable(apint_test[2], apint_test[0], apint_test[1]);
+
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 0llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 18446744073709551615llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 18446744073709551615llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 18446744073709551615llu);
+            ASSERT_EQUAL_I(apint_test[2]->sign, 1);
+            ASSERT_EQUAL_I(borrow, 0);
+    });
+
+    TEST_CASE(portable subtraction with max limb and borrow, {
+            apint_setlimb(apint_test[0], 3, 1);
+            apint_setlimb(apint_test[0], 2, 0);
+            apint_setlimb(apint_test[0], 1, 0);
+            apint_setlimb(apint_test[0], 0, 0);
+            apint_test[0]->sign = 1;
+
+            apint_setlimb(apint_test[1], 3, 0);
+            apint_setlimb(apint_test[1], 2, UINT64_MAX);
+            apint_setlimb(apint_test[1], 1, 1);
+            apint_setlimb(apint_test[1], 0, 0);
+            apint_test[1]->sign = 1;
+
+            unsigned char borrow = apint_sub_portable(apint_test[2], apint_test[0], apint_test[1]);
+
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 0llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 0llu);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), (apint_limb_t) UINT64_MAX);
+            ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 0llu);
+            ASSERT_EQUAL_I(apint_test[2]->sign, 1);
+            ASSERT_EQUAL_I(borrow, 0);
+    });
+
     TEST_CASE(multiply, {
             apint_setlimb(apint_test[0], 0, 1);
             apint_setlimb(apint_test[0], 1, 1);
@@ -1034,8 +1169,8 @@ TEST_GROUP(ball_arithmetic, {
 
             apbar_mul_no_rad_exp(apbar_test[2], apbar_test[1], apbar_test[0], 128);
 
-            apbar_print_msg("pi is:     ", apbar_test[0]);
-            apbar_print_msg("pi * pi is:", apbar_test[2]);
+            // apbar_print_msg("pi is:     ", apbar_test[0]);
+            // apbar_print_msg("pi * pi is:", apbar_test[2]);
 
             // From arblib mid point needs to be: 9.86960440109
             ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 1), 0x9de9e64df22ef2d2llu);
