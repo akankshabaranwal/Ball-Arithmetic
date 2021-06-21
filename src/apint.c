@@ -315,11 +315,11 @@ unsigned char apint_add_portable(apint_ptr x, apint_srcptr a, apint_srcptr b)
     {
         if (a->sign == -1) //only a is negative. so equivalent to b-a.
         {
-            overflow = apint_minus(x, b, a);
+            overflow = apint_minus_portable(x, b, a);
         }
         else
         {
-            overflow = apint_minus(x, a, b);
+            overflow = apint_minus_portable(x, a, b);
         }
     }
     return overflow;
@@ -369,6 +369,22 @@ unsigned char apint_add_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
     return overflow;
 }
 
+unsigned char apint_sub_portable(apint_ptr x, apint_srcptr a, apint_srcptr b)
+{
+    unsigned char overflow;
+
+    if (a->sign == b->sign)
+    {
+        overflow = apint_minus_portable(x, a, b); //sign is set here
+    }
+    else
+    {
+        apint_plus_portable(x, a, b);
+        x->sign = a->sign;
+    }
+    return overflow;
+}
+
 unsigned char apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     unsigned char overflow;
@@ -380,6 +396,22 @@ unsigned char apint_sub(apint_ptr x, apint_srcptr a, apint_srcptr b)
     else
     {
         apint_plus(x, a, b);
+        x->sign = a->sign;
+    }
+    return overflow;
+}
+
+unsigned char apint_sub_minus(apint_ptr x, apint_srcptr a, apint_srcptr b)
+{
+    unsigned char overflow;
+
+    if (a->sign == b->sign)
+    {
+        overflow = apint_minus_optim1(x, a, b); //sign is set here
+    }
+    else
+    {
+        apint_plus_optim1(x, a, b);
         x->sign = a->sign;
     }
     return overflow;
@@ -418,7 +450,7 @@ unsigned char apint_plus(apint_ptr x, apint_srcptr a, apint_srcptr b)
 /* Optimizations compared to portable version
  * Changed maximum iteration to midpoint
  * Using vector intrinsics
- * Unrolled by a factor of 4. TODO: Akanksha check what is the effect of unroll factor on perf
+ * Unrolled by a factor of 4.
  */
 unsigned char apint_plus_optim1(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
@@ -439,6 +471,33 @@ unsigned char apint_plus_optim1(apint_ptr x, apint_srcptr a, apint_srcptr b)
         carry4 = _addcarryx_u64(carry3, a->limbs[i], b->limbs[i], &x->limbs[i]);
     }
     return carry4;
+}
+
+// |a| - |b|. Do not handle sign here.
+unsigned char apint_minus_portable(apint_ptr x, apint_srcptr a, apint_srcptr b)
+{
+    assert(x->limbs && a->limbs && b->limbs);
+    assert(a->length == b->length); // only handle same lengths for now
+    assert(a->length <= x->length);
+    unsigned char borrow = 0;
+
+    if (apint_is_greater(a, b)) // a > b so a-b
+    {
+        x->sign = a->sign;
+        for (apint_size_t i = 0; i < a->length; i++)
+        {
+            borrow = _subborrow_u64(borrow, a->limbs[i], b->limbs[i], &x->limbs[i]);
+        }
+    }
+    else // b > a so -(b-a)
+    {
+        x->sign = -b->sign;
+        for (apint_size_t i = 0; i < a->length; i++)
+        {
+            borrow = _subborrow_u64(borrow, b->limbs[i], a->limbs[i], &x->limbs[i]);
+        }
+    }
+    return borrow;
 }
 
 // |a| - |b|. Do not handle sign here.
