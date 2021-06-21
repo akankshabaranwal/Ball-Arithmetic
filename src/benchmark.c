@@ -250,10 +250,10 @@ void barith_add_merged(unsigned int prec)
 {
     for (size_t i = 0; i < BENCHMARK_ITER; i++)
     {
-        apbar_add_plus(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_add_plus(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_add_plus(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_add_plus(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add_merged(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add_merged(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add_merged(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_add_merged(apbar_out, apbar_in1, apbar_in2, prec);
     }
 }
 
@@ -272,10 +272,10 @@ void barith_sub_merged(unsigned int prec)
 {
     for (size_t i = 0; i < BENCHMARK_ITER; i++)
     {
-        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
-        apbar_sub(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_merged(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_merged(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_merged(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_merged(apbar_out, apbar_in1, apbar_in2, prec);
     }
 }
 
@@ -618,7 +618,7 @@ BENCHMARK_BEGIN_TABLE(ball_add_new_old)
 BENCHMARK_END_TABLE(ball_add_new_old)
 
 BENCHMARK_BEGIN_TABLE(ball_sub_new_old)
-    BENCHMARK_FUNCTION(barith_add_nestedbranch, barith_init, barith_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith_sub_nestedbranch, barith_init, barith_deinit, 4.0, 8, 17)
     BENCHMARK_FUNCTION(barith2_add, barith2_init, barith2_deinit, 4.0, 8, 17)
 BENCHMARK_END_TABLE(ball_sub_new_old)
 
@@ -629,13 +629,13 @@ BENCHMARK_END_TABLE(ball_mult_new_old)
 
 BENCHMARK_BEGIN_TABLE(compare_add_arblib)
     BENCHMARK_FUNCTION(arblib_add, arblib_init, arblib_deinit, 4.0, 8, 17)
-    BENCHMARK_FUNCTION(barith_add_norad_noexp, barith_init, barith_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith_add_nestedbranch, barith_init, barith_deinit, 4.0, 8, 17)
     BENCHMARK_FUNCTION(barith2_add, barith2_init, barith2_deinit, 4.0, 8, 17)
 BENCHMARK_END_TABLE(compare_add_arblib)
 
 BENCHMARK_BEGIN_TABLE(compare_subtract_arblib)
     BENCHMARK_FUNCTION(arblib_sub, arblib_init, arblib_deinit, 4.0, 8, 17)
-    BENCHMARK_FUNCTION(barith_sub_norad_noexp, barith_init, barith_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith_sub_nestedbranch, barith_init, barith_deinit, 4.0, 8, 17)
     BENCHMARK_FUNCTION(barith2_sub, barith2_init, barith2_deinit, 4.0, 8, 17)
 BENCHMARK_END_TABLE(compare_subtract_arblib)
 

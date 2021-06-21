@@ -469,7 +469,6 @@ bool apfp_add_merged(apfp_ptr x, apfp_srcptr a, apfp_srcptr b)
     if(MIDDLE_LEFT(x) != 0 && (x->mant->limbs[0]& 0x1ull) != 0)
         is_exact = false;
 
-    //is_exact = adjust_alignment(x);
     size_t overflow = apint_detectfirst1(x->mant);
     int mid_pos_bitwise_val = MID_POS_BITWISE(x);
     if (overflow > mid_pos_bitwise_val)
