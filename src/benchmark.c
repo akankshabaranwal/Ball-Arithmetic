@@ -399,6 +399,17 @@ void barith2_add(unsigned int prec)
     }
 }
 
+void barith2_add_optim1(unsigned int prec)
+{
+    for (size_t i = 0; i < BENCHMARK_ITER; i++)
+    {
+        apbar2_add_optim1(apbar2_out, apbar2_in1, apbar2_in2, prec);
+        apbar2_add_optim1(apbar2_out, apbar2_in1, apbar2_in2, prec);
+        apbar2_add_optim1(apbar2_out, apbar2_in1, apbar2_in2, prec);
+        apbar2_add_optim1(apbar2_out, apbar2_in1, apbar2_in2, prec);
+    }
+}
+
 void barith2_sub(unsigned int prec)
 {
     for (size_t i = 0; i < BENCHMARK_ITER; i++)
@@ -407,6 +418,17 @@ void barith2_sub(unsigned int prec)
         apbar2_sub(apbar2_out, apbar2_in1, apbar2_in2, prec);
         apbar2_sub(apbar2_out, apbar2_in1, apbar2_in2, prec);
         apbar2_sub(apbar2_out, apbar2_in1, apbar2_in2, prec);
+    }
+}
+
+void barith2_sub_optim1(unsigned int prec)
+{
+    for (size_t i = 0; i < BENCHMARK_ITER; i++)
+    {
+        apbar2_sub_optim1(apbar2_out, apbar2_in1, apbar2_in2, prec);
+        apbar2_sub_optim1(apbar2_out, apbar2_in1, apbar2_in2, prec);
+        apbar2_sub_optim1(apbar2_out, apbar2_in1, apbar2_in2, prec);
+        apbar2_sub_optim1(apbar2_out, apbar2_in1, apbar2_in2, prec);
     }
 }
 
@@ -615,11 +637,13 @@ BENCHMARK_END_TABLE(ball_sub_all)
 BENCHMARK_BEGIN_TABLE(ball_add_new_old)
     BENCHMARK_FUNCTION(barith_add_nestedbranch, barith_init, barith_deinit, 4.0, 8, 17)
     BENCHMARK_FUNCTION(barith2_add, barith2_init, barith2_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith2_add_optim1, barith2_init, barith2_deinit, 4.0, 8, 17)
 BENCHMARK_END_TABLE(ball_add_new_old)
 
 BENCHMARK_BEGIN_TABLE(ball_sub_new_old)
     BENCHMARK_FUNCTION(barith_sub_nestedbranch, barith_init, barith_deinit, 4.0, 8, 17)
-    BENCHMARK_FUNCTION(barith2_add, barith2_init, barith2_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith2_sub, barith2_init, barith2_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith2_sub_optim1, barith2_init, barith2_deinit, 4.0, 8, 17)
 BENCHMARK_END_TABLE(ball_sub_new_old)
 
 BENCHMARK_BEGIN_TABLE(ball_mult_new_old)
@@ -630,13 +654,13 @@ BENCHMARK_END_TABLE(ball_mult_new_old)
 BENCHMARK_BEGIN_TABLE(compare_add_arblib)
     BENCHMARK_FUNCTION(arblib_add, arblib_init, arblib_deinit, 4.0, 8, 17)
     BENCHMARK_FUNCTION(barith_add_nestedbranch, barith_init, barith_deinit, 4.0, 8, 17)
-    BENCHMARK_FUNCTION(barith2_add, barith2_init, barith2_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith2_add_optim1, barith2_init, barith2_deinit, 4.0, 8, 17)
 BENCHMARK_END_TABLE(compare_add_arblib)
 
 BENCHMARK_BEGIN_TABLE(compare_subtract_arblib)
     BENCHMARK_FUNCTION(arblib_sub, arblib_init, arblib_deinit, 4.0, 8, 17)
     BENCHMARK_FUNCTION(barith_sub_nestedbranch, barith_init, barith_deinit, 4.0, 8, 17)
-    BENCHMARK_FUNCTION(barith2_sub, barith2_init, barith2_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith2_sub_optim1, barith2_init, barith2_deinit, 4.0, 8, 17)
 BENCHMARK_END_TABLE(compare_subtract_arblib)
 
 BENCHMARK_BEGIN_TABLE(compare_mult_new_arblib)
