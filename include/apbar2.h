@@ -233,6 +233,65 @@ static inline uint8_t _add_unsigned_midpt(apbar2_ptr x, apbar2_srcptr a, apbar2_
     return overflow;
 }
 
+/* Optimizations:
+ * Scalar replacement
+ * */
+// Returns detected overflow.
+static inline uint8_t _add_unsigned_midpt_optim1(apbar2_ptr x, apbar2_srcptr a, apbar2_srcptr b)
+{
+    assert(x->midpt_mant && a->midpt_mant && b->midpt_mant);
+    assert(x->midpt_size == a->midpt_size);
+    assert(x->midpt_size == b->midpt_size);
+
+    // After swap, `a' is guaranteed to have largest exponent.
+    if (b->midpt_exp > a->midpt_exp)
+    {
+        apbar2_srcptr t = a; a = b; b = t;
+    }
+
+    // Add mantissas taking into account exponent difference.
+    apbar2_exp_t shift = a->midpt_exp - b->midpt_exp;
+    apbar2_exp_t nshift = (APBAR2_LIMB_BITS - shift);
+    apbar2_size_t offset = shift / APBAR2_LIMB_BITS;
+    shift -= offset * APBAR2_LIMB_BITS;
+
+    uint8_t overflow = 0;
+    uint8_t offset_1;
+
+    apbar2_limb_t b_mant0;
+    apbar2_limb_t b_mant1 = b->midpt_mant[offset];
+
+    offset_1 = offset + 1;
+
+    for (apbar2_size_t i = 0; i <= APBAR2_LOWER(x); i+=1)
+    {
+        b_mant0 = b_mant1;
+        b_mant1 = b->midpt_mant[i + offset_1];
+
+        unsigned long long lower = b_mant0 >> shift;
+        unsigned long long upper = shift ? b_mant1 << nshift : 0ULL;
+
+        overflow = _addcarryx_u64(overflow, a->midpt_mant[i], upper | lower, &x->midpt_mant[i]);
+    }
+
+    // Update exponent in `x' accordingly.
+    x->midpt_exp = a->midpt_exp + overflow;
+
+    apbar2_limb_t lx_mant11 = x->midpt_mant[offset_1];
+    apbar2_limb_t lx_mant11shift = x->midpt_mant[offset]>>1u;
+
+    // Shift by one the case of an addition overflow.
+    if (overflow)
+    {
+        for (apbar2_size_t i = 0; i < APBAR2_LOWER(x); i++)
+        {
+            x->midpt_mant[i] = (lx_mant11 << (APBAR2_LIMB_BITS - 1)) | (lx_mant11shift);
+        }
+        x->midpt_mant[APBAR2_LOWER(x)] = (x->midpt_mant[APBAR2_LOWER(x)] >> 1) | APBAR2_LIMB_MSBMASK;
+    }
+    return overflow;
+}
+
 static inline uint8_t _sub_unsigned_midpt(apbar2_ptr x, apbar2_srcptr a, apbar2_srcptr b)
 {
     assert(x->midpt_mant && a->midpt_mant && b->midpt_mant);
@@ -337,6 +396,39 @@ static inline void apbar2_add(apbar2_ptr x, apbar2_srcptr a, apbar2_srcptr b, ap
     {
         x->sign = a->sign;
         is_inexact = _add_unsigned_midpt(x, a, b); // To-do: Perhaps mantissa alignment is also inexactitude.
+    }
+    else
+    {
+        uint8_t flipped;
+
+        if (b->sign)
+        {
+            flipped = _sub_unsigned_midpt(x, a, b);
+        }
+        else
+        {
+            flipped = _sub_unsigned_midpt(x, b, a);
+        }
+
+        x->sign = (flipped) ? !a->sign : a->sign;
+        is_inexact = flipped; // To-do: Perhaps underflow doesn't signify inexactitude.
+    }
+
+    // Update the radius (if is_inexact/overflow, add error bound below).
+    x->rad = a->rad + b->rad;
+    if (is_inexact) x->rad += _rad_error_bound(x, prec);
+}
+
+/* Optimizations
+ * */
+static inline void apbar2_add_optim1(apbar2_ptr x, apbar2_srcptr a, apbar2_srcptr b, apbar2_size_t prec)
+{
+    uint8_t is_inexact;
+
+    if (a->sign == b->sign)
+    {
+        x->sign = a->sign;
+        is_inexact = _add_unsigned_midpt_optim1(x, a, b); // To-do: Perhaps mantissa alignment is also inexactitude.
     }
     else
     {
