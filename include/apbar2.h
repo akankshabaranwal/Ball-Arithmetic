@@ -263,7 +263,9 @@ static inline uint8_t _add_unsigned_midpt_optim1(apbar2_ptr x, apbar2_srcptr a, 
 
     offset_1 = offset + 1;
 
-    for (apbar2_size_t i = 0; i <= APBAR2_LOWER(x); i+=1)
+    apbar2_size_t lower_x, limbbits_1;
+    lower_x = APBAR2_LOWER(x);
+    for (apbar2_size_t i = 0; i <= lower_x; i+=1)
     {
         b_mant0 = b_mant1;
         b_mant1 = b->midpt_mant[i + offset_1];
@@ -280,14 +282,16 @@ static inline uint8_t _add_unsigned_midpt_optim1(apbar2_ptr x, apbar2_srcptr a, 
     apbar2_limb_t lx_mant11 = x->midpt_mant[offset_1];
     apbar2_limb_t lx_mant11shift = x->midpt_mant[offset]>>1u;
 
+    limbbits_1= (APBAR2_LIMB_BITS - 1);
+    apbar2_limb_t tmp_shift_by_1 =(lx_mant11 <<limbbits_1) | (lx_mant11shift);
     // Shift by one the case of an addition overflow.
     if (overflow)
     {
-        for (apbar2_size_t i = 0; i < APBAR2_LOWER(x); i++)
+        for (apbar2_size_t i = 0; i < lower_x; i++)
         {
-            x->midpt_mant[i] = (lx_mant11 << (APBAR2_LIMB_BITS - 1)) | (lx_mant11shift);
+            x->midpt_mant[i] = tmp_shift_by_1;
         }
-        x->midpt_mant[APBAR2_LOWER(x)] = (x->midpt_mant[APBAR2_LOWER(x)] >> 1) | APBAR2_LIMB_MSBMASK;
+        x->midpt_mant[lower_x] = (x->midpt_mant[lower_x] >> 1) | APBAR2_LIMB_MSBMASK;
     }
     return overflow;
 }
