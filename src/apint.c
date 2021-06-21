@@ -480,23 +480,26 @@ unsigned char apint_minus_portable(apint_ptr x, apint_srcptr a, apint_srcptr b)
     assert(a->length == b->length); // only handle same lengths for now
     assert(a->length <= x->length);
     unsigned char borrow = 0;
-
-    if (apint_is_greater(a, b)) // a > b so a-b
-    {
+    apint_srcptr first, second;
+    if (apint_is_greater(a, b)) {
+        // a > b so a-b
+        first = a;
+        second = b;
         x->sign = a->sign;
-        for (apint_size_t i = 0; i < a->length; i++)
-        {
-            borrow = _subborrow_u64(borrow, a->limbs[i], b->limbs[i], &x->limbs[i]);
-        }
     }
-    else // b > a so -(b-a)
-    {
+    else {
+        // b > a so -(b-a)
+        first = b;
+        second = a;
         x->sign = -b->sign;
-        for (apint_size_t i = 0; i < a->length; i++)
-        {
-            borrow = _subborrow_u64(borrow, b->limbs[i], a->limbs[i], &x->limbs[i]);
-        }
     }
+
+    for (apint_size_t i = 0; i < first->length; i++) {
+        x->limbs[i] = first->limbs[i] - second->limbs[i] - borrow;
+        if (second->limbs[i] == UINT64_MAX && borrow) borrow = 1;
+        else borrow = first->limbs[i] < second->limbs[i] + borrow;
+    }
+
     return borrow;
 }
 
