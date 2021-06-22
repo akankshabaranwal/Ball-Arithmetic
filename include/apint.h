@@ -51,7 +51,7 @@ int apint_mul_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b);
 
 // Karatsuba helper methods
 char apint_add_karatsuba(apint_ptr x, apint_srcptr a, apint_srcptr b);
-uint64_t apint_mul_karatsuba_base_case(apint_ptr x, apint_srcptr a, apint_srcptr b);
+unsigned long long apint_mul_karatsuba_base_case(apint_ptr x, apint_srcptr a, apint_srcptr b);
 
 // Karatsuba main methods
 uint64_t apint_mul_karatsuba(apint_ptr x, apint_srcptr a, apint_srcptr b);
