@@ -172,7 +172,7 @@ static inline void apbar2_copy(apbar2_ptr dst, apbar2_srcptr src)
 static inline double _rad_error_bound(apbar2_srcptr x, apbar2_size_t prec)
 {
     int p = prec;
-    double eta = ldexp(1.0, 2 - (1 << sizeof(apbar2_exp_t) * 8) - p);
+    double eta = __DBL_MIN__;
     double eps = ldexp(1.0, -p);
     return (fabs(apbar2_get_d(x)) + eta) * eps;
 }
@@ -230,6 +230,69 @@ static inline uint8_t _add_unsigned_midpt(apbar2_ptr x, apbar2_srcptr a, apbar2_
         x->midpt_mant[APBAR2_LOWER(x)] = (x->midpt_mant[APBAR2_LOWER(x)] >> 1) | APBAR2_LIMB_MSBMASK;
     }
 
+    return overflow;
+}
+
+/* Optimizations:
+ * Scalar replacement
+ * */
+// Returns detected overflow.
+static inline uint8_t _add_unsigned_midpt_optim1(apbar2_ptr x, apbar2_srcptr a, apbar2_srcptr b)
+{
+    assert(x->midpt_mant && a->midpt_mant && b->midpt_mant);
+    assert(x->midpt_size == a->midpt_size);
+    assert(x->midpt_size == b->midpt_size);
+
+    // After swap, `a' is guaranteed to have largest exponent.
+    if (b->midpt_exp > a->midpt_exp)
+    {
+        apbar2_srcptr t = a; a = b; b = t;
+    }
+
+    // Add mantissas taking into account exponent difference.
+    apbar2_exp_t shift = a->midpt_exp - b->midpt_exp;
+    apbar2_exp_t nshift = (APBAR2_LIMB_BITS - shift);
+    apbar2_size_t offset = shift / APBAR2_LIMB_BITS;
+    shift -= offset * APBAR2_LIMB_BITS;
+
+    uint8_t overflow = 0;
+    uint8_t offset_1;
+
+    apbar2_limb_t b_mant0;
+    apbar2_limb_t b_mant1 = b->midpt_mant[offset];
+
+    offset_1 = offset + 1;
+
+    apbar2_size_t lower_x, limbbits_1;
+    lower_x = APBAR2_LOWER(x);
+    for (apbar2_size_t i = 0; i <= lower_x; i+=1)
+    {
+        b_mant0 = b_mant1;
+        b_mant1 = b->midpt_mant[i + offset_1];
+
+        unsigned long long lower = b_mant0 >> shift;
+        unsigned long long upper = shift ? b_mant1 << nshift : 0ULL;
+
+        overflow = _addcarryx_u64(overflow, a->midpt_mant[i], upper | lower, &x->midpt_mant[i]);
+    }
+
+    // Update exponent in `x' accordingly.
+    x->midpt_exp = a->midpt_exp + overflow;
+
+    apbar2_limb_t lx_mant11 = x->midpt_mant[offset_1];
+    apbar2_limb_t lx_mant11shift = x->midpt_mant[offset]>>1u;
+
+    limbbits_1= (APBAR2_LIMB_BITS - 1);
+    apbar2_limb_t tmp_shift_by_1 =(lx_mant11 <<limbbits_1) | (lx_mant11shift);
+    // Shift by one the case of an addition overflow.
+    if (overflow)
+    {
+        for (apbar2_size_t i = 0; i < lower_x; i++)
+        {
+            x->midpt_mant[i] = tmp_shift_by_1;
+        }
+        x->midpt_mant[lower_x] = (x->midpt_mant[lower_x] >> 1) | APBAR2_LIMB_MSBMASK;
+    }
     return overflow;
 }
 
@@ -329,6 +392,102 @@ static inline uint8_t _sub_unsigned_midpt(apbar2_ptr x, apbar2_srcptr a, apbar2_
     return underflow ^ swapped;
 }
 
+/* Optimizations:
+ * scalar replacement
+ * removed unnecessary branch and reduced loop iteration
+ */
+static inline uint8_t _sub_unsigned_midpt_optim1(apbar2_ptr x, apbar2_srcptr a, apbar2_srcptr b)
+{
+    assert(x->midpt_mant && a->midpt_mant && b->midpt_mant);
+    assert(x->midpt_size == a->midpt_size);
+    assert(x->midpt_size == b->midpt_size);
+
+    uint8_t swapped = 0;
+
+    // After swap, `a' is guaranteed to have largest exponent.
+    if (b->midpt_exp > a->midpt_exp)
+    {
+        apbar2_srcptr t = a; a = b; b = t;
+        swapped = 1;
+    }
+
+    // Subtract mantissas taking into account exponent difference.
+    apbar2_exp_t shift = a->midpt_exp - b->midpt_exp;
+    apbar2_size_t offset = shift / APBAR2_LIMB_BITS;
+    shift -= offset * APBAR2_LIMB_BITS;
+
+    uint8_t underflow = 0;
+    int last_non_zero = -1;
+
+    apbar2_limb_t b_mant0;
+    apbar2_limb_t b_mant1 = b->midpt_mant[offset];
+    apbar2_size_t lower_x;
+    apbar2_exp_t nshift = (APBAR2_LIMB_BITS - shift);
+    lower_x = APBAR2_LOWER(x);
+
+    for (apbar2_size_t i = 0; i <= lower_x; i++)
+    {
+        b_mant0 = b_mant1;
+        b_mant1 = b->midpt_mant[i + offset + 1];
+
+        unsigned long long lower = b_mant0 >> shift;
+        unsigned long long upper = shift ? b_mant1 << nshift : 0ULL;
+
+        // To-do: Scalar replacement? Multiple array access on `x->midpt_mant[i]'.
+        underflow = _subborrow_u64(underflow, a->midpt_mant[i], upper | lower, &x->midpt_mant[i]);
+        apbar2_limb_t result = x->midpt_mant[i];
+        if (result)
+        {
+            last_non_zero = i;
+        }
+    }
+    apbar2_size_t tmpi;
+    tmpi =1;
+    // Take two's complement in the case of an underflow.
+    if (underflow)
+    {
+        uint8_t carry = 0;
+        for (apbar2_size_t i = 0; i <= lower_x; i++)
+        {
+            // Add initial 1 in order to propagate two's complement.
+            carry = _addcarryx_u64(carry, ~x->midpt_mant[i], tmpi, &x->midpt_mant[i]);
+            apbar2_limb_t result = x->midpt_mant[i];
+            tmpi=0;
+            if (result)
+            {
+                last_non_zero = i;
+            }
+        }
+    }
+
+    // Left shift after subtraction so leading 1 is the MSB of lower-half.
+    if (last_non_zero >= 0)
+    {
+        unsigned long long leading_zeros = _lzcnt_u64(x->midpt_mant[last_non_zero]);
+        offset = lower_x - last_non_zero;
+        unsigned long long precompute = (APBAR2_LIMB_BITS - leading_zeros);
+        if (offset || leading_zeros)
+        {
+            apbar2_limb_t x_mant0;
+            apbar2_limb_t x_mant1 = x->midpt_mant[lower_x - offset];
+
+            for (apbar2_ssize_t i = lower_x; i > offset; i--)
+            {
+            int j = i - offset;
+            x_mant0 = x_mant1;
+            x_mant1 =  x->midpt_mant[j - 1];
+            x->midpt_mant[i] = (x_mant0 << leading_zeros) | (x_mant1 >> precompute);
+            }
+        }
+
+        x->midpt_exp = a->midpt_exp - (APBAR2_LIMB_BITS * offset) - leading_zeros;
+    }
+
+    // A final underflow signifies output of *unsigned* subtraction is negative.
+    return underflow ^ swapped;
+}
+
+
 static inline void apbar2_add(apbar2_ptr x, apbar2_srcptr a, apbar2_srcptr b, apbar2_size_t prec)
 {
     uint8_t is_inexact;
@@ -360,12 +519,54 @@ static inline void apbar2_add(apbar2_ptr x, apbar2_srcptr a, apbar2_srcptr b, ap
     if (is_inexact) x->rad += _rad_error_bound(x, prec);
 }
 
+/* Optimizations
+ * */
+static inline void apbar2_add_optim1(apbar2_ptr x, apbar2_srcptr a, apbar2_srcptr b, apbar2_size_t prec)
+{
+    uint8_t is_inexact;
+
+    if (a->sign == b->sign)
+    {
+        x->sign = a->sign;
+        is_inexact = _add_unsigned_midpt_optim1(x, a, b); // To-do: Perhaps mantissa alignment is also inexactitude.
+    }
+    else
+    {
+        uint8_t flipped;
+
+        if (b->sign)
+        {
+            flipped = _sub_unsigned_midpt_optim1(x, a, b);
+        }
+        else
+        {
+            flipped = _sub_unsigned_midpt_optim1(x, b, a);
+        }
+
+        x->sign = (flipped) ? !a->sign : a->sign;
+        is_inexact = flipped; // To-do: Perhaps underflow doesn't signify inexactitude.
+    }
+
+    // Update the radius (if is_inexact/overflow, add error bound below).
+    x->rad = a->rad + b->rad;
+    if (is_inexact) x->rad += _rad_error_bound(x, prec);
+}
+
 static inline void apbar2_sub(apbar2_ptr x, apbar2_srcptr a, apbar2_srcptr b, apbar2_size_t prec)
 {
     // Temporarily patch b's sign to the opposite. (We have to de-const-ify...)
     apbar2_ptr b_cast = (apbar2_ptr) b;
     b_cast->sign = !b_cast->sign;
     apbar2_add(x, a, b, prec);
+    b_cast->sign = !b_cast->sign;
+}
+
+static inline void apbar2_sub_optim1(apbar2_ptr x, apbar2_srcptr a, apbar2_srcptr b, apbar2_size_t prec)
+{
+    // Temporarily patch b's sign to the opposite. (We have to de-const-ify...)
+    apbar2_ptr b_cast = (apbar2_ptr) b;
+    b_cast->sign = !b_cast->sign;
+    apbar2_add_optim1(x, a, b, prec);
     b_cast->sign = !b_cast->sign;
 }
 
@@ -508,16 +709,17 @@ static inline void _add_unsigned_midpt4(apbar2_ptr x1, apbar2_srcptr a1, apbar2_
         __m256i x_mant1 = _mm256_add_epi64(a_mant, b_shifted);
         __m256i x_mant2 = _mm256_add_epi64(x_mant1, overflow);
 
-        __m256i xor1, xor2;
+        #define _mm256_cmpgt_epu64(a, b) \
+            _mm256_cmpgt_epi64( \
+                _mm256_xor_si256(a, _mm256_set1_epi64x(0x8000000000000000)), \
+                _mm256_xor_si256(b, _mm256_set1_epi64x(0x8000000000000000)) \
+            )
+        #define _mm256_cmplt_epu64(a, b) _mm256_cmpgt_epu64(b, a)
 
-        xor1 = _mm256_xor_si256(x_mant1, a_mant);
-        xor2 = _mm256_xor_si256(x_mant1, b_shifted);
-        __m256i overflow1 = _mm256_and_si256(xor1, xor2);
+        __m256i overflow1 = _mm256_cmplt_epu64(x_mant1, a_mant);
         overflow1 = _mm256_srli_epi64(overflow1, 63);
 
-        xor1 = _mm256_xor_si256(x_mant2, x_mant1);
-        xor2 = _mm256_xor_si256(x_mant2, overflow);
-        __m256i overflow2 = _mm256_and_si256(xor1, xor2);
+        __m256i overflow2 = _mm256_cmplt_epu64(x_mant2, x_mant1);
         overflow2 = _mm256_srli_epi64(overflow2, 63);
 
         overflow = _mm256_or_si256(overflow1, overflow2);
@@ -525,20 +727,20 @@ static inline void _add_unsigned_midpt4(apbar2_ptr x1, apbar2_srcptr a1, apbar2_
         alignas(32) uint64_t x_mant[4];
         _mm256_store_si256(x_mant, x_mant2);
 
-        x1->midpt_mant[i] = x_mant[3];
-        x2->midpt_mant[i] = x_mant[2];
-        x3->midpt_mant[i] = x_mant[1];
-        x4->midpt_mant[i] = x_mant[0];
+        x1->midpt_mant[i] = x_mant[0];
+        x2->midpt_mant[i] = x_mant[1];
+        x3->midpt_mant[i] = x_mant[2];
+        x4->midpt_mant[i] = x_mant[3];
 
         a_mant_addr = _mm256_add_epi64(a_mant_addr, limb_bytes);
     }
 
     _mm256_store_si256(overflows, overflow);
 
-    uint64_t overflow1 = overflows[3];
-    uint64_t overflow2 = overflows[2];
-    uint64_t overflow3 = overflows[1];
-    uint64_t overflow4 = overflows[0];
+    uint64_t overflow1 = overflows[0];
+    uint64_t overflow2 = overflows[1];
+    uint64_t overflow3 = overflows[2];
+    uint64_t overflow4 = overflows[3];
 
     // Update exponent in `x' accordingly.
     x1->midpt_exp = a1->midpt_exp + overflow1;

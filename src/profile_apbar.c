@@ -2,8 +2,8 @@
 #include <apfp.h>
 #include <apbar.h>
 
-static const int NUM_RUNS = 10000;
-static const int PRECISION = 4096;
+static const int NUM_RUNS = 100000;
+static const int PRECISION = 32768;
 
 int main()
 {
@@ -21,13 +21,13 @@ int main()
 
     apbar_set_midpt_mant(apbar_test[0], 0, 0xC4C6628B80DC1CD1);
     apbar_set_midpt_mant(apbar_test[0], 1, 0xC90FDAA22168C234);
-    apbar_set_midpt_exp(apbar_test[0], -126);
+    apbar_set_midpt_exp(apbar_test[0], 0);
     apbar_set_rad(apbar_test[0], 536870912, -156);
     apbar_test[0]->midpt->mant->sign=1;
 
     apbar_set_midpt_mant(apbar_test[1], 0, 0xC4C6628B80DC1CD1);
     apbar_set_midpt_mant(apbar_test[1], 1, 0xC90FDAA22168C234);
-    apbar_set_midpt_exp(apbar_test[1], -126);
+    apbar_set_midpt_exp(apbar_test[1], 512);
     apbar_set_rad(apbar_test[1], 536870912, -156);
     apbar_test[1]->midpt->mant->sign=1;
 
@@ -38,14 +38,14 @@ int main()
         {
             case 'a':
             {
-                apbar_add(apbar_test[2], apbar_test[1], apbar_test[0], 128);
-                apbar_add(apbar_test[0], apbar_test[1], apbar_test[2], 128);
+                apbar_add_portable(apbar_test[2], apbar_test[1], apbar_test[0], PRECISION);
+                apbar_add_portable(apbar_test[0], apbar_test[1], apbar_test[2], PRECISION);
                 break;
             }
             case 's':
             {
-                apbar_sub(apbar_test[2], apbar_test[1], apbar_test[0], 128);
-                apbar_sub(apbar_test[0], apbar_test[1], apbar_test[2], 128);
+                apbar_sub(apbar_test[2], apbar_test[1], apbar_test[0], PRECISION);
+                apbar_sub(apbar_test[0], apbar_test[1], apbar_test[2], PRECISION);
                 break;
             }
             case 'm':

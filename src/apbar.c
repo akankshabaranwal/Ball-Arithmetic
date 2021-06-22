@@ -181,8 +181,59 @@ static inline void add_error_bound(apbar_ptr res, apint_size_t prec)
 //    rad_add(t, res->rad, dy);
 //    printf("t is: %llu * 2^%ld\n", t->mant, t->exp);
 }
+static inline void narrow_to_rad_keep(apfp_ptr x, rad_ptr rad)
+{
+    // Essentially shift right enough so that mantissa fits into 64 bits
+    size_t pos = apint_detectfirst1(x->mant);
+    size_t shift = pos - APINT_LIMB_BITS;
+    apint_t new_mant;
+    apint_init(new_mant, x->mant->length * APINT_LIMB_BITS);
+    apint_shiftr_copy(new_mant, x->mant, shift);
+    rad->mant = new_mant->limbs[0] + 1;
+    rad->exp = x->exp + shift;
+}
+static inline void error_bound_no_exp(apbar_ptr res, apint_size_t prec)
+{
+    // From the arb paper delta y (error bound) is (|y|+n)*e
+    // y = resulting midpoint (I think)
+    // n = smallest representable number
+    // e = machine accuracy
+    rad_t delta_y;
+    narrow_to_rad_keep(res->midpt, delta_y);
 
+    // Add n. This is always just adding one to the mantissa since we are
+    // rounding towards +inf.
+    delta_y->mant++;
+
+    // Multiply by e.
+    // e is 2^-p so we essentially just need to subtract p from the exponent
+    delta_y->exp -= prec;
+
+    // Add delta y to the current radius
+    rad_add(res->rad, res->rad, delta_y);
+}
 //assumes that c, a, b are already allocated
+// This is not the complete base
+// Maybe have different plots showing how optimizing shiftl or shiftr improved the performance etc for the base case
+
+//Portable apbar add
+void apbar_add_portable(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_add_portable(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    rad_add(c->rad, a->rad, b->rad);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) add_error_bound(c, p);
+}
+
+//Base version
 void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 {
     assert(a);
@@ -191,6 +242,156 @@ void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 
     // midpoint computation (should round towards 0)
     bool is_exact = apfp_add(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    rad_add(c->rad, a->rad, b->rad);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) add_error_bound(c, p);
+}
+
+//With shiftr optimized
+void apbar_add_shiftr(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_add_shiftr(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    rad_add(c->rad, a->rad, b->rad);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) add_error_bound(c, p);
+}
+//With shiftl optimized as well
+void apbar_add_shiftl(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_add_shiftl(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    rad_add(c->rad, a->rad, b->rad);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) add_error_bound(c, p);
+}
+//With plus optimized
+void apbar_add_plus(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_add_plus(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    rad_add(c->rad, a->rad, b->rad);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) add_error_bound(c, p);
+}
+//With detec1 optimized
+void apbar_add_detect1(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_add_detect1(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    rad_add(c->rad, a->rad, b->rad);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) add_error_bound(c, p);
+}
+//With functions merged
+// Removed some overlapping computations
+void apbar_add_merged(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_add_merged(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    rad_add(c->rad, a->rad, b->rad);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) add_error_bound(c, p);
+}
+//With functions merged
+// Scalar replacement, simplification of functions. Unnecessary workload removed
+void apbar_add_scalar(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_add_scalar(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    rad_add(c->rad, a->rad, b->rad);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) add_error_bound(c, p);
+}
+//With functions merged
+// Unrolling
+void apbar_add_unroll(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_add_unrolled(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    rad_add(c->rad, a->rad, b->rad);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) add_error_bound(c, p);
+}
+
+void apbar_add_unroll_norad_noexp(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_add_unrolled(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    rad_add(c->rad, a->rad, b->rad);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) error_bound_no_exp(c, p);
+}
+
+//assumes that c, a, b are already allocated
+//!!portable minus is not yet implemented!!
+void apbar_sub_portable(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_sub_portable(c->midpt, a->midpt, b->midpt);
 
     // radius computation (should round towards +inf)
     rad_add(c->rad, a->rad, b->rad);
@@ -214,6 +415,140 @@ void apbar_sub(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 
     // error bound computation (should round towards +inf)
     if (!is_exact) add_error_bound(c, p);
+}
+
+//assumes that c, a, b are already allocated
+void apbar_sub_shiftr(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_sub_shiftr(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    rad_add(c->rad, a->rad, b->rad);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) add_error_bound(c, p);
+}
+
+//assumes that c, a, b are already allocated
+void apbar_sub_shiftl(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_sub_shiftl(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    rad_add(c->rad, a->rad, b->rad);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) add_error_bound(c, p);
+}
+
+//assumes that c, a, b are already allocated
+void apbar_sub_minus(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_sub_minus(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    rad_add(c->rad, a->rad, b->rad);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) add_error_bound(c, p);
+}
+
+void apbar_sub_detect1(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_sub_detect1(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    rad_add(c->rad, a->rad, b->rad);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) add_error_bound(c, p);
+}
+
+//assumes that c, a, b are already allocated
+void apbar_sub_merged(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_sub_merged(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    rad_add(c->rad, a->rad, b->rad);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) add_error_bound(c, p);
+}
+
+//assumes that c, a, b are already allocated
+void apbar_sub_scalar(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_sub_scalar(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    rad_add(c->rad, a->rad, b->rad);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) add_error_bound(c, p);
+}
+
+//assumes that c, a, b are already allocated
+void apbar_sub_unroll(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_sub_unroll(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    rad_add(c->rad, a->rad, b->rad);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) add_error_bound(c, p);
+}
+
+void apbar_sub_unroll_norad_noexp(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
+{
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_sub_unroll(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    rad_add(c->rad, a->rad, b->rad);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) error_bound_no_exp(c, p);
 }
 
 void apbar_mul(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
@@ -291,17 +626,82 @@ void apbar_mul(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
     if (!is_exact) add_error_bound(c, p);
 }
 
-static inline void narrow_to_rad_keep(apfp_ptr x, rad_ptr rad)
+void apbar_mul_portable(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 {
-    // Essentially shift right enough so that mantissa fits into 64 bits
-    size_t pos = apint_detectfirst1(x->mant);
-    size_t shift = pos - APINT_LIMB_BITS;
-    apint_t new_mant;
-    apint_init(new_mant, x->mant->length * APINT_LIMB_BITS);
-    apint_shiftr_copy(new_mant, x->mant, shift);
-    rad->mant = new_mant->limbs[0] + 1;
-    rad->exp = x->exp + shift;
+    assert(a);
+    assert(b);
+    assert(c);
+
+    // midpoint computation (should round towards 0)
+    bool is_exact = apfp_mul_portable(c->midpt, a->midpt, b->midpt);
+
+    // radius computation (should round towards +inf)
+    // (|x| + r)s + r|y|
+    // x == a->midpt, r == a->rad
+    // y == b->midpt, s == b->rad
+
+    // For now do the computation in apfp for max precision
+    // TODO: [optimisation] perform the computation in the rad type and over-estimate
+    apfp_t x_abs;
+    apfp_init(x_abs, p);
+    apint_copy(x_abs->mant, a->midpt->mant);
+    apfp_set_exp(x_abs, a->midpt->exp);
+    apfp_set_pos(x_abs);
+
+    apfp_t r;
+    apfp_init(r, p);
+    expand_rad(r, a->rad);
+
+    apfp_t y_abs;
+    apfp_init(y_abs, p);
+    apint_copy(y_abs->mant, b->midpt->mant);
+    apfp_set_exp(y_abs, b->midpt->exp);
+    apfp_set_pos(y_abs);
+
+    apfp_t s;
+    apfp_init(s, p);
+    expand_rad(s, b->rad);
+
+    apint_t one;
+    apint_init(one, 2*p);
+    apint_setlimb(one, 0, 1);
+
+    bool is_exact_sub;
+    // TODO: Can we add numbers and have an output as one of the inputs?
+    // TODO: round
+    // |x| + r
+    is_exact_sub = apfp_add(x_abs, x_abs, r);
+    if (!is_exact_sub) apint_add(x_abs->mant, x_abs->mant, one);
+    // (|x| + r) * s
+    apfp_t res;
+    apfp_init(res, p);
+    is_exact_sub = apfp_mul(res, x_abs, s);
+    if (!is_exact_sub) apint_add(res->mant, res->mant, one);
+
+    //r * |y|
+    apfp_t res_2;
+    apfp_init(res_2, p);
+    is_exact_sub = apfp_mul(res_2, y_abs, r);
+    if (!is_exact_sub) apint_add(res_2->mant, res_2->mant, one);
+
+    is_exact_sub = apfp_add(res, res, res_2);
+    if (!is_exact_sub) apint_add(res->mant, res->mant, one);
+
+    // narrow back to rad
+    narrow_to_rad(res, c->rad);
+
+    apfp_free(res_2);
+    apfp_free(res);
+    apfp_free(s);
+    apfp_free(y_abs);
+    apfp_free(r);
+    apfp_free(x_abs);
+
+    // error bound computation (should round towards +inf)
+    if (!is_exact) add_error_bound(c, p);
 }
+
+
 
 static inline void rad_mul(rad_ptr c, rad_srcptr a, rad_srcptr b)
 {
@@ -312,26 +712,7 @@ static inline void rad_mul(rad_ptr c, rad_srcptr a, rad_srcptr b)
     c->exp += (apfp_exp_t) APINT_LIMB_BITS - shift;
 }
 
-static inline void error_bound_no_exp(apbar_ptr res, apint_size_t prec)
-{
-    // From the arb paper delta y (error bound) is (|y|+n)*e
-    // y = resulting midpoint (I think)
-    // n = smallest representable number
-    // e = machine accuracy
-    rad_t delta_y;
-    narrow_to_rad_keep(res->midpt, delta_y);
 
-    // Add n. This is always just adding one to the mantissa since we are
-    // rounding towards +inf.
-    delta_y->mant++;
-
-    // Multiply by e.
-    // e is 2^-p so we essentially just need to subtract p from the exponent
-    delta_y->exp -= prec;
-
-    // Add delta y to the current radius
-    rad_add(res->rad, res->rad, delta_y);
-}
 
 void apbar_mul_no_rad_exp(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 {

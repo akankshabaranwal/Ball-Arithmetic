@@ -43,10 +43,30 @@ void apbar_print(apbar_srcptr value);
 void apbar_print_msg(const char *msg, apbar_srcptr value);
 void right_align_rad(rad_ptr rad);
 
+void apbar_add_portable(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
 void apbar_add(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
+void apbar_add_shiftr(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
+void apbar_add_shiftl(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
+void apbar_add_plus(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
+void apbar_add_detect1(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
+void apbar_add_merged(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
+void apbar_add_scalar(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
+void apbar_add_unroll(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
+void apbar_add_unroll_norad_noexp(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
+
+void apbar_add_optim1(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
 void apbar_sub(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
+void apbar_sub_shiftr(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
+void apbar_sub_shiftl(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
+void apbar_sub_minus(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
+void apbar_sub_detect1(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
+void apbar_sub_merged(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
+void apbar_sub_scalar(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
+void apbar_sub_unroll(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
+void apbar_sub_unroll_norad_noexp(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
 
 void apbar_mul(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
+void apbar_mul_portable(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
 void apbar_mul_no_rad_exp(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
 void apbar_mul_unroll(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p);
 

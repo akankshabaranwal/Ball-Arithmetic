@@ -307,6 +307,146 @@ TEST_GROUP(apint,
                              ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 4), 1llu);
                          });
 
+               TEST_CASE(portable subtraction with positive numbers a - b a > b,
+                         {
+                             apint_setlimb(apint_test[0], 3, 4);
+                             apint_setlimb(apint_test[0], 2, 6);
+                             apint_setlimb(apint_test[0], 1, 2);
+                             apint_setlimb(apint_test[0], 0, 5);
+                             apint_test[0]->sign = 1;
+
+                             apint_setlimb(apint_test[1], 3, 3);
+                             apint_setlimb(apint_test[1], 2, 2);
+                             apint_setlimb(apint_test[1], 1, 1);
+                             apint_setlimb(apint_test[1], 0, 0);
+                             apint_test[1]->sign = 1;
+
+                             apint_sub_portable(apint_test[2], apint_test[0], apint_test[1]);
+
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 1llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 4llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 1llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 5llu);
+                             ASSERT_EQUAL_I(apint_test[2]->sign, 1);
+                         });
+
+               TEST_CASE(portable subtraction with positive numbers a - b a < b,
+                         {
+                             apint_setlimb(apint_test[0], 3, 3);
+                             apint_setlimb(apint_test[0], 2, 2);
+                             apint_setlimb(apint_test[0], 1, 1);
+                             apint_setlimb(apint_test[0], 0, 0);
+                             apint_test[0]->sign = 1;
+
+                             apint_setlimb(apint_test[1], 3, 4);
+                             apint_setlimb(apint_test[1], 2, 6);
+                             apint_setlimb(apint_test[1], 1, 2);
+                             apint_setlimb(apint_test[1], 0, 5);
+                             apint_test[1]->sign = 1;
+
+                             apint_sub_portable(apint_test[2], apint_test[0], apint_test[1]);
+
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 1llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 4llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 1llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 5llu);
+                             ASSERT_EQUAL_I(apint_test[2]->sign, -1);
+                         });
+
+               TEST_CASE(portable subtraction with positive - negative number a - b a > b,
+                         {
+                             apint_setlimb(apint_test[0], 3, 4);
+                             apint_setlimb(apint_test[0], 2, 6);
+                             apint_setlimb(apint_test[0], 1, 2);
+                             apint_setlimb(apint_test[0], 0, 5);
+                             apint_test[0]->sign = 1;
+
+                             apint_setlimb(apint_test[1], 3, 3);
+                             apint_setlimb(apint_test[1], 2, 2);
+                             apint_setlimb(apint_test[1], 1, 1);
+                             apint_setlimb(apint_test[1], 0, 0);
+                             apint_test[1]->sign = -1;
+
+                             apint_sub_portable(apint_test[2], apint_test[0], apint_test[1]);
+
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 7llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 8llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 3llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 5llu);
+                             ASSERT_EQUAL_I(apint_test[2]->sign, 1);
+                         });
+
+               TEST_CASE(portable subtraction with negative - positive number a - b a > b,
+                         {
+                             apint_setlimb(apint_test[0], 3, 4);
+                             apint_setlimb(apint_test[0], 2, 6);
+                             apint_setlimb(apint_test[0], 1, 2);
+                             apint_setlimb(apint_test[0], 0, 5);
+                             apint_test[0]->sign = -1;
+
+                             apint_setlimb(apint_test[1], 3, 3);
+                             apint_setlimb(apint_test[1], 2, 2);
+                             apint_setlimb(apint_test[1], 1, 1);
+                             apint_setlimb(apint_test[1], 0, 0);
+                             apint_test[1]->sign = 1;
+
+                             apint_sub_portable(apint_test[2], apint_test[0], apint_test[1]);
+
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 7llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 8llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 3llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 5llu);
+                             ASSERT_EQUAL_I(apint_test[2]->sign, -1);
+                         });
+
+               TEST_CASE(portable subtraction with borrow,
+                         {
+                             apint_setlimb(apint_test[0], 3, 1);
+                             apint_setlimb(apint_test[0], 2, 0);
+                             apint_setlimb(apint_test[0], 1, 0);
+                             apint_setlimb(apint_test[0], 0, 0);
+                             apint_test[0]->sign = 1;
+
+                             apint_setlimb(apint_test[1], 3, 0);
+                             apint_setlimb(apint_test[1], 2, 0);
+                             apint_setlimb(apint_test[1], 1, 0);
+                             apint_setlimb(apint_test[1], 0, 1);
+                             apint_test[1]->sign = 1;
+
+                             unsigned char borrow = apint_sub_portable(apint_test[2], apint_test[0], apint_test[1]);
+
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 0llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 18446744073709551615llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 18446744073709551615llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 18446744073709551615llu);
+                             ASSERT_EQUAL_I(apint_test[2]->sign, 1);
+                             ASSERT_EQUAL_I(borrow, 0);
+                         });
+
+               TEST_CASE(portable subtraction with max limb and borrow,
+                         {
+                             apint_setlimb(apint_test[0], 3, 1);
+                             apint_setlimb(apint_test[0], 2, 0);
+                             apint_setlimb(apint_test[0], 1, 0);
+                             apint_setlimb(apint_test[0], 0, 0);
+                             apint_test[0]->sign = 1;
+
+                             apint_setlimb(apint_test[1], 3, 0);
+                             apint_setlimb(apint_test[1], 2, UINT64_MAX);
+                             apint_setlimb(apint_test[1], 1, 1);
+                             apint_setlimb(apint_test[1], 0, 0);
+                             apint_test[1]->sign = 1;
+
+                             unsigned char borrow = apint_sub_portable(apint_test[2], apint_test[0], apint_test[1]);
+
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 0llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 0llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), (apint_limb_t)UINT64_MAX);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 0llu);
+                             ASSERT_EQUAL_I(apint_test[2]->sign, 1);
+                             ASSERT_EQUAL_I(borrow, 0);
+                         });
+
                TEST_CASE(multiply,
                          {
                              apint_setlimb(apint_test[0], 0, 1);
@@ -382,32 +522,7 @@ TEST_GROUP(apint,
                              ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0xffffffffffffffffllu);
                          });
 
-               TEST_CASE(multiply unrolled,
-                         {
-                             apint_setlimb(apint_test[0], 0, 1);
-                             apint_setlimb(apint_test[0], 1, 1);
-                             apint_setlimb(apint_test[0], 2, 1);
-                             apint_setlimb(apint_test[0], 3, 1);
-
-                             apint_setlimb(apint_test[1], 0, 2);
-                             apint_setlimb(apint_test[1], 1, 2);
-                             apint_setlimb(apint_test[1], 2, 2);
-                             apint_setlimb(apint_test[1], 3, 2);
-
-                             apint_mul_unroll(apint_test[2], apint_test[0], apint_test[1]);
-
-                             // Calculated with: https://defuse.ca/big-number-calculator.htm
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 2llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 4llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 6llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 8llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 4), 6llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 5), 4llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 6), 2llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0llu);
-                         });
-
-               TEST_CASE(multiply mantissa of pi with itself unrolled,
+               TEST_CASE(multiply mantissa of pi with itself karatsuba,
                          {
                              apint_setlimb(apint_test[0], 3, 0x6487ED5110B4611A);
                              apint_setlimb(apint_test[0], 2, 0x62633145C06E0E68);
@@ -418,160 +533,60 @@ TEST_GROUP(apint,
                              apint_setlimb(apint_test[1], 2, 0x62633145C06E0E68);
                              apint_setlimb(apint_test[1], 1, 0x948127044533E63A);
                              apint_setlimb(apint_test[1], 0, 0x0105DF531D89CD91);
-
-                             apint_mul_unroll(apint_test[2], apint_test[0], apint_test[1]);
-
-                             // Calculated with: https://defuse.ca/big-number-calculator.htm
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 0x68906cc684438c21llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 0x8a103ede33e3d523llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 0xe42ca89707ea23aellu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 0xbc5658f0d63b5677llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 4), 0x19a0884094f1cda3llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 5), 0xc2159a8ff834288allu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 6), 0x95b89b36602306b1llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0x277a79937c8bbcb4llu);
-                         });
-
-               TEST_CASE(multiply propagate unrolled,
-                         {
-                             apint_setlimb(apint_test[0], 3, 0xffffffffffffffff);
-                             apint_setlimb(apint_test[0], 2, 0xffffffffffffffff);
-                             apint_setlimb(apint_test[0], 1, 0xffffffffffffffff);
-                             apint_setlimb(apint_test[0], 0, 0xffffffffffffffff);
-
-                             apint_setlimb(apint_test[1], 3, 0xffffffffffffffff);
-                             apint_setlimb(apint_test[1], 2, 0xffffffffffffffff);
-                             apint_setlimb(apint_test[1], 1, 0xffffffffffffffff);
-                             apint_setlimb(apint_test[1], 0, 0xffffffffffffffff);
-
-                             apint_mul_unroll(apint_test[2], apint_test[0], apint_test[1]);
-
-                             // Calculated with: https://defuse.ca/big-number-calculator.htm
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 0x0000000000000001llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 0llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 0llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 0llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 4), 0xfffffffffffffffellu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 5), 0xffffffffffffffffllu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 6), 0xffffffffffffffffllu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0xffffffffffffffffllu);
-                         });
-
-               TEST_CASE(multiply unrolled,
-                         {
-                             apint_setlimb(apint_test[0], 0, 1);
-                             apint_setlimb(apint_test[0], 1, 1);
-                             apint_setlimb(apint_test[0], 2, 1);
-                             apint_setlimb(apint_test[0], 3, 1);
-
-                             apint_setlimb(apint_test[1], 0, 2);
-                             apint_setlimb(apint_test[1], 1, 2);
-                             apint_setlimb(apint_test[1], 2, 2);
-                             apint_setlimb(apint_test[1], 3, 2);
-
-                             apint_mul_OPT1(apint_test[2], apint_test[0], apint_test[1]);
-
-                             // Calculated with: https://defuse.ca/big-number-calculator.htm
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 2llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 4llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 6llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 8llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 4), 6llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 5), 4llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 6), 2llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0llu);
-                         });
-
-               TEST_CASE(multiply mantissa of pi with itself unrolled,
-                         {
-                             apint_setlimb(apint_test[0], 3, 0x6487ED5110B4611A);
-                             apint_setlimb(apint_test[0], 2, 0x62633145C06E0E68);
-                             apint_setlimb(apint_test[0], 1, 0x948127044533E63A);
-                             apint_setlimb(apint_test[0], 0, 0x0105DF531D89CD91);
-
-                             apint_setlimb(apint_test[1], 3, 0x6487ED5110B4611A);
-                             apint_setlimb(apint_test[1], 2, 0x62633145C06E0E68);
-                             apint_setlimb(apint_test[1], 1, 0x948127044533E63A);
-                             apint_setlimb(apint_test[1], 0, 0x0105DF531D89CD91);
-
-                             apint_mul_OPT1(apint_test[2], apint_test[0], apint_test[1]);
-
-                             // Calculated with: https://defuse.ca/big-number-calculator.htm
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 0x68906cc684438c21llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 0x8a103ede33e3d523llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 0xe42ca89707ea23aellu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 0xbc5658f0d63b5677llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 4), 0x19a0884094f1cda3llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 5), 0xc2159a8ff834288allu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 6), 0x95b89b36602306b1llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0x277a79937c8bbcb4llu);
-                         });
-
-               TEST_CASE(multiply propagate unrolled,
-                         {
-                             apint_setlimb(apint_test[0], 3, 0xffffffffffffffff);
-                             apint_setlimb(apint_test[0], 2, 0xffffffffffffffff);
-                             apint_setlimb(apint_test[0], 1, 0xffffffffffffffff);
-                             apint_setlimb(apint_test[0], 0, 0xffffffffffffffff);
-
-                             apint_setlimb(apint_test[1], 3, 0xffffffffffffffff);
-                             apint_setlimb(apint_test[1], 2, 0xffffffffffffffff);
-                             apint_setlimb(apint_test[1], 1, 0xffffffffffffffff);
-                             apint_setlimb(apint_test[1], 0, 0xffffffffffffffff);
-
-                             apint_mul_OPT1(apint_test[2], apint_test[0], apint_test[1]);
-
-                             // Calculated with: https://defuse.ca/big-number-calculator.htm
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 0x0000000000000001llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 0llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 0llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 0llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 4), 0xfffffffffffffffellu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 5), 0xffffffffffffffffllu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 6), 0xffffffffffffffffllu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0xffffffffffffffffllu);
-                         });
-
-               TEST_CASE(multiply mantissa of pi with itself,
-                         {
-                             apint_setlimb(apint_test[0], 3, 0x6487ED5110B4611A);
-                             apint_setlimb(apint_test[0], 2, 0x62633145C06E0E68);
-                             apint_setlimb(apint_test[0], 1, 0x948127044533E63A);
-                             apint_setlimb(apint_test[0], 0, 0x0105DF531D89CD91);
-
-                             apint_setlimb(apint_test[1], 3, 0x6487ED5110B4611A);
-                             apint_setlimb(apint_test[1], 2, 0x62633145C06E0E68);
-                             apint_setlimb(apint_test[1], 1, 0x948127044533E63A);
-                             apint_setlimb(apint_test[1], 0, 0x0105DF531D89CD91);
-
-                             apint_mul(apint_test[2], apint_test[0], apint_test[1]);
-
-                             // Calculated with: https://defuse.ca/big-number-calculator.htm
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 0x68906cc684438c21llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 0x8a103ede33e3d523llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 0xe42ca89707ea23aellu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 0xbc5658f0d63b5677llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 4), 0x19a0884094f1cda3llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 5), 0xc2159a8ff834288allu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 6), 0x95b89b36602306b1llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0x277a79937c8bbcb4llu);
-                         });
-
-               TEST_CASE(multiply apint_mul_karatsuba,
-                         {
-                             apint_setlimb(apint_test[0], 0, 1);
-                             apint_setlimb(apint_test[0], 1, 1);
-                             apint_setlimb(apint_test[0], 2, 1);
-                             apint_setlimb(apint_test[0], 3, 1);
-
-                             apint_setlimb(apint_test[1], 0, 2);
-                             apint_setlimb(apint_test[1], 1, 2);
-                             apint_setlimb(apint_test[1], 2, 2);
-                             apint_setlimb(apint_test[1], 3, 2);
 
                              apint_mul_karatsuba(apint_test[2], apint_test[0], apint_test[1]);
 
                              // Calculated with: https://defuse.ca/big-number-calculator.htm
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 0x68906cc684438c21llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 0x8a103ede33e3d523llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 0xe42ca89707ea23aellu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 0xbc5658f0d63b5677llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 4), 0x19a0884094f1cda3llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 5), 0xc2159a8ff834288allu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 6), 0x95b89b36602306b1llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0x277a79937c8bbcb4llu);
+                         });
+
+               TEST_CASE(multiply propagate karatsuba,
+                         {
+                             apint_setlimb(apint_test[0], 3, 0xffffffffffffffff);
+                             apint_setlimb(apint_test[0], 2, 0xffffffffffffffff);
+                             apint_setlimb(apint_test[0], 1, 0xffffffffffffffff);
+                             apint_setlimb(apint_test[0], 0, 0xffffffffffffffff);
+
+                             apint_setlimb(apint_test[1], 3, 0xffffffffffffffff);
+                             apint_setlimb(apint_test[1], 2, 0xffffffffffffffff);
+                             apint_setlimb(apint_test[1], 1, 0xffffffffffffffff);
+                             apint_setlimb(apint_test[1], 0, 0xffffffffffffffff);
+
+                             apint_mul_karatsuba(apint_test[2], apint_test[0], apint_test[1]);
+
+                             // Calculated with: https://defuse.ca/big-number-calculator.htm
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 0x0000000000000001llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 0llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 0llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 0llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 4), 0xfffffffffffffffellu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 5), 0xffffffffffffffffllu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 6), 0xffffffffffffffffllu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0xffffffffffffffffllu);
+                         });
+
+               TEST_CASE(multiply unrolled,
+                         {
+                             apint_setlimb(apint_test[0], 0, 1);
+                             apint_setlimb(apint_test[0], 1, 1);
+                             apint_setlimb(apint_test[0], 2, 1);
+                             apint_setlimb(apint_test[0], 3, 1);
+
+                             apint_setlimb(apint_test[1], 0, 2);
+                             apint_setlimb(apint_test[1], 1, 2);
+                             apint_setlimb(apint_test[1], 2, 2);
+                             apint_setlimb(apint_test[1], 3, 2);
+
+                             apint_mul_unroll(apint_test[2], apint_test[0], apint_test[1]);
+
+                             // Calculated with: https://defuse.ca/big-number-calculator.htm
                              ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 2llu);
                              ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 4llu);
                              ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 6llu);
@@ -582,7 +597,7 @@ TEST_GROUP(apint,
                              ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0llu);
                          });
 
-               TEST_CASE(multiply apint_mul_karatsuba_extend_basecase,
+               TEST_CASE(multiply mantissa of pi with itself unrolled,
                          {
                              apint_setlimb(apint_test[0], 3, 0x6487ED5110B4611A);
                              apint_setlimb(apint_test[0], 2, 0x62633145C06E0E68);
@@ -594,7 +609,7 @@ TEST_GROUP(apint,
                              apint_setlimb(apint_test[1], 1, 0x948127044533E63A);
                              apint_setlimb(apint_test[1], 0, 0x0105DF531D89CD91);
 
-                             apint_mul_karatsuba_extend_basecase(apint_test[2], apint_test[0], apint_test[1]);
+                             apint_mul_unroll(apint_test[2], apint_test[0], apint_test[1]);
 
                              // Calculated with: https://defuse.ca/big-number-calculator.htm
                              ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 0x68906cc684438c21llu);
@@ -607,29 +622,29 @@ TEST_GROUP(apint,
                              ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0x277a79937c8bbcb4llu);
                          });
 
-               TEST_CASE(multiply apint_mul_karatsuba_OPT1,
+               TEST_CASE(multiply propagate unrolled,
                          {
-                             apint_setlimb(apint_test[0], 3, 0x6487ED5110B4611A);
-                             apint_setlimb(apint_test[0], 2, 0x62633145C06E0E68);
-                             apint_setlimb(apint_test[0], 1, 0x948127044533E63A);
-                             apint_setlimb(apint_test[0], 0, 0x0105DF531D89CD91);
+                             apint_setlimb(apint_test[0], 3, 0xffffffffffffffff);
+                             apint_setlimb(apint_test[0], 2, 0xffffffffffffffff);
+                             apint_setlimb(apint_test[0], 1, 0xffffffffffffffff);
+                             apint_setlimb(apint_test[0], 0, 0xffffffffffffffff);
 
-                             apint_setlimb(apint_test[1], 3, 0x6487ED5110B4611A);
-                             apint_setlimb(apint_test[1], 2, 0x62633145C06E0E68);
-                             apint_setlimb(apint_test[1], 1, 0x948127044533E63A);
-                             apint_setlimb(apint_test[1], 0, 0x0105DF531D89CD91);
+                             apint_setlimb(apint_test[1], 3, 0xffffffffffffffff);
+                             apint_setlimb(apint_test[1], 2, 0xffffffffffffffff);
+                             apint_setlimb(apint_test[1], 1, 0xffffffffffffffff);
+                             apint_setlimb(apint_test[1], 0, 0xffffffffffffffff);
 
-                             apint_mul_karatsuba_OPT1(apint_test[2], apint_test[0], apint_test[1]);
+                             apint_mul_unroll(apint_test[2], apint_test[0], apint_test[1]);
 
                              // Calculated with: https://defuse.ca/big-number-calculator.htm
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 0x68906cc684438c21llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 0x8a103ede33e3d523llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 0xe42ca89707ea23aellu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 0xbc5658f0d63b5677llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 4), 0x19a0884094f1cda3llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 5), 0xc2159a8ff834288allu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 6), 0x95b89b36602306b1llu);
-                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0x277a79937c8bbcb4llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 0), 0x0000000000000001llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 1), 0llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 2), 0llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 3), 0llu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 4), 0xfffffffffffffffellu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 5), 0xffffffffffffffffllu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 6), 0xffffffffffffffffllu);
+                             ASSERT_EQUAL_UL(apint_getlimb(apint_test[2], 7), 0xffffffffffffffffllu);
                          });
 
                TEST_CASE(portable multiply,
@@ -1202,8 +1217,8 @@ TEST_GROUP(ball_arithmetic,
 
                              apbar_mul_no_rad_exp(apbar_test[2], apbar_test[1], apbar_test[0], 128);
 
-                             apbar_print_msg("pi is:     ", apbar_test[0]);
-                             apbar_print_msg("pi * pi is:", apbar_test[2]);
+                             // apbar_print_msg("pi is:     ", apbar_test[0]);
+                             // apbar_print_msg("pi * pi is:", apbar_test[2]);
 
                              // From arblib mid point needs to be: 9.86960440109
                              ASSERT_EQUAL_UL(apbar_get_midpt_mant(apbar_test[2], 1), 0x9de9e64df22ef2d2llu);
@@ -1554,12 +1569,215 @@ TEST_GROUP(apbar2,
                            });
            });
 
+apbar2_t apbar2_add4_a[4];
+apbar2_t apbar2_add4_b[4];
+apbar2_t apbar2_add4_x[4];
+
+static void apbar2_add4_test_setup()
+{
+    for (size_t i = 0; i < 4; i++)
+    {
+        apbar2_init(apbar2_add4_a[i], 256);
+        apbar2_init(apbar2_add4_b[i], 256);
+        apbar2_init(apbar2_add4_x[i], 256);
+    }
+}
+
+static void apbar2_add4_test_teardown()
+{
+    for (size_t i = 0; i < 4; i++)
+    {
+        apbar2_free(apbar2_add4_a[i]);
+        apbar2_free(apbar2_add4_b[i]);
+        apbar2_free(apbar2_add4_x[i]);
+    }
+}
+
+TEST_GROUP(apbar2_add4_test,
+           {
+               WITH_SETUP(apbar2_add4_test_setup);
+               WITH_TEARDOWN(apbar2_add4_test_teardown);
+
+               TEST_CASE(apbar2_add4
+                         : add two numbers,
+                           {
+                               // Need to re-precision
+                               for (size_t i = 0; i < 4; i++)
+                               {
+                                   apbar2_free(apbar2_add4_a[i]);
+                                   apbar2_free(apbar2_add4_b[i]);
+                                   apbar2_free(apbar2_add4_x[i]);
+                               }
+
+                               for (size_t i = 0; i < 4; i++)
+                               {
+                                   apbar2_init(apbar2_add4_a[i], 128);
+                                   apbar2_init(apbar2_add4_b[i], 128);
+                                   apbar2_init(apbar2_add4_x[i], 128);
+                               }
+
+                               for (size_t i = 0; i < 4; i++)
+                               {
+                                   // 1 * 2^-127
+                                   apbar2_set_midpt_limb(apbar2_add4_a[i], 1, APBAR2_LIMB_MSBMASK);
+                                   apbar2_set_midpt_exp(apbar2_add4_a[i], -127);
+                               }
+
+                               for (size_t i = 0; i < 4; i++)
+                               {
+                                   // 16703571626015105435307505830654230989 * 2^-249
+                                   apbar2_set_midpt_limb(apbar2_add4_b[i], 1, 0xc90fdaa22168c234);
+                                   apbar2_set_midpt_limb(apbar2_add4_b[i], 0, 0xc4c6628b80dc1cd0);
+                                   apbar2_set_midpt_exp(apbar2_add4_b[i], -126);
+                               }
+
+                               apbar2_add4(apbar2_add4_x[0], apbar2_add4_a[0], apbar2_add4_b[0],
+                                           apbar2_add4_x[1], apbar2_add4_a[1], apbar2_add4_b[1],
+                                           apbar2_add4_x[2], apbar2_add4_a[2], apbar2_add4_b[2],
+                                           apbar2_add4_x[3], apbar2_add4_a[3], apbar2_add4_b[3],
+                                           128);
+
+                               for (size_t i = 0; i < 4; i++)
+                               {
+                                   ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_add4_x[i], 1), 0x8487ed5110b4611allu);
+                                   ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_add4_x[i], 0), 0x62633145c06e0e68llu);
+
+                                   // Check value of exponent and sign
+                                   ASSERT_EQUAL_L(apbar2_get_midpt_exp(apbar2_add4_x[i]), -125l);
+                               }
+                           });
+
+               TEST_CASE(apbar2_add4
+                         : addition with positive numbers 1.000...00 X 2 ^ 10 + 1.000...00 X 2 ^ 10,
+                           {
+                               for (size_t i = 0; i < 4; i++)
+                               {
+                                   apbar2_set_midpt_limb(apbar2_add4_a[i], 3, 0x8000000000000000LLU);
+                                   apbar2_set_midpt_limb(apbar2_add4_a[i], 2, 0);
+                                   apbar2_set_midpt_limb(apbar2_add4_a[i], 1, 0);
+                                   apbar2_set_midpt_limb(apbar2_add4_a[i], 0, 0);
+                                   apbar2_set_midpt_exp(apbar2_add4_a[i], 10);
+                                   apbar2_set_sign(apbar2_add4_a[i], 0);
+                               }
+
+                               for (size_t i = 0; i < 4; i++)
+                               {
+                                   apbar2_set_midpt_limb(apbar2_add4_b[i], 3, 0x8000000000000000LLU);
+                                   apbar2_set_midpt_limb(apbar2_add4_b[i], 2, 0);
+                                   apbar2_set_midpt_limb(apbar2_add4_b[i], 1, 0);
+                                   apbar2_set_midpt_limb(apbar2_add4_b[i], 0, 0);
+                                   apbar2_set_midpt_exp(apbar2_add4_b[i], 10);
+                                   apbar2_set_sign(apbar2_add4_b[i], 0);
+                               }
+
+                               apbar2_add4(apbar2_add4_x[0], apbar2_add4_a[0], apbar2_add4_b[0],
+                                           apbar2_add4_x[1], apbar2_add4_a[1], apbar2_add4_b[1],
+                                           apbar2_add4_x[2], apbar2_add4_a[2], apbar2_add4_b[2],
+                                           apbar2_add4_x[3], apbar2_add4_a[3], apbar2_add4_b[3],
+                                           256);
+
+                               for (size_t i = 0; i < 4; i++)
+                               {
+                                   ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_add4_x[i], 3), 0x8000000000000000LLU);
+                                   ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_add4_x[i], 2), 0);
+                                   ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_add4_x[i], 1), 0);
+                                   ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_add4_x[i], 0), 0);
+
+                                   ASSERT_EQUAL_L(apbar2_get_midpt_exp(apbar2_add4_x[i]), 11);
+                                   ASSERT_EQUAL_I(apbar2_get_sign(apbar2_add4_x[i]), 0);
+                               }
+                           });
+
+               TEST_CASE(apbar2_add4
+                         : addition with positive numbers 1.111...11 X 2 ^ 10 + 1.111...11 X 2 ^ 10,
+                           {
+                               for (size_t i = 0; i < 4; i++)
+                               {
+                                   apbar2_set_midpt_limb(apbar2_add4_a[i], 3, 0xffffffffffffffffLLU);
+                                   apbar2_set_midpt_limb(apbar2_add4_a[i], 2, 0xffffffffffffffffLLU);
+                                   apbar2_set_midpt_limb(apbar2_add4_a[i], 1, 0xffffffffffffffffLLU);
+                                   apbar2_set_midpt_limb(apbar2_add4_a[i], 0, 0xffffffffffffffffLLU);
+                                   apbar2_set_midpt_exp(apbar2_add4_a[i], 10);
+                                   apbar2_set_sign(apbar2_add4_a[i], 0);
+                               }
+
+                               for (size_t i = 0; i < 4; i++)
+                               {
+                                   apbar2_set_midpt_limb(apbar2_add4_b[i], 3, 0xffffffffffffffffLLU);
+                                   apbar2_set_midpt_limb(apbar2_add4_b[i], 2, 0xffffffffffffffffLLU);
+                                   apbar2_set_midpt_limb(apbar2_add4_b[i], 1, 0xffffffffffffffffLLU);
+                                   apbar2_set_midpt_limb(apbar2_add4_b[i], 0, 0xffffffffffffffffLLU);
+                                   apbar2_set_midpt_exp(apbar2_add4_b[i], 10);
+                                   apbar2_set_sign(apbar2_add4_b[i], 0);
+                               }
+
+                               apbar2_add4(apbar2_add4_x[0], apbar2_add4_a[0], apbar2_add4_b[0],
+                                           apbar2_add4_x[1], apbar2_add4_a[1], apbar2_add4_b[1],
+                                           apbar2_add4_x[2], apbar2_add4_a[2], apbar2_add4_b[2],
+                                           apbar2_add4_x[3], apbar2_add4_a[3], apbar2_add4_b[3],
+                                           256);
+
+                               for (size_t i = 0; i < 4; i++)
+                               {
+                                   ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_add4_x[i], 3), 0xffffffffffffffffLLU);
+                                   ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_add4_x[i], 2), 0xffffffffffffffffLLU);
+                                   ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_add4_x[i], 1), 0xffffffffffffffffLLU);
+                                   ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_add4_x[i], 0), 0xffffffffffffffffLLU);
+
+                                   ASSERT_EQUAL_L(apbar2_get_midpt_exp(apbar2_add4_x[i]), 11);
+                                   ASSERT_EQUAL_I(apbar2_get_sign(apbar2_add4_x[i]), 0);
+                               }
+                           });
+
+               TEST_CASE(apbar2_add4
+                         : addition with positive numbers 1.000...01 X 2 ^ 256 + 1.000...00 X 2 ^ 1,
+                           {
+                               for (size_t i = 0; i < 4; i++)
+                               {
+                                   apbar2_set_midpt_limb(apbar2_add4_a[i], 3, 0x8000000000000000LLU);
+                                   apbar2_set_midpt_limb(apbar2_add4_a[i], 2, 0);
+                                   apbar2_set_midpt_limb(apbar2_add4_a[i], 1, 0);
+                                   apbar2_set_midpt_limb(apbar2_add4_a[i], 0, 1);
+                                   apbar2_set_midpt_exp(apbar2_add4_a[i], 256);
+                                   apbar2_set_sign(apbar2_add4_a[i], 0);
+                               }
+
+                               for (size_t i = 0; i < 4; i++)
+                               {
+                                   apbar2_set_midpt_limb(apbar2_add4_b[i], 3, 0x8000000000000000LLU);
+                                   apbar2_set_midpt_limb(apbar2_add4_b[i], 2, 0);
+                                   apbar2_set_midpt_limb(apbar2_add4_b[i], 1, 0);
+                                   apbar2_set_midpt_limb(apbar2_add4_b[i], 0, 1);
+                                   apbar2_set_midpt_exp(apbar2_add4_b[i], 1);
+                                   apbar2_set_sign(apbar2_add4_b[i], 0);
+                               }
+
+                               apbar2_add4(apbar2_add4_x[0], apbar2_add4_a[0], apbar2_add4_b[0],
+                                           apbar2_add4_x[1], apbar2_add4_a[1], apbar2_add4_b[1],
+                                           apbar2_add4_x[2], apbar2_add4_a[2], apbar2_add4_b[2],
+                                           apbar2_add4_x[3], apbar2_add4_a[3], apbar2_add4_b[3],
+                                           256);
+
+                               for (size_t i = 0; i < 4; i++)
+                               {
+                                   ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_add4_x[i], 3), 0x8000000000000000LLU);
+                                   ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_add4_x[i], 2), 0);
+                                   ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_add4_x[i], 1), 0);
+                                   ASSERT_EQUAL_UL(apbar2_get_midpt_limb(apbar2_add4_x[i], 0), 2);
+
+                                   ASSERT_EQUAL_L(apbar2_get_midpt_exp(apbar2_add4_x[i]), 256);
+                                   ASSERT_EQUAL_I(apbar2_get_sign(apbar2_add4_x[i]), 0);
+                               }
+                           });
+           });
+
 void run_test_suite()
 {
     RUN_TEST_GROUP(apint);
     RUN_TEST_GROUP(apfp);
     RUN_TEST_GROUP(ball_arithmetic);
     RUN_TEST_GROUP(apbar2);
+    RUN_TEST_GROUP(apbar2_add4_test);
 }
 
 int main(int argc, char *argv[])
