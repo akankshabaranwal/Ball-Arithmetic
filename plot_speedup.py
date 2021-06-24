@@ -62,10 +62,10 @@ plt.tight_layout()
 # Shrink current axis's height by 10% on the bottom
 ax = plt.gca()
 box = ax.get_position()
-ax.set_position([box.x0, box.y0 - box.height * 0.15, box.width, box.height * 0.75])
+ax.set_position([box.x0, box.y0 - box.height * 0.05, box.width, box.height * 0.85])
 #
 # # Put a legend below current axis
 # ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=5)
-ax.legend(loc='upper center', bbox_to_anchor=(0.465, 1.6), ncol=3, fancybox=True, shadow=True)
+ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.25), ncol=2, fancybox=True, shadow=True)
 
 plt.savefig(in_file + '.png')
