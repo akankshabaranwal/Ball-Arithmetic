@@ -7,7 +7,7 @@
 #include "tsc_x86.h"
 #include "benchmark.h"
 
-#define ITERATE(CODE) for (size_t i = 0; i < BENCHMARK_ITER; i++) (CODE);
+#define ITERATE(CODE) for (size_t i = 0; i < BENCHMARK_ITER; i++) CODE;
 
 static double bench(benchmark_fun_t f, unsigned int prec)
 {
@@ -257,6 +257,17 @@ void barith_add_merged(unsigned int prec)
     }
 }
 
+void barith_sub_portable(unsigned int prec)
+{
+    for (size_t i = 0; i < BENCHMARK_ITER; i++)
+    {
+        apbar_sub_portable(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_portable(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_portable(apbar_out, apbar_in1, apbar_in2, prec);
+        apbar_sub_portable(apbar_out, apbar_in1, apbar_in2, prec);
+    }
+}
+
 void barith_sub_intrinsics(unsigned int prec)
 {
     for (size_t i = 0; i < BENCHMARK_ITER; i++)
@@ -358,6 +369,9 @@ void barith_mul_no_rad_exp(unsigned int prec)
 }
 
 static apbar2_t apbar2_out, apbar2_in1, apbar2_in2;
+static apbar2_t apbar2_out1, apbar2_in3, apbar2_in4;
+static apbar2_t apbar2_out2, apbar2_in5, apbar2_in6;
+static apbar2_t apbar2_out3, apbar2_in7, apbar2_in8;
 
 void barith2_init(unsigned int prec)
 {
@@ -388,6 +402,86 @@ void barith2_deinit(unsigned int prec)
     apbar2_free(apbar2_out);
 }
 
+void barith2_init4(unsigned int prec)
+{
+    apbar2_init(apbar2_out, prec);
+    apbar2_init(apbar2_in1, prec);
+    apbar2_init(apbar2_in2, prec);
+
+    apbar2_init(apbar2_out1, prec);
+    apbar2_init(apbar2_in3, prec);
+    apbar2_init(apbar2_in4, prec);
+
+    apbar2_init(apbar2_out2, prec);
+    apbar2_init(apbar2_in5, prec);
+    apbar2_init(apbar2_in6, prec);
+
+    apbar2_init(apbar2_out3, prec);
+    apbar2_init(apbar2_in7, prec);
+    apbar2_init(apbar2_in8, prec);
+
+    for (uint i = 0; i < apbar2_in1->midpt_size; ++i) {
+        apbar2_set_midpt_limb(apbar2_in1, i, urand());
+        apbar2_set_midpt_limb(apbar2_in2, i, urand());
+        apbar2_set_midpt_limb(apbar2_in3, i, urand());
+        apbar2_set_midpt_limb(apbar2_in4, i, urand());
+        apbar2_set_midpt_limb(apbar2_in5, i, urand());
+        apbar2_set_midpt_limb(apbar2_in6, i, urand());
+        apbar2_set_midpt_limb(apbar2_in7, i, urand());
+        apbar2_set_midpt_limb(apbar2_in8, i, urand());
+    }
+
+    // I am setting the exponents of the midpoint so that the difference can't
+    // be more than prec
+    apfp_exp_t exp = random();
+    apfp_exp_t diff1 = (apfp_exp_t) ((((double)random() / RAND_MAX) * 2 * prec) - prec);
+    apfp_exp_t diff2 = (apfp_exp_t) ((((double)random() / RAND_MAX) * 2 * prec) - prec);
+    apfp_exp_t diff3 = (apfp_exp_t) ((((double)random() / RAND_MAX) * 2 * prec) - prec);
+    apfp_exp_t diff4 = (apfp_exp_t) ((((double)random() / RAND_MAX) * 2 * prec) - prec);
+    apfp_exp_t diff5 = (apfp_exp_t) ((((double)random() / RAND_MAX) * 2 * prec) - prec);
+    apfp_exp_t diff6 = (apfp_exp_t) ((((double)random() / RAND_MAX) * 2 * prec) - prec);
+    apfp_exp_t diff7 = (apfp_exp_t) ((((double)random() / RAND_MAX) * 2 * prec) - prec);
+    apbar2_set_midpt_exp(apbar2_in1, exp);
+    apbar2_set_midpt_exp(apbar2_in2, exp + diff1);
+    apbar2_set_midpt_exp(apbar2_in3, exp + diff2);
+    apbar2_set_midpt_exp(apbar2_in4, exp + diff3);
+    apbar2_set_midpt_exp(apbar2_in5, exp + diff4);
+    apbar2_set_midpt_exp(apbar2_in6, exp + diff5);
+    apbar2_set_midpt_exp(apbar2_in7, exp + diff6);
+    apbar2_set_midpt_exp(apbar2_in8, exp + diff7);
+
+    apbar2_set_rad(apbar2_in1, (double)rand() / RAND_MAX);
+    apbar2_set_rad(apbar2_in2, (double)rand() / RAND_MAX);
+
+    apbar2_set_rad(apbar2_in3, (double)rand() / RAND_MAX);
+    apbar2_set_rad(apbar2_in4, (double)rand() / RAND_MAX);
+
+    apbar2_set_rad(apbar2_in5, (double)rand() / RAND_MAX);
+    apbar2_set_rad(apbar2_in6, (double)rand() / RAND_MAX);
+
+    apbar2_set_rad(apbar2_in7, (double)rand() / RAND_MAX);
+    apbar2_set_rad(apbar2_in8, (double)rand() / RAND_MAX);
+}
+
+void barith2_deinit4(unsigned int prec)
+{
+    apbar2_free(apbar2_in1);
+    apbar2_free(apbar2_in2);
+    apbar2_free(apbar2_out);
+
+    apbar2_free(apbar2_in3);
+    apbar2_free(apbar2_in4);
+    apbar2_free(apbar2_out1);
+
+    apbar2_free(apbar2_in5);
+    apbar2_free(apbar2_in6);
+    apbar2_free(apbar2_out2);
+
+    apbar2_free(apbar2_in7);
+    apbar2_free(apbar2_in8);
+    apbar2_free(apbar2_out3);
+}
+
 void barith2_add(unsigned int prec)
 {
     for (size_t i = 0; i < BENCHMARK_ITER; i++)
@@ -408,6 +502,29 @@ void barith2_add_optim1(unsigned int prec)
         apbar2_add_optim1(apbar2_out, apbar2_in1, apbar2_in2, prec);
         apbar2_add_optim1(apbar2_out, apbar2_in1, apbar2_in2, prec);
     }
+}
+
+void barith2_add4_scalar(unsigned int prec)
+{
+    ITERATE({
+        apbar2_add_optim1(apbar2_out, apbar2_in1, apbar2_in2, prec);
+        apbar2_add_optim1(apbar2_out1, apbar2_in3, apbar2_in4, prec);
+        apbar2_add_optim1(apbar2_out2, apbar2_in5, apbar2_in6, prec);
+        apbar2_add_optim1(apbar2_out3, apbar2_in7, apbar2_in8, prec);
+    });
+}
+
+void barith2_add4_simd(unsigned int prec)
+{
+    ITERATE({
+        apbar2_add4(
+                apbar2_out, apbar2_in1, apbar2_in2,
+                apbar2_out1, apbar2_in3, apbar2_in4,
+                apbar2_out2, apbar2_in5, apbar2_in6,
+                apbar2_out3, apbar2_in7, apbar2_in8,
+                prec
+        );
+    });
 }
 
 void barith2_sub(unsigned int prec)
@@ -549,19 +666,39 @@ static void ball_cleanup(uint prec)
     apbar_free(ball_out);
 }
 
-static void ball_mul_portable(uint prec) {
-    ITERATE(apbar_mul_portable(ball_out, ball_in1, ball_in2, prec));
+static void barith_mul_portable(uint prec) {
+    ITERATE({
+        apbar_mul_portable(ball_out, ball_in1, ball_in2, prec);
+        apbar_mul_portable(ball_out, ball_in1, ball_in2, prec);
+        apbar_mul_portable(ball_out, ball_in1, ball_in2, prec);
+        apbar_mul_portable(ball_out, ball_in1, ball_in2, prec);
+    });
 }
 
-static void ball_mul(uint prec) {
-    ITERATE(apbar_mul(ball_out, ball_in1, ball_in2, prec));
+static void barith_mul_intrinsic(uint prec) {
+    ITERATE({
+        apbar_mul(ball_out, ball_in1, ball_in2, prec);
+        apbar_mul(ball_out, ball_in1, ball_in2, prec);
+        apbar_mul(ball_out, ball_in1, ball_in2, prec);
+        apbar_mul(ball_out, ball_in1, ball_in2, prec);
+    });
 }
 
-static void ball_mul_no_exp(uint prec) {
-    ITERATE(apbar_mul_no_rad_exp(ball_out, ball_in1, ball_in2, prec));
+static void barith_mul_rad_opt(uint prec) {
+    ITERATE({
+        apbar_mul_no_rad_exp(ball_out, ball_in1, ball_in2, prec);
+        apbar_mul_no_rad_exp(ball_out, ball_in1, ball_in2, prec);
+        apbar_mul_no_rad_exp(ball_out, ball_in1, ball_in2, prec);
+        apbar_mul_no_rad_exp(ball_out, ball_in1, ball_in2, prec);
+    });
 }
-static void ball_mul_unroll(uint prec) {
-    ITERATE(apbar_mul_unroll(ball_out, ball_in1, ball_in2, prec));
+static void barith_mul_unroll(uint prec) {
+    ITERATE({
+        apbar_mul_unroll(ball_out, ball_in1, ball_in2, prec);
+        apbar_mul_unroll(ball_out, ball_in1, ball_in2, prec);
+        apbar_mul_unroll(ball_out, ball_in1, ball_in2, prec);
+        apbar_mul_unroll(ball_out, ball_in1, ball_in2, prec);
+    });
 }
 
 static void int_mul_karatsuba_opt1(uint prec)
@@ -597,41 +734,46 @@ BENCHMARK_BEGIN_TABLE(ball_add_old)
 BENCHMARK_END_TABLE(ball_add_old)
 
 BENCHMARK_BEGIN_TABLE(ball_add_all)
-                BENCHMARK_FUNCTION(barith_add_portable, barith_init, barith_deinit, 4.0, 8, 17)
-                BENCHMARK_FUNCTION(barith_add_intrinsics, barith_init, barith_deinit, 4.0, 8, 17)
-                BENCHMARK_FUNCTION(barith_add_shiftr, barith_init, barith_deinit, 4.0, 8, 17)
-                BENCHMARK_FUNCTION(barith_add_shiftl, barith_init, barith_deinit, 4.0, 8, 17)
-                BENCHMARK_FUNCTION(barith_add_detect1, barith_init, barith_deinit, 4.0, 8, 17)
-                BENCHMARK_FUNCTION(barith_add_merged, barith_init, barith_deinit, 4.0, 8, 17)
-                BENCHMARK_FUNCTION(barith_add_midptrep, barith_init, barith_deinit, 4.0, 8, 17)
-                BENCHMARK_FUNCTION(barith_add_nestedbranch, barith_init, barith_deinit, 4.0, 8, 17)
-                BENCHMARK_FUNCTION(barith_add_norad_noexp, barith_init, barith_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith_add_portable, barith_init, barith_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith_add_intrinsics, barith_init, barith_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith_add_shiftr, barith_init, barith_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith_add_shiftl, barith_init, barith_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith_add_detect1, barith_init, barith_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith_add_merged, barith_init, barith_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith_add_midptrep, barith_init, barith_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith_add_nestedbranch, barith_init, barith_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith_add_norad_noexp, barith_init, barith_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith2_add, barith2_init, barith2_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith2_add_optim1, barith2_init, barith2_deinit, 4.0, 8, 20)
 BENCHMARK_END_TABLE(ball_add_all)
 
 BENCHMARK_BEGIN_TABLE(ball_sub_micro)
-                BENCHMARK_FUNCTION(barith_sub_intrinsics, barith_init, barith_deinit, 4.0, 8, 17)
-                BENCHMARK_FUNCTION(barith_sub_shiftr, barith_init, barith_deinit, 4.0, 8, 17)
-                BENCHMARK_FUNCTION(barith_sub_shiftl, barith_init, barith_deinit, 4.0, 8, 17)
-                BENCHMARK_FUNCTION(barith_sub_detect1, barith_init, barith_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith_sub_intrinsics, barith_init, barith_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith_sub_shiftr, barith_init, barith_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith_sub_shiftl, barith_init, barith_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith_sub_detect1, barith_init, barith_deinit, 4.0, 8, 17)
 BENCHMARK_END_TABLE(ball_sub_micro)
 
 BENCHMARK_BEGIN_TABLE(ball_sub_old)
-                BENCHMARK_FUNCTION(barith_sub_intrinsics, barith_init, barith_deinit, 4.0, 8, 17)
-                BENCHMARK_FUNCTION(barith_sub_merged, barith_init, barith_deinit, 4.0, 8, 17)
-                BENCHMARK_FUNCTION(barith_sub_midptrep, barith_init, barith_deinit, 4.0, 8, 17)
-                BENCHMARK_FUNCTION(barith_sub_nestedbranch, barith_init, barith_deinit, 4.0, 8, 17)
-                BENCHMARK_FUNCTION(barith_sub_norad_noexp, barith_init, barith_deinit, 4.0, 8, 17)
+        BENCHMARK_FUNCTION(barith_sub_intrinsics, barith_init, barith_deinit, 4.0, 8, 17)
+        BENCHMARK_FUNCTION(barith_sub_merged, barith_init, barith_deinit, 4.0, 8, 17)
+        BENCHMARK_FUNCTION(barith_sub_midptrep, barith_init, barith_deinit, 4.0, 8, 17)
+        BENCHMARK_FUNCTION(barith_sub_nestedbranch, barith_init, barith_deinit, 4.0, 8, 17)
+        BENCHMARK_FUNCTION(barith_sub_norad_noexp, barith_init, barith_deinit, 4.0, 8, 17)
 BENCHMARK_END_TABLE(ball_sub_old)
 
 BENCHMARK_BEGIN_TABLE(ball_sub_all)
-                BENCHMARK_FUNCTION(barith_sub_intrinsics, barith_init, barith_deinit, 4.0, 8, 17)
-                BENCHMARK_FUNCTION(barith_sub_shiftr, barith_init, barith_deinit, 4.0, 8, 17)
-                BENCHMARK_FUNCTION(barith_sub_shiftl, barith_init, barith_deinit, 4.0, 8, 17)
-                BENCHMARK_FUNCTION(barith_sub_detect1, barith_init, barith_deinit, 4.0, 8, 17)
-                BENCHMARK_FUNCTION(barith_sub_merged, barith_init, barith_deinit, 4.0, 8, 17)
-                BENCHMARK_FUNCTION(barith_sub_midptrep, barith_init, barith_deinit, 4.0, 8, 17)
-                BENCHMARK_FUNCTION(barith_sub_nestedbranch, barith_init, barith_deinit, 4.0, 8, 17)
-                BENCHMARK_FUNCTION(barith_sub_norad_noexp, barith_init, barith_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith_sub_portable, barith_init, barith_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith_sub_intrinsics, barith_init, barith_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith_sub_shiftr, barith_init, barith_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith_sub_shiftl, barith_init, barith_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith_sub_detect1, barith_init, barith_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith_sub_merged, barith_init, barith_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith_sub_midptrep, barith_init, barith_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith_sub_nestedbranch, barith_init, barith_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith_sub_norad_noexp, barith_init, barith_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith2_sub, barith2_init, barith2_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith2_sub_optim1, barith2_init, barith2_deinit, 4.0, 8, 20)
 BENCHMARK_END_TABLE(ball_sub_all)
 
 BENCHMARK_BEGIN_TABLE(ball_add_new_old)
@@ -646,27 +788,38 @@ BENCHMARK_BEGIN_TABLE(ball_sub_new_old)
     BENCHMARK_FUNCTION(barith2_sub_optim1, barith2_init, barith2_deinit, 4.0, 8, 17)
 BENCHMARK_END_TABLE(ball_sub_new_old)
 
+BENCHMARK_BEGIN_TABLE(ball_mul_all)
+    BENCHMARK_FUNCTION(barith_mul_portable, ball_init, ball_cleanup, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith_mul_intrinsic, ball_init, ball_cleanup, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith_mul_rad_opt, ball_init, ball_cleanup, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith_mul_unroll, ball_init, ball_cleanup, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith2_mul, barith2_init, barith2_deinit, 4.0, 8, 20)
+BENCHMARK_END_TABLE(ball_mul_all)
+
 BENCHMARK_BEGIN_TABLE(ball_mult_new_old)
     BENCHMARK_FUNCTION(barith_mul_no_rad_exp, barith_init, barith_deinit, 4.0, 8, 17)
     BENCHMARK_FUNCTION(barith2_mul, barith2_init, barith2_deinit, 4.0, 8, 17)
 BENCHMARK_END_TABLE(ball_mult_new_old)
 
 BENCHMARK_BEGIN_TABLE(compare_add_arblib)
-    BENCHMARK_FUNCTION(arblib_add, arblib_init, arblib_deinit, 4.0, 8, 17)
-    BENCHMARK_FUNCTION(barith_add_nestedbranch, barith_init, barith_deinit, 4.0, 8, 17)
-    BENCHMARK_FUNCTION(barith2_add_optim1, barith2_init, barith2_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith_add_portable, barith_init, barith_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(arblib_add, arblib_init, arblib_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith_add_nestedbranch, barith_init, barith_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith2_add_optim1, barith2_init, barith2_deinit, 4.0, 8, 20)
 BENCHMARK_END_TABLE(compare_add_arblib)
 
 BENCHMARK_BEGIN_TABLE(compare_subtract_arblib)
-    BENCHMARK_FUNCTION(arblib_sub, arblib_init, arblib_deinit, 4.0, 8, 17)
-    BENCHMARK_FUNCTION(barith_sub_nestedbranch, barith_init, barith_deinit, 4.0, 8, 17)
-    BENCHMARK_FUNCTION(barith2_sub_optim1, barith2_init, barith2_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(barith_sub_portable, barith_init, barith_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(arblib_sub, arblib_init, arblib_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith_sub_nestedbranch, barith_init, barith_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith2_sub_optim1, barith2_init, barith2_deinit, 4.0, 8, 20)
 BENCHMARK_END_TABLE(compare_subtract_arblib)
 
 BENCHMARK_BEGIN_TABLE(compare_mult_new_arblib)
-    BENCHMARK_FUNCTION(arblib_mul, arblib_init, arblib_deinit, 4.0, 8, 17)
-    BENCHMARK_FUNCTION(barith_mul_no_rad_exp, barith_init, barith_deinit, 4.0, 8, 17)
-    BENCHMARK_FUNCTION(barith2_mul, barith2_init, barith2_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(arblib_mul, arblib_init, arblib_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith_mul_portable, ball_init, ball_cleanup, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith_mul_no_rad_exp, barith_init, barith_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith2_mul, barith2_init, barith2_deinit, 4.0, 8, 20)
 BENCHMARK_END_TABLE(compare_mult_new_arblib)
 
 BENCHMARK_BEGIN_TABLE(int_plus)
@@ -674,33 +827,44 @@ BENCHMARK_BEGIN_TABLE(int_plus)
     BENCHMARK_FUNCTION(int_plus_portable, int_init, int_cleanup, 1.0, 8, 17)
 BENCHMARK_END_TABLE(int_plus)
 
-BENCHMARK_BEGIN_TABLE(int_mul)
-    BENCHMARK_FUNCTION(int_mul, int_init, int_cleanup, 1.0, 8, 17)
-    BENCHMARK_FUNCTION(int_mul_portable, int_init, int_cleanup, 1.0, 8, 17)
-    BENCHMARK_FUNCTION(int_mul_karatsuba, int_init, int_cleanup, 1.0, 8, 17)
-    BENCHMARK_FUNCTION(int_mul_karatsuba_extend_basecase, int_init, int_cleanup, 1.0, 8, 17)
-BENCHMARK_END_TABLE(int_mul)
+BENCHMARK_BEGIN_TABLE(karatsuba)
+    BENCHMARK_FUNCTION(int_mul_unroll, int_init, int_cleanup, 1.0, 8, 16)
+    BENCHMARK_FUNCTION(int_mul_karatsuba, int_init, int_cleanup, 1.0, 8, 16)
+    BENCHMARK_FUNCTION(int_mul_karatsuba_extend_basecase, int_init, int_cleanup, 1.0, 8, 16)
+    BENCHMARK_FUNCTION(int_mul_karatsuba_opt1, int_init, int_cleanup, 1.0, 8, 16)
+BENCHMARK_END_TABLE(karatsuba)
 
-BENCHMARK_BEGIN_TABLE(apbar_mul)
-    BENCHMARK_FUNCTION(ball_mul_portable, ball_init, ball_cleanup, 1.0, 8, 18)
-    BENCHMARK_FUNCTION(ball_mul, ball_init, ball_cleanup, 1.0, 8, 18)
-    BENCHMARK_FUNCTION(ball_mul_no_exp, ball_init, ball_cleanup, 1.0, 8, 18)
-    BENCHMARK_FUNCTION(ball_mul_unroll, ball_init, ball_cleanup, 1.0, 8, 18)
-BENCHMARK_END_TABLE(apbar_mul)
+BENCHMARK_BEGIN_TABLE(ball_add_simd)
+    BENCHMARK_FUNCTION(barith2_add4_scalar, barith2_init4, barith2_deinit4, 1.0, 8, 20)
+    BENCHMARK_FUNCTION(barith2_add4_simd, barith2_init4, barith2_deinit4, 1.0, 8, 20)
+BENCHMARK_END_TABLE(ball_add_simd)
 
-BENCHMARK_BEGIN_TABLE(apbar_mul_small)
-    BENCHMARK_FUNCTION(ball_mul_portable, ball_init, ball_cleanup, 1.0, 8, 12)
-    BENCHMARK_FUNCTION(ball_mul, ball_init, ball_cleanup, 1.0, 8, 12)
-    BENCHMARK_FUNCTION(ball_mul_no_exp, ball_init, ball_cleanup, 1.0, 8, 12)
-    BENCHMARK_FUNCTION(ball_mul_unroll, ball_init, ball_cleanup, 1.0, 8, 12)
-BENCHMARK_END_TABLE(apbar_mul_small)
+BENCHMARK_BEGIN_TABLE(compiler)
+    BENCHMARK_FUNCTION(barith2_add_optim1, barith2_init, barith2_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith2_sub_optim1, barith2_init, barith2_deinit, 4.0, 8, 20)
+    BENCHMARK_FUNCTION(barith2_mul, barith2_init, barith2_deinit, 4.0, 8, 20)
+BENCHMARK_END_TABLE(compiler)
 
-BENCHMARK_BEGIN_TABLE(apbar_mul_large)
-    BENCHMARK_FUNCTION(ball_mul_portable, ball_init, ball_cleanup, 1.0, 12, 18)
-    BENCHMARK_FUNCTION(ball_mul, ball_init, ball_cleanup, 1.0, 12, 18)
-    BENCHMARK_FUNCTION(ball_mul_no_exp, ball_init, ball_cleanup, 1.0, 12, 18)
-    BENCHMARK_FUNCTION(ball_mul_unroll, ball_init, ball_cleanup, 1.0, 12, 18)
-BENCHMARK_END_TABLE(apbar_mul_large)
+//BENCHMARK_BEGIN_TABLE(apbar_mul)
+//    BENCHMARK_FUNCTION(ball_mul_portable, ball_init, ball_cleanup, 1.0, 8, 18)
+//    BENCHMARK_FUNCTION(ball_mul, ball_init, ball_cleanup, 1.0, 8, 18)
+//    BENCHMARK_FUNCTION(ball_mul_no_exp, ball_init, ball_cleanup, 1.0, 8, 18)
+//    BENCHMARK_FUNCTION(ball_mul_unroll, ball_init, ball_cleanup, 1.0, 8, 18)
+//BENCHMARK_END_TABLE(apbar_mul)
+//
+//BENCHMARK_BEGIN_TABLE(apbar_mul_small)
+//    BENCHMARK_FUNCTION(ball_mul_portable, ball_init, ball_cleanup, 1.0, 8, 12)
+//    BENCHMARK_FUNCTION(ball_mul, ball_init, ball_cleanup, 1.0, 8, 12)
+//    BENCHMARK_FUNCTION(ball_mul_no_exp, ball_init, ball_cleanup, 1.0, 8, 12)
+//    BENCHMARK_FUNCTION(ball_mul_unroll, ball_init, ball_cleanup, 1.0, 8, 12)
+//BENCHMARK_END_TABLE(apbar_mul_small)
+//
+//BENCHMARK_BEGIN_TABLE(apbar_mul_large)
+//    BENCHMARK_FUNCTION(ball_mul_portable, ball_init, ball_cleanup, 1.0, 12, 18)
+//    BENCHMARK_FUNCTION(ball_mul, ball_init, ball_cleanup, 1.0, 12, 18)
+//    BENCHMARK_FUNCTION(ball_mul_no_exp, ball_init, ball_cleanup, 1.0, 12, 18)
+//    BENCHMARK_FUNCTION(ball_mul_unroll, ball_init, ball_cleanup, 1.0, 12, 18)
+//BENCHMARK_END_TABLE(apbar_mul_large)
 
 BENCHMARK_END_SUITE()
 
@@ -723,7 +887,7 @@ int main(int argc, char const *argv[])
             double cycles = bench(current->function, precision) / BENCHMARK_ITER / current->divisor;
             current->deinit(precision);
 
-            printf("%-14s %5d bits : %.2f cyc\n", current->name, precision, cycles);
+            printf("%-14s %6d bits : %.2f cyc\n", current->name, precision, cycles);
         }
     }
 
