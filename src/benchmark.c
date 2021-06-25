@@ -859,6 +859,10 @@ BENCHMARK_FUNCTION(int_mul_unroll, int_init, int_cleanup, 1.0, 8, 17)
 BENCHMARK_FUNCTION(int_mul_karatsuba, int_init, int_cleanup, 1.0, 8, 17)
 BENCHMARK_FUNCTION(int_mul_karatsuba_extend_basecase, int_init, int_cleanup, 1.0, 8, 17)
 BENCHMARK_FUNCTION(int_mul_karatsuba_opt1, int_init, int_cleanup, 1.0, 8, 17)
+<<<<<<< HEAD
+=======
+BENCHMARK_FUNCTION(int_mul_karatsuba_opt2, int_init, int_cleanup, 1.0, 8, 17)
+>>>>>>> master
 BENCHMARK_END_TABLE(karatsuba)
 
 BENCHMARK_BEGIN_TABLE(ball_add_simd)
