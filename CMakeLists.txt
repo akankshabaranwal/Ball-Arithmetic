@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(ball_arithmetic C)
 
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mavx2 -madx -mbmi2 -mlzcnt -Ofast -march=native -mtune=skylake -funroll-loops -g") # -Ofast -march=native -mtune=skylake
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mavx2 -madx -mbmi2 -mlzcnt -Ofast -march=native -mtune=skylake -funroll-loops -g") # -Ofast -march=native -mtune=skylake -funroll-loops
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build)
 
@@ -64,6 +64,11 @@ add_executable(apbar2-add4-example
     src/apbar2-add4-example.c
 )
 target_link_libraries(apbar2-add4-example flint gmp arb)
+add_executable(rooflineanalysis
+        ${BALL_ARITH_SRC}
+        src/roofline_multiprecision.c
+        )
+target_link_libraries(rooflineanalysis flint gmp arb)
 
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
     add_executable(profile-apbar

@@ -132,6 +132,7 @@ static inline void expand_rad(apfp_ptr fp, rad_srcptr rad)
     apfp_set_pos(fp);
 }
 
+// cost: 3 * limbs ( 1 n apint_add + 2 n apfp_add)
 static inline void add_error_bound(apbar_ptr res, apint_size_t prec)
 {
     // From the arb paper delta y (error bound) is (|y|+n)*e
@@ -383,7 +384,6 @@ void apbar_add_unroll_norad_noexp(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, a
 }
 
 //assumes that c, a, b are already allocated
-//!!portable minus is not yet implemented!!
 void apbar_sub_portable(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 {
     assert(a);
