@@ -45,6 +45,10 @@ def barith2_mul_cost(limbs):
     return 4 * limbs ** 2
 
 
+def int_mul_cost(limbs):
+    return 4 * limbs ** 2
+
+
 cost_functions = {
     "barith_add_portable": barith_add_cost_rad,
     "barith_add_intrinsics": barith_add_cost_rad,
@@ -84,6 +88,10 @@ cost_functions = {
     "barith2_mul_O0": barith2_mul_cost,
     "barith2_mul_O2": barith2_mul_cost,
     "barith2_mul_fastest": barith2_mul_cost,
+    "int_mul": int_mul_cost,
+    "int_mul_unroll4": int_mul_cost,
+    "int_mul_unroll8": int_mul_cost,
+    "int_mul_unroll12": int_mul_cost,
 }
 
 
@@ -155,4 +163,4 @@ fig = mpl.pyplot.gcf()
 print(fig.get_size_inches())
 fig.set_size_inches(7, 4)
 
-plt.savefig(in_file + '.png')
+plt.savefig(in_file + '_performance' + '.png')

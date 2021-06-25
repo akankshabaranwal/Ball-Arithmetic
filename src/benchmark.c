@@ -559,6 +559,17 @@ void barith2_mul(unsigned int prec)
     }
 }
 
+void barith2_mul_opt(unsigned int prec)
+{
+    for (size_t i = 0; i < BENCHMARK_ITER; i++)
+    {
+        apbar2_mul_opt(apbar2_out, apbar2_in1, apbar2_in2, prec);
+        apbar2_mul_opt(apbar2_out, apbar2_in1, apbar2_in2, prec);
+        apbar2_mul_opt(apbar2_out, apbar2_in1, apbar2_in2, prec);
+        apbar2_mul_opt(apbar2_out, apbar2_in1, apbar2_in2, prec);
+    }
+}
+
 apint_t in1, in2, out;
 static void int_init(uint prec)
 {
@@ -811,6 +822,7 @@ BENCHMARK_BEGIN_TABLE(ball_mul_all)
     BENCHMARK_FUNCTION(barith_mul_rad_opt, ball_init, ball_cleanup, 4.0, 8, 18)
     BENCHMARK_FUNCTION(barith_mul_unroll, ball_init, ball_cleanup, 4.0, 8, 18)
     BENCHMARK_FUNCTION(barith2_mul, barith2_init, barith2_deinit, 4.0, 8, 18)
+    BENCHMARK_FUNCTION(barith2_mul_opt, barith2_init, barith2_deinit, 4.0, 8, 18)
 BENCHMARK_END_TABLE(ball_mul_all)
 
 BENCHMARK_BEGIN_TABLE(ball_mult_new_old)
@@ -833,10 +845,10 @@ BENCHMARK_BEGIN_TABLE(compare_subtract_arblib)
 BENCHMARK_END_TABLE(compare_subtract_arblib)
 
 BENCHMARK_BEGIN_TABLE(compare_mul_arblib)
-    BENCHMARK_FUNCTION(arblib_mul, arblib_init, arblib_deinit, 4.0, 8, 17)
-    BENCHMARK_FUNCTION(barith_mul_portable, ball_init, ball_cleanup, 4.0, 8, 17)
-    BENCHMARK_FUNCTION(barith_mul_no_rad_exp, barith_init, barith_deinit, 4.0, 8, 17)
-    BENCHMARK_FUNCTION(barith2_mul, barith2_init, barith2_deinit, 4.0, 8, 17)
+    BENCHMARK_FUNCTION(arblib_mul, arblib_init, arblib_deinit, 4.0, 8, 12)
+    // BENCHMARK_FUNCTION(barith_mul_portable, ball_init, ball_cleanup, 4.0, 8, 18)
+    BENCHMARK_FUNCTION(barith2_mul, barith2_init, barith2_deinit, 4.0, 8, 12)
+    BENCHMARK_FUNCTION(barith_mul_intrinsic, ball_init, ball_cleanup, 4.0, 8, 12)
 BENCHMARK_END_TABLE(compare_mul_arblib)
 
 BENCHMARK_BEGIN_TABLE(int_plus)
@@ -846,6 +858,7 @@ BENCHMARK_END_TABLE(int_plus)
 
 BENCHMARK_BEGIN_TABLE(karatsuba)
     BENCHMARK_FUNCTION(int_mul, int_init, int_cleanup, 1.0, 8, 18)
+    BENCHMARK_FUNCTION(int_mul_portable, int_init, int_cleanup, 1.0, 8, 18)
     BENCHMARK_FUNCTION(int_mul_karatsuba, int_init, int_cleanup, 1.0, 8, 18)
     BENCHMARK_FUNCTION(int_mul_karatsuba_extend_basecase, int_init, int_cleanup, 1.0, 8, 18)
     BENCHMARK_FUNCTION(int_mul_karatsuba_opt1, int_init, int_cleanup, 1.0, 8, 18)

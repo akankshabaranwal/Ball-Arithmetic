@@ -630,6 +630,62 @@ static inline void apbar2_mul(apbar2_ptr x, apbar2_srcptr a, apbar2_srcptr b, ap
     x->rad = (fabs(apbar2_get_d(a)) + a->rad) * b->rad + a->rad * fabs(apbar2_get_d(b)) + _rad_error_bound(x, prec);
 }
 
+static inline unsigned long long _mul_unsigned_midpt_opt(apbar2_ptr x, apbar2_srcptr a, apbar2_srcptr b)
+{
+    assert(x->midpt_mant && a->midpt_mant && b->midpt_mant);
+    assert(x->midpt_size == a->midpt_size);
+    assert(x->midpt_size == b->midpt_size);
+
+    unsigned long long overflow;
+    unsigned char carry;
+    apbar2_limb_t b_limb;
+
+    for (apbar2_size_t i = 0; i <= APBAR2_UPPER(b); i++)
+    {
+        overflow = 0;
+        carry = 0;
+        b_limb = b->midpt_mant[i];
+        for (apbar2_size_t j = 0; j <= APBAR2_UPPER(a); j++)
+        {
+            carry = _addcarryx_u64(carry, x->midpt_mant[i + j], overflow, &x->midpt_mant[i + j]);
+            carry += _addcarryx_u64(0, x->midpt_mant[i + j], _mulx_u64(a->midpt_mant[j], b_limb, &overflow), &x->midpt_mant[i + j]);
+        }
+    }
+
+    // Leading 1 is always going to land in the last limb: Right shift so it becomes the MSB of lower-half.
+    // To-do: `leading_zero' can only be 1 or 0, possible optimization?
+    unsigned long long leading_zero = _lzcnt_u64(x->midpt_mant[x->midpt_size - 1]);
+
+    apbar2_limb_t x_mant0;
+    apbar2_limb_t x_mant1 = x->midpt_mant[APBAR2_UPPER(x)];
+
+    for (apbar2_size_t i = 0; i < x->midpt_size; i++)
+    {
+        if (i < APBAR2_UPPER(x))
+        {
+            x_mant0 = x_mant1;
+            x_mant1 = x->midpt_mant[APBAR2_UPPER(x) + i + 1];
+
+            unsigned long long lower = x_mant0 << leading_zero;
+            unsigned long long upper = (leading_zero) ? (x_mant1 >> (APBAR2_LIMB_BITS - leading_zero)) : 0ULL;
+            x->midpt_mant[i] = upper | lower;
+        } else {
+            x->midpt_mant[i] = 0ull;
+        }
+    }
+
+    x->midpt_exp = a->midpt_exp + b->midpt_exp + !leading_zero;
+
+    return overflow;
+}
+
+static inline void apbar2_mul_opt(apbar2_ptr x, apbar2_srcptr a, apbar2_srcptr b, apbar2_size_t prec)
+{
+    x->sign = (a->sign != b->sign);
+    _mul_unsigned_midpt_opt(x, a, b);
+    x->rad = (fabs(apbar2_get_d(a)) + a->rad) * b->rad + a->rad * fabs(apbar2_get_d(b)) + _rad_error_bound(x, prec);
+}
+
 static inline void _add_unsigned_midpt4(apbar2_ptr x1, apbar2_srcptr a1, apbar2_srcptr b1,
                                         apbar2_ptr x2, apbar2_srcptr a2, apbar2_srcptr b2,
                                         apbar2_ptr x3, apbar2_srcptr a3, apbar2_srcptr b3,

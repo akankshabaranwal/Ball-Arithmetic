@@ -54,7 +54,7 @@ for name, (x, y) in benchmarks.items():
 plt.xscale('log', base=2)
 plt.xticks(list(x_ticks), list(map(sizeof_fmt, x_ticks)), rotation=45)
 plt.xlabel('Precision [bits]')
-plt.ylabel('Speedup')
+plt.ylabel('Speedup over ' + base)
 plt.grid()
 # plt.legend()
 plt.tight_layout()
@@ -68,4 +68,4 @@ ax.set_position([box.x0, box.y0 - box.height * 0.05, box.width, box.height * 0.8
 # ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=5)
 ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.25), ncol=2, fancybox=True, shadow=True)
 
-plt.savefig(in_file + '.png')
+plt.savefig(in_file + '_speedup' + '.png')
