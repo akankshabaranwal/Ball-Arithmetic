@@ -1139,7 +1139,7 @@ uint64_t apint_mul_karatsuba_extend_basecase(apint_ptr x, apint_srcptr a, apint_
 
     // if lengths small enough, return a*b
     if (a->length <= 1 || b->length <= 1) // they have to be the same length anyways
-        return apint_mul_karatsuba_base_case(x, a, b);
+        return apint_mul(x, a, b);
 
     uint64_t overflow = apint_mul_karatsuba_recurse_extend_basecase(x, a, b); // Although I don't think there will be overflow here
     return overflow;                                                          // this returns a unit64_t

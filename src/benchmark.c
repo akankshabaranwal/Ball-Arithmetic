@@ -856,6 +856,7 @@ BENCHMARK_BEGIN_TABLE(int_plus)
     BENCHMARK_FUNCTION(int_plus_portable, int_init, int_cleanup, 1.0, 8, 17)
 BENCHMARK_END_TABLE(int_plus)
 
+// Need to run individually or run into memory issues?
 BENCHMARK_BEGIN_TABLE(karatsuba)
     BENCHMARK_FUNCTION(int_mul, int_init, int_cleanup, 1.0, 8, 18)
     BENCHMARK_FUNCTION(int_mul_portable, int_init, int_cleanup, 1.0, 8, 18)
