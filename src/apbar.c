@@ -551,6 +551,17 @@ void apbar_sub_unroll_norad_noexp(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, a
     if (!is_exact) error_bound_no_exp(c, p);
 }
 
+
+static inline void rad_mul(rad_ptr c, rad_srcptr a, rad_srcptr b)
+{
+    c->exp = a->exp + b->exp;
+    uint64_t low = _mulx_u64(a->mant, b->mant, &c->mant);
+    uint shift = __builtin_clzl(c->mant);
+    c->mant = (c->mant << shift) + ((apint_limb_t) low >> (APINT_LIMB_BITS - shift)) + 1;
+    c->exp += (apfp_exp_t) APINT_LIMB_BITS - shift;
+}
+
+
 void apbar_mul(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 {
     assert(a);
@@ -567,63 +578,26 @@ void apbar_mul(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 
     // For now do the computation in apfp for max precision
     // TODO: [optimisation] perform the computation in the rad type and over-estimate
-    apfp_t x_abs;
-    apfp_init(x_abs, p);
-    apint_copy(x_abs->mant, a->midpt->mant);
-    apfp_set_exp(x_abs, a->midpt->exp);
-    apfp_set_pos(x_abs);
+    rad_t x_abs;
+    narrow_to_rad_keep(a->midpt, x_abs);
 
-    apfp_t r;
-    apfp_init(r, p);
-    expand_rad(r, a->rad);
+    rad_t y_abs;
+    narrow_to_rad_keep(b->midpt, y_abs);
 
-    apfp_t y_abs;
-    apfp_init(y_abs, p);
-    apint_copy(y_abs->mant, b->midpt->mant);
-    apfp_set_exp(y_abs, b->midpt->exp);
-    apfp_set_pos(y_abs);
-
-    apfp_t s;
-    apfp_init(s, p);
-    expand_rad(s, b->rad);
-
-    apint_t one;
-    apint_init(one, 2*p);
-    apint_setlimb(one, 0, 1);
-
-    bool is_exact_sub;
     // TODO: Can we add numbers and have an output as one of the inputs?
     // TODO: round
     // |x| + r
-    is_exact_sub = apfp_add(x_abs, x_abs, r);
-    if (!is_exact_sub) apint_add(x_abs->mant, x_abs->mant, one);
+    rad_add(x_abs, x_abs, a->rad);
     // (|x| + r) * s
-    apfp_t res;
-    apfp_init(res, p);
-    is_exact_sub = apfp_mul(res, x_abs, s);
-    if (!is_exact_sub) apint_add(res->mant, res->mant, one);
+    rad_mul(x_abs, x_abs, b->rad);
 
     //r * |y|
-    apfp_t res_2;
-    apfp_init(res_2, p);
-    is_exact_sub = apfp_mul(res_2, y_abs, r);
-    if (!is_exact_sub) apint_add(res_2->mant, res_2->mant, one);
+    rad_mul(y_abs, y_abs, a->rad);
 
-    is_exact_sub = apfp_add(res, res, res_2);
-    if (!is_exact_sub) apint_add(res->mant, res->mant, one);
-
-    // narrow back to rad
-    narrow_to_rad(res, c->rad);
-
-    apfp_free(res_2);
-    apfp_free(res);
-    apfp_free(s);
-    apfp_free(y_abs);
-    apfp_free(r);
-    apfp_free(x_abs);
+    rad_add(c->rad, x_abs, y_abs);
 
     // error bound computation (should round towards +inf)
-    if (!is_exact) add_error_bound(c, p);
+    if (!is_exact) error_bound_no_exp(c, p);
 }
 
 void apbar_mul_portable(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
@@ -702,18 +676,6 @@ void apbar_mul_portable(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_
 }
 
 
-
-static inline void rad_mul(rad_ptr c, rad_srcptr a, rad_srcptr b)
-{
-    c->exp = a->exp + b->exp;
-    uint64_t low = _mulx_u64(a->mant, b->mant, &c->mant);
-    uint shift = __builtin_clzl(c->mant);
-    c->mant = (c->mant << shift) + ((apint_limb_t) low >> (APINT_LIMB_BITS - shift)) + 1;
-    c->exp += (apfp_exp_t) APINT_LIMB_BITS - shift;
-}
-
-
-
 void apbar_mul_no_rad_exp(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_size_t p)
 {
     assert(a);
@@ -721,7 +683,7 @@ void apbar_mul_no_rad_exp(apbar_ptr c, apbar_srcptr a, apbar_srcptr b, apint_siz
     assert(c);
 
     // midpoint computation (should round towards 0)
-    bool is_exact = apfp_mul(c->midpt, a->midpt, b->midpt);
+    bool is_exact = apfp_mul_portable(c->midpt, a->midpt, b->midpt);
 
     // radius computation (should round towards +inf)
     // (|x| + r)s + r|y|
