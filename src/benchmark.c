@@ -594,11 +594,6 @@ static void ball_mul_unroll(uint prec)
     ITERATE(apbar_mul_unroll(ball_out, ball_in1, ball_in2, prec));
 }
 
-static void int_mul_karatsuba_opt1(uint prec)
-{
-    ITERATE(apbar_mul_unroll(ball_out, ball_in1, ball_in2, prec));
-}
-
 BENCHMARK_BEGIN_SUITE()
 BENCHMARK_BEGIN_TABLE(def)
 BENCHMARK_FUNCTION(arblib_add, arblib_init, arblib_deinit, 4.0, 8, 17)
