@@ -10,6 +10,16 @@
 
 #define APINT_MSB ((apint_limb_t)1 << (sizeof(apint_limb_t) * 8 - 1))
 
+void printing(apint_t x, int m)
+{
+    printf("%d ", m);
+    for (int i = x->length - 1; i >= 0; i--)
+    {
+        printf("%llx ", apint_getlimb(x, i));
+    }
+    printf("\n");
+}
+
 void apint_init(apint_t x, apint_size_t p)
 {
     x->length = (p / APINT_LIMB_BITS) + ((p % APINT_LIMB_BITS) > 0);
@@ -22,7 +32,8 @@ void apint_to_fmpz(fmpz_t res, apint_srcptr src)
     fmpz_init2(res, src->length);
 
     fmpz_set_ui(res, src->limbs[0]);
-    for (int i = 1; i < src->length; ++i) {
+    for (int i = 1; i < src->length; ++i)
+    {
         fmpz_t val;
         fmpz_set_ui(val, src->limbs[i]);
         fmpz_mul_2exp(val, val, sizeof(apint_limb_t) * 8 * i);
@@ -35,7 +46,8 @@ void apint_print(apint_srcptr value)
     fmpz_t number;
     apint_to_fmpz(number, value);
 
-    if (value->sign < 0) {
+    if (value->sign < 0)
+    {
         printf("-");
     }
     fmpz_print(number);
@@ -61,12 +73,12 @@ void apint_copy(apint_ptr dst, apint_srcptr src)
 {
     assert(dst->length >= src->length);
     int i;
-    for (i = 0; i < src->length; i+=4)
+    for (i = 0; i < src->length; i += 4)
     {
         dst->limbs[i] = src->limbs[i];
-        dst->limbs[i+1] = src->limbs[i+1];
-        dst->limbs[i+2] = src->limbs[i+2];
-        dst->limbs[i+3] = src->limbs[i+3];
+        dst->limbs[i + 1] = src->limbs[i + 1];
+        dst->limbs[i + 2] = src->limbs[i + 2];
+        dst->limbs[i + 3] = src->limbs[i + 3];
     }
     dst->sign = src->sign;
 }
@@ -80,12 +92,16 @@ size_t apint_detectfirst1(apint_ptr x)
     size_t pos;
     apint_limb_t number;
     pos = 0;
-    for(i = x->length - 1; i >= 0; i--) {
-        if(x->limbs[i] > 0) {
+    for (i = x->length - 1; i >= 0; i--)
+    {
+        if (x->limbs[i] > 0)
+        {
             // There's a 1 somewhere here
             number = x->limbs[i];
-            while(1) {
-                if (number & APINT_MSB) {
+            while (1)
+            {
+                if (number & APINT_MSB)
+                {
                     return x->length * APINT_LIMB_BITS - pos;
                 }
                 number <<= 1;
@@ -104,19 +120,19 @@ size_t apint_detectfirst1_optim1(apint_ptr x)
     size_t pos;
     apint_limb_t number;
     pos = 0;
-    for(i = x->length - 1; i >= 0; i--)
+    for (i = x->length - 1; i >= 0; i--)
     {
-        if(x->limbs[i] > 0)
+        if (x->limbs[i] > 0)
         {
             number = x->limbs[i];
             break;
         }
     }
-    pos = APINT_LIMB_BITS * (x->length-i-1);
+    pos = APINT_LIMB_BITS * (x->length - i - 1);
     int xsize = x->length * APINT_LIMB_BITS;
     int bitpos = __builtin_clzll(number);
     pos = pos + bitpos;
-    return (xsize-pos);
+    return (xsize - pos);
 }
 
 bool apint_shiftr_copy(apint_ptr dest, apint_srcptr src, unsigned int shift)
@@ -125,28 +141,35 @@ bool apint_shiftr_copy(apint_ptr dest, apint_srcptr src, unsigned int shift)
     assert(dest->limbs);
     assert(dest->length >= src->length);
 
-    if (!shift) return false;
+    if (!shift)
+        return false;
 
     uint full_limbs_shifted = shift / APINT_LIMB_BITS;
     shift -= full_limbs_shifted * APINT_LIMB_BITS;
 
     bool did_shift = false;
 
-    for (int i = 0; i < src->length; ++i) {
-        if (i + full_limbs_shifted < src->length) {
-            if (i == 0) {
-                for (int j = 0; j < full_limbs_shifted; ++j) {
-                    if (src->limbs[j] != 0) did_shift = true;
+    for (int i = 0; i < src->length; ++i)
+    {
+        if (i + full_limbs_shifted < src->length)
+        {
+            if (i == 0)
+            {
+                for (int j = 0; j < full_limbs_shifted; ++j)
+                {
+                    if (src->limbs[j] != 0)
+                        did_shift = true;
                 }
             }
-            dest->limbs[i] = (src->limbs[i+full_limbs_shifted] >> shift) + (src->limbs[i+full_limbs_shifted+1] << (APINT_LIMB_BITS - shift));
+            dest->limbs[i] = (src->limbs[i + full_limbs_shifted] >> shift) + (src->limbs[i + full_limbs_shifted + 1] << (APINT_LIMB_BITS - shift));
         }
-        else {
+        else
+        {
             dest->limbs[i] = 0;
         }
     }
 
-    dest->limbs[src->length - 1] = src->limbs[src->length-1] >> shift;
+    dest->limbs[src->length - 1] = src->limbs[src->length - 1] >> shift;
     return did_shift || __builtin_ctzl(src->limbs[0]) >= shift;
 }
 
@@ -155,32 +178,41 @@ bool apint_shiftr(apint_ptr x, unsigned int shift)
 {
     assert(x->limbs);
 
-    if (!shift) return false;
+    if (!shift)
+        return false;
 
     uint full_limbs_shifted = shift / APINT_LIMB_BITS;
     shift -= full_limbs_shifted * APINT_LIMB_BITS;
 
     bool did_shift = false;
 
-    for (int i = 0; i < x->length; ++i) {
-        if (i + full_limbs_shifted < x->length) {
-            if (i == 0) {
-                for (int j = 0; j < full_limbs_shifted; ++j) {
-                    if (x->limbs[j] != 0) did_shift = true;
+    for (int i = 0; i < x->length; ++i)
+    {
+        if (i + full_limbs_shifted < x->length)
+        {
+            if (i == 0)
+            {
+                for (int j = 0; j < full_limbs_shifted; ++j)
+                {
+                    if (x->limbs[j] != 0)
+                        did_shift = true;
                 }
             }
-            x->limbs[i] = x->limbs[i+full_limbs_shifted];
+            x->limbs[i] = x->limbs[i + full_limbs_shifted];
         }
-        else {
+        else
+        {
             x->limbs[i] = 0;
         }
     }
 
-    if (!shift) return did_shift;
+    if (!shift)
+        return did_shift;
     did_shift |= __builtin_ctzl(x->limbs[0]) >= shift;
 
-    for (int i = 0; i < x->length - 1; ++i) {
-        x->limbs[i] = (x->limbs[i] >> shift) + (x->limbs[i+1] << (APINT_LIMB_BITS - shift));
+    for (int i = 0; i < x->length - 1; ++i)
+    {
+        x->limbs[i] = (x->limbs[i] >> shift) + (x->limbs[i + 1] << (APINT_LIMB_BITS - shift));
     }
 
     x->limbs[x->length - 1] >>= shift;
@@ -197,45 +229,52 @@ bool apint_shiftr_optim1(apint_ptr x, unsigned int shift)
 {
     assert(x->limbs);
 
-    if (!shift) return false;
+    if (!shift)
+        return false;
 
     int full_limbs_shifted = shift / APINT_LIMB_BITS;
     shift -= full_limbs_shifted * APINT_LIMB_BITS;
 
     bool did_shift = false;
 
-    int full_limbs_shifted_1 = full_limbs_shifted-1;
-    for (int i = full_limbs_shifted; i  < x->length; i+=2)
+    int full_limbs_shifted_1 = full_limbs_shifted - 1;
+    for (int i = full_limbs_shifted; i < x->length; i += 2)
     {
-        x->limbs[i-full_limbs_shifted] = x->limbs[i];
-        x->limbs[i-full_limbs_shifted_1] = x->limbs[i+1];
+        x->limbs[i - full_limbs_shifted] = x->limbs[i];
+        x->limbs[i - full_limbs_shifted_1] = x->limbs[i + 1];
     }
 
-    if (!shift) return did_shift;
+    if (!shift)
+        return did_shift;
     did_shift |= __builtin_ctzl(x->limbs[0]) >= shift;
 
-    int leftshiftamt =  (APINT_LIMB_BITS - shift);
+    int leftshiftamt = (APINT_LIMB_BITS - shift);
     for (int i = 0; i < x->length - 1; ++i)
     {
-        x->limbs[i] = (x->limbs[i] >> shift) + (x->limbs[i+1] << leftshiftamt);
+        x->limbs[i] = (x->limbs[i] >> shift) + (x->limbs[i + 1] << leftshiftamt);
     }
 
     x->limbs[x->length - 1] >>= shift;
     return did_shift;
 }
 
-void apint_shiftl(apint_ptr x, unsigned int shift){
+void apint_shiftl(apint_ptr x, unsigned int shift)
+{
     assert(x->limbs);
-    if (shift == 0) return;
+    if (shift == 0)
+        return;
 
     uint full_limbs_shifted = shift / APINT_LIMB_BITS;
     shift -= full_limbs_shifted * APINT_LIMB_BITS;
 
-    for (int i = x->length - 1; i >= 0; i--) {
-        if (i - (int) full_limbs_shifted >= 0) {
-            x->limbs[i] = x->limbs[i-full_limbs_shifted];
+    for (int i = x->length - 1; i >= 0; i--)
+    {
+        if (i - (int)full_limbs_shifted >= 0)
+        {
+            x->limbs[i] = x->limbs[i - full_limbs_shifted];
         }
-        else {
+        else
+        {
             x->limbs[i] = 0;
         }
     }
@@ -243,8 +282,9 @@ void apint_shiftl(apint_ptr x, unsigned int shift){
     if (!shift)
         return;
 
-    for (int i = x->length - 1; i > 0; i--) {
-        x->limbs[i] = (x->limbs[i] << shift) + (x->limbs[i-1] >> (APINT_LIMB_BITS - shift));
+    for (int i = x->length - 1; i > 0; i--)
+    {
+        x->limbs[i] = (x->limbs[i] << shift) + (x->limbs[i - 1] >> (APINT_LIMB_BITS - shift));
     }
 
     x->limbs[0] <<= shift;
@@ -252,22 +292,26 @@ void apint_shiftl(apint_ptr x, unsigned int shift){
 /* Optimizations:
  * Refer _optim2 for the most optimized version
  */
-void apint_shiftl_optim1(apint_ptr x, unsigned int shift){
+void apint_shiftl_optim1(apint_ptr x, unsigned int shift)
+{
     assert(x->limbs);
-    if (shift == 0) return;
+    if (shift == 0)
+        return;
 
     int full_limbs_shifted = shift / APINT_LIMB_BITS;
     shift -= full_limbs_shifted * APINT_LIMB_BITS;
 
-    for (int i = x->length - 1; i >= full_limbs_shifted; i--) {
-            x->limbs[i] = x->limbs[i-full_limbs_shifted];
+    for (int i = x->length - 1; i >= full_limbs_shifted; i--)
+    {
+        x->limbs[i] = x->limbs[i - full_limbs_shifted];
     }
 
     if (!shift)
         return;
 
-    for (int i = x->length - 1; i > 0; i--) {
-        x->limbs[i] = (x->limbs[i] << shift) + (x->limbs[i-1] >> (APINT_LIMB_BITS - shift));
+    for (int i = x->length - 1; i > 0; i--)
+    {
+        x->limbs[i] = (x->limbs[i] << shift) + (x->limbs[i - 1] >> (APINT_LIMB_BITS - shift));
     }
 
     x->limbs[0] <<= shift;
@@ -280,24 +324,28 @@ void apint_shiftl_optim1(apint_ptr x, unsigned int shift){
  * Removed unnecessary loop iterations
  * Scalar replacement
 */
-void apint_shiftl_optim2(apint_ptr x, unsigned int shift){
+void apint_shiftl_optim2(apint_ptr x, unsigned int shift)
+{
     assert(x->limbs);
-    if (shift == 0) return;
+    if (shift == 0)
+        return;
 
     int full_limbs_shifted = shift / APINT_LIMB_BITS;
     shift -= full_limbs_shifted * APINT_LIMB_BITS;
     int full_limbs_shifted_1 = full_limbs_shifted + 1;
-    for (int i = x->length - 1; i >= full_limbs_shifted-1; i-=2) {
-        x->limbs[i] = x->limbs[i-full_limbs_shifted];
-        x->limbs[i-1] = x->limbs[i-full_limbs_shifted_1];
+    for (int i = x->length - 1; i >= full_limbs_shifted - 1; i -= 2)
+    {
+        x->limbs[i] = x->limbs[i - full_limbs_shifted];
+        x->limbs[i - 1] = x->limbs[i - full_limbs_shifted_1];
     }
 
     if (!shift)
         return;
 
     int rightshiftamt = (APINT_LIMB_BITS - shift);
-    for (int i = x->length - 1; i > 0; i--) {
-        x->limbs[i] = (x->limbs[i] << shift) + (x->limbs[i-1] >> rightshiftamt);
+    for (int i = x->length - 1; i > 0; i--)
+    {
+        x->limbs[i] = (x->limbs[i] << shift) + (x->limbs[i - 1] >> rightshiftamt);
     }
     x->limbs[0] <<= shift;
 }
@@ -427,7 +475,7 @@ char apint_plus_portable(apint_ptr x, apint_srcptr a, apint_srcptr b)
 
     for (apint_size_t i = 0; i < a->length; i++)
     {
-        x->limbs[i] = (unsigned) carry;
+        x->limbs[i] = (unsigned)carry;
         x->limbs[i] += a->limbs[i] + b->limbs[i];
         carry = (a->limbs[i] > UINT64_MAX - b->limbs[i]) ? 1 : 0;
     }
@@ -458,12 +506,12 @@ unsigned char apint_plus_optim1(apint_ptr x, apint_srcptr a, apint_srcptr b)
     assert(a->length == b->length);
     assert(a->length <= x->length);
 
-    int midpt = (a->length /2) + 1;
+    int midpt = (a->length / 2) + 1;
     unsigned char carry1 = 0;
     unsigned char carry2 = 0;
     unsigned char carry3 = 0;
     unsigned char carry4 = 0;
-    for (apint_size_t i = 0; i < midpt; i+=4)
+    for (apint_size_t i = 0; i < midpt; i += 4)
     {
         carry1 = _addcarryx_u64(carry4, a->limbs[i], b->limbs[i], &x->limbs[i]);
         carry2 = _addcarryx_u64(carry1, a->limbs[i], b->limbs[i], &x->limbs[i]);
@@ -481,23 +529,28 @@ unsigned char apint_minus_portable(apint_ptr x, apint_srcptr a, apint_srcptr b)
     assert(a->length <= x->length);
     unsigned char borrow = 0;
     apint_srcptr first, second;
-    if (apint_is_greater(a, b)) {
+    if (apint_is_greater(a, b))
+    {
         // a > b so a-b
         first = a;
         second = b;
         x->sign = a->sign;
     }
-    else {
+    else
+    {
         // b > a so -(b-a)
         first = b;
         second = a;
         x->sign = -b->sign;
     }
 
-    for (apint_size_t i = 0; i < first->length; i++) {
+    for (apint_size_t i = 0; i < first->length; i++)
+    {
         x->limbs[i] = first->limbs[i] - second->limbs[i] - borrow;
-        if (second->limbs[i] == UINT64_MAX && borrow) borrow = 1;
-        else borrow = first->limbs[i] < second->limbs[i] + borrow;
+        if (second->limbs[i] == UINT64_MAX && borrow)
+            borrow = 1;
+        else
+            borrow = first->limbs[i] < second->limbs[i] + borrow;
     }
 
     return borrow;
@@ -540,41 +593,41 @@ unsigned char apint_minus_optim1(apint_ptr x, apint_srcptr a, apint_srcptr b)
     assert(a->length == b->length); // only handle same lengths for now
     assert(a->length <= x->length);
     unsigned char borrow = 0;
-    int midlength = (b->length/2)+1;
-    int is_greater1,is_greater2,is_greater3,is_greater4 ;
-    int is_greater=0;
+    int midlength = (b->length / 2) + 1;
+    int is_greater1, is_greater2, is_greater3, is_greater4;
+    int is_greater = 0;
     unsigned char borrow1 = 0;
     unsigned char borrow2 = 0;
     unsigned char borrow3 = 0;
     unsigned char borrow4 = 0;
-    for (int i = midlength; i >= 0; i-=4)
+    for (int i = midlength; i >= 0; i -= 4)
     {
-        is_greater1=(a->limbs[i] > b->limbs[i]);
-        is_greater2=(a->limbs[i-1] > b->limbs[i-1]);
-        is_greater3=(a->limbs[i-2] > b->limbs[i-2]);
-        is_greater4=(a->limbs[i-3] > b->limbs[i-3]);
-        is_greater = is_greater | is_greater1|is_greater2|is_greater3|is_greater4;
+        is_greater1 = (a->limbs[i] > b->limbs[i]);
+        is_greater2 = (a->limbs[i - 1] > b->limbs[i - 1]);
+        is_greater3 = (a->limbs[i - 2] > b->limbs[i - 2]);
+        is_greater4 = (a->limbs[i - 3] > b->limbs[i - 3]);
+        is_greater = is_greater | is_greater1 | is_greater2 | is_greater3 | is_greater4;
     }
     if (is_greater) // a > b so a-b
     {
         x->sign = a->sign;
-        for (apint_size_t i = 0; i < midlength; i+=4)
+        for (apint_size_t i = 0; i < midlength; i += 4)
         {
             borrow1 = _subborrow_u64(borrow4, a->limbs[i], b->limbs[i], &x->limbs[i]);
-            borrow2 = _subborrow_u64(borrow1, a->limbs[i+1], b->limbs[i+1], &x->limbs[i+1]);
-            borrow3 = _subborrow_u64(borrow2, a->limbs[i+2], b->limbs[i+2], &x->limbs[i+2]);
-            borrow4 = _subborrow_u64(borrow3, a->limbs[i+3], b->limbs[i+3], &x->limbs[i+3]);
+            borrow2 = _subborrow_u64(borrow1, a->limbs[i + 1], b->limbs[i + 1], &x->limbs[i + 1]);
+            borrow3 = _subborrow_u64(borrow2, a->limbs[i + 2], b->limbs[i + 2], &x->limbs[i + 2]);
+            borrow4 = _subborrow_u64(borrow3, a->limbs[i + 3], b->limbs[i + 3], &x->limbs[i + 3]);
         }
     }
     else // b > a so -(b-a)
     {
         x->sign = -b->sign;
-        for (apint_size_t i = 0; i < midlength; i+=4)
+        for (apint_size_t i = 0; i < midlength; i += 4)
         {
             borrow1 = _subborrow_u64(borrow4, b->limbs[i], a->limbs[i], &x->limbs[i]);
-            borrow2 = _subborrow_u64(borrow1, b->limbs[i+1], a->limbs[i+1], &x->limbs[i+1]);
-            borrow3 = _subborrow_u64(borrow2, b->limbs[i+2], a->limbs[i+2], &x->limbs[i+2]);
-            borrow4 = _subborrow_u64(borrow3, b->limbs[i+3], a->limbs[i+3], &x->limbs[i+3]);
+            borrow2 = _subborrow_u64(borrow1, b->limbs[i + 1], a->limbs[i + 1], &x->limbs[i + 1]);
+            borrow3 = _subborrow_u64(borrow2, b->limbs[i + 2], a->limbs[i + 2], &x->limbs[i + 2]);
+            borrow4 = _subborrow_u64(borrow3, b->limbs[i + 3], a->limbs[i + 3], &x->limbs[i + 3]);
         }
     }
     return borrow4;
@@ -585,7 +638,8 @@ int apint_is_greater(apint_srcptr a, apint_srcptr b)
     //Works only for same length a, b
     for (int i = (a->length - 1); i >= 0; i--)
     {
-        if (apint_getlimb(a, i) > apint_getlimb(b, i)) return 1;
+        if (apint_getlimb(a, i) > apint_getlimb(b, i))
+            return 1;
     }
     return 0;
 }
@@ -599,19 +653,23 @@ int apint_mul(apint_ptr x, apint_srcptr a, apint_srcptr b)
     unsigned long long overflow;
     apint_limb_t b_limb;
     unsigned char carry;
-    if (a->sign == b->sign) x->sign = 1;
-    else x->sign = -1;
+    if (a->sign == b->sign)
+        x->sign = 1;
+    else
+        x->sign = -1;
 
-    for (apint_size_t i = 0; i < b->length; i++) {
+    for (apint_size_t i = 0; i < b->length; i++)
+    {
         overflow = 0;
         carry = 0;
         b_limb = b->limbs[i];
-        for (apint_size_t j = 0; j < a->length && i + j < x->length; j++) {
+        for (apint_size_t j = 0; j < a->length && i + j < x->length; j++)
+        {
             carry = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]);
             carry += _addcarryx_u64(0, x->limbs[i + j], _mulx_u64(a->limbs[j], b_limb, &overflow), &x->limbs[i + j]);
         }
     }
-    return (int) overflow;
+    return (int)overflow; // why?
 }
 
 int apint_mul_unroll(apint_ptr x, apint_srcptr a, apint_srcptr b)
@@ -620,8 +678,10 @@ int apint_mul_unroll(apint_ptr x, apint_srcptr a, apint_srcptr b)
     assert(a->length == b->length); // only handle same lengths
     assert(a->length == x->length);
 
-    if (a->sign == b->sign) x->sign = 1;
-    else x->sign = -1;
+    if (a->sign == b->sign)
+        x->sign = 1;
+    else
+        x->sign = -1;
 
     unsigned long long overflow;
     unsigned long long overflow1;
@@ -648,19 +708,23 @@ int apint_mul_unroll(apint_ptr x, apint_srcptr a, apint_srcptr b)
     unsigned char carry5;
     unsigned char carry6;
     unsigned char carry7;
-    if (a->length < 4) {
+    if (a->length < 4)
+    {
         // a and b should be same length
         return apint_mul(x, a, b);
     }
-    else {
+    else
+    {
         // Loop unrolling if size is greater than 4
-        for (apint_size_t i = 0; i < b->length; i += 1) {
+        for (apint_size_t i = 0; i < b->length; i += 1)
+        {
             // doing 1 for now
             overflow = 0;
             carry = 0;
             b_limb = b->limbs[i];
             apint_size_t j = 0;
-            for (; j < a->length && i + j + 7 < x->length; j += 8) {
+            for (; j < a->length && i + j + 7 < x->length; j += 8)
+            {
                 carry1 = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]); // needs to be done first because dependent on previous overflow
                 temp = _mulx_u64(a->limbs[j], b_limb, &overflow1);
                 temp1 = _mulx_u64(a->limbs[j + 1], b_limb, &overflow2);
@@ -694,14 +758,15 @@ int apint_mul_unroll(apint_ptr x, apint_srcptr a, apint_srcptr b)
                 carry = _addcarryx_u64(carry7, x->limbs[i + j + 7], overflow7, &x->limbs[i + j + 7]);
                 carry += _addcarryx_u64(0, x->limbs[i + j + 7], temp7, &x->limbs[i + j + 7]);
             }
-            for (; j < a->length && i + j < x->length; j++) {
+            for (; j < a->length && i + j < x->length; j++)
+            {
                 carry = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]);
                 carry += _addcarryx_u64(0, x->limbs[i + j], _mulx_u64(a->limbs[j], b_limb, &overflow), &x->limbs[i + j]);
             }
         }
     }
 
-    return (int) overflow;
+    return (int)overflow;
 }
 
 int apint_mul_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b)
@@ -760,6 +825,11 @@ int apint_mul_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b)
                     carry = _addcarryx_u64(carry3, x->limbs[i + j + 3], overflow3, &x->limbs[i + j + 3]);
                     carry += _addcarryx_u64(0, x->limbs[i + j + 3], temp3, &x->limbs[i + j + 3]);
                 }
+                else if (i + j < x->length)
+                {
+                    x->limbs[i + j] += overflow + carry;
+                    x->limbs[i + j] += _mulx_u64(a->limbs[j], b->limbs[i], &overflow1);
+                }
             }
         }
     }
@@ -773,26 +843,29 @@ void apint_mul_portable(apint_ptr x, apint_srcptr a, apint_srcptr b)
     assert(a->length == b->length); // only handle same lengths for now
     assert(a->length == x->length);
 
-    if(a->sign == b->sign) {
+    if (a->sign == b->sign)
+    {
         x->sign = 1;
     }
-    else {
+    else
+    {
         x->sign = -1;
     }
 
     // Use 32 bits for multiplication to be able to get the overflow
     uint32_t overflow = 0;
-    uint32_t *b_vals = (uint32_t *) b->limbs;
-    uint32_t *a_vals = (uint32_t *) a->limbs;
-    uint32_t *x_vals = (uint32_t *) x->limbs;
+    uint32_t *b_vals = (uint32_t *)b->limbs;
+    uint32_t *a_vals = (uint32_t *)a->limbs;
+    uint32_t *x_vals = (uint32_t *)x->limbs;
     for (size_t b_i = 0; b_i < b->length * 2; b_i++)
     {
         overflow = 0;
         for (size_t a_i = 0; a_i < a->length * 2; a_i++)
         {
-            if ((a_i + b_i) < x->length * 2) {
+            if ((a_i + b_i) < x->length * 2)
+            {
                 x_vals[a_i + b_i] += overflow;
-                uint64_t res = (uint64_t) a_vals[a_i] * (uint64_t) b_vals[b_i];
+                uint64_t res = (uint64_t)a_vals[a_i] * (uint64_t)b_vals[b_i];
                 overflow = res >> 32;
                 x_vals[a_i + b_i] += res;
             }
@@ -812,28 +885,30 @@ Was supposed to be used for karatsuba adding when two lengths are different, but
 */
 char apint_add_karatsuba(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
-    assert(x->limbs && a->limbs && b->limbs);
-    assert((max(a->length, b->length)) == x->length);
-    /*
-    a has to be the bigger one because when we pass in a_high,
-    it will always be greater or equal because of how we calculate "d"
-    */
-    assert(a->length >= b->length);
-
-    char carry = 0;
-    apint_size_t i;
-    for (i = 0; i < b->length; i++)
+    assert(a->length == b->length);
+    unsigned char overflow;
+    if (a->sign == b->sign)
     {
-        carry = _addcarryx_u64(carry, a->limbs[i], b->limbs[i], &x->limbs[i]);
+        overflow = apint_plus(x, a, b);
+        x->sign = a->sign;
     }
-
-    for (; i < a->length; i++)
+    else
     {
-        carry = _addcarryx_u64(carry, a->limbs[i], 0, &x->limbs[i]);
+        if (a->sign == -1) //only a is negative. so equivalent to b-a.
+        {
+            overflow = apint_minus(x, b, a);
+        }
+        else
+        {
+            overflow = apint_minus(x, a, b);
+        }
     }
-
-    // x->limbs[x->length - 1] = carry;
-    return carry;
+    if (overflow && x->length > a->length)
+    {
+        x->limbs[a->length] += x->limbs[a->length] + overflow;
+        overflow = 0;
+    }
+    return overflow;
 }
 
 uint64_t apint_mul_karatsuba(apint_ptr x, apint_srcptr a, apint_srcptr b)
@@ -847,7 +922,7 @@ uint64_t apint_mul_karatsuba(apint_ptr x, apint_srcptr a, apint_srcptr b)
 
     // if lengths small enough, return a*b
     if (a->length <= 1 || b->length <= 1) // they have to be the same length anyways
-        return apint_mul_karatsuba_base_case(x, a, b);
+        return apint_mul(x, a, b);
 
     uint64_t overflow = apint_mul_karatsuba_recurse(x, a, b); // Although I don't think there will be overflow here
     return overflow;                                          // this returns a unit64_t
@@ -860,7 +935,7 @@ uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b
 {
     // if lengths small enough, return a*b
     // karatsuba_base_case handles different precision input and output because it is needed
-    if (a->length == 1 || b->length == 1)
+    if (a->length <= 1 || b->length <= 1) // CHECK THE LENGTHS
         return apint_mul_karatsuba_base_case(x, a, b);
 
     // d = floor(max(length(a), length(b)) / 2)
@@ -890,7 +965,7 @@ uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b
     z0->sign = 1;
     z1->sign = 1;
     z2->sign = 1;
-    apint_init(z0, x->length * 64); // Padding it to oblivion, trade off between performance and precision
+    apint_init(z0, x->length * 64); // Padding it to x len, trade off between performance and precision
     apint_init(z1, x->length * 64);
     apint_init(z2, x->length * 64);
 
@@ -898,15 +973,16 @@ uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b
     a_add->sign = 1;
     b_add->sign = 1;
     char a_add_overflow, b_add_overflow;
-    apint_init(a_add, (max(a_high->length, a_low->length)) * 64);
-    apint_init(b_add, (max(b_high->length, b_low->length)) * 64);
+    apint_init(a_add, (max(a_high->length, a_low->length) + 1) * 64);
+    apint_init(b_add, (max(b_high->length, b_low->length) + 1) * 64);
 
-    a_add_overflow = apint_add(a_add, a_high, a_low); // a_high and a_low have to be the same length for now ASSUMPTION
-    b_add_overflow = apint_add(b_add, b_high, b_low); // a_high and a_low have to be the same length for now
+    a_add_overflow = apint_add_karatsuba(a_add, a_high, a_low); // a_high and a_low have to be the same length for now ASSUMPTION
+    b_add_overflow = apint_add_karatsuba(b_add, b_high, b_low); // a_high and a_low have to be the same length for now
 
     apint_mul_karatsuba_recurse(z0, a_low, b_low);
-    apint_mul_karatsuba_recurse(z1, a_add, b_add);   // THE LENGTH NEVER DECREASES, ok now it decreases, so its fine
-    apint_mul_karatsuba_recurse(z2, a_high, b_high); // There should be an overflow but I don't think I need to do anything with it
+    // apint_mul_karatsuba_recurse(z1, a_add, b_add); // THE LENGTH NEVER DECREASES, ok now it decreases, so its fine
+    apint_mul_karatsuba_base_case(z1, a_add, b_add); // Need to use this one because it's possible a_add and b_add has an overflow
+    apint_mul_karatsuba_recurse(z2, a_high, b_high); // There should not be an overflow
 
     // FREE THINGS
     apint_free(a_high);
@@ -919,7 +995,7 @@ uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b
     apint_t first_operand; // z2 + z0
     first_operand->sign = 1;
     apint_init(first_operand, (z2->length) * 64);
-    apint_add(first_operand, z2, z0);
+    a_add_overflow = apint_add_karatsuba(first_operand, z2, z0);
 
     apint_t second_operand; // z1 - (z2 + z0)
     second_operand->sign = 1;
@@ -936,8 +1012,8 @@ uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b
     // x = z2 * 2 ^ (2 * d) + (z1 - z2 - z0) * 2 ^ (d) + z0;
     apint_t temp_x;
     apint_init(temp_x, (x->length) * 64);
-    apint_add(temp_x, z2, second_operand);
-    apint_add(x, temp_x, z0);
+    a_add_overflow = apint_add_karatsuba(temp_x, z2, second_operand);
+    b_add_overflow = apint_add_karatsuba(x, temp_x, z0);
 
     // FREE EVERYTHING ELSE
     apint_free(z0);
@@ -947,15 +1023,13 @@ uint64_t apint_mul_karatsuba_recurse(apint_ptr x, apint_srcptr a, apint_srcptr b
     apint_free(second_operand);
     apint_free(temp_x);
 
-    uint64_t result; // not used
-    return result;
+    return 0;
 }
 
-uint64_t apint_mul_karatsuba_base_case(apint_ptr x, apint_srcptr a, apint_srcptr b)
+unsigned long long apint_mul_karatsuba_base_case(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
     assert(a->length == b->length); // only handle same lengths for now
-    // assert((a->length + b->length) <= x->length); // output can be different precision than input due to recursion and not wanting to lose precision during recursion
 
     unsigned long long overflow;
     unsigned char carry;
@@ -963,22 +1037,28 @@ uint64_t apint_mul_karatsuba_base_case(apint_ptr x, apint_srcptr a, apint_srcptr
         x->sign = 1;
     else
         x->sign = -1;
-    for (apint_size_t i = 0; i < b->length; i++)
+
+    apint_size_t i, j;
+    for (i = 0; i < b->length; i++)
     {
         overflow = 0;
         carry = 0;
-        for (apint_size_t j = 0; j < a->length; j++)
+        for (j = 0; j < a->length && i + j < x->length; j++)
         {
             // make sure we don't try to set something in x that is outside of its precision
-            if ((i + j) < x->length)
+            carry = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]);
+            carry += _addcarryx_u64(0, x->limbs[i + j], _mulx_u64(a->limbs[j], b->limbs[i], &overflow), &x->limbs[i + j]);
+        }
+        if (carry || overflow)
+        {
+            if (i + j - 1 < x->length)
             {
                 carry = _addcarryx_u64(carry, x->limbs[i + j], overflow, &x->limbs[i + j]);
-                x->limbs[i + j] += carry;
-                x->limbs[i + j] += _mulx_u64(a->limbs[j], b->limbs[i], &overflow);
             }
+            overflow = 0;
         }
     }
-    return (int)overflow;
+    return overflow;
 }
 
 /* -------------------------------------- OPTIMIZATIONS BELOW (Extend Recursive Basecase) --------------------------------------  */
@@ -1049,14 +1129,14 @@ uint64_t apint_mul_karatsuba_recurse_extend_basecase(apint_ptr x, apint_srcptr a
     a_add->sign = 1;
     b_add->sign = 1;
     char a_add_overflow, b_add_overflow;
-    apint_init(a_add, (max(a_high->length, a_low->length)) * 64);
-    apint_init(b_add, (max(b_high->length, b_low->length)) * 64);
+    apint_init(a_add, (max(a_high->length, a_low->length) + 1) * 64);
+    apint_init(b_add, (max(b_high->length, b_low->length) + 1) * 64);
 
-    a_add_overflow = apint_add(a_add, a_high, a_low); // a_high and a_low have to be the same length for now ASSUMPTION
-    b_add_overflow = apint_add(b_add, b_high, b_low); // a_high and a_low have to be the same length for now
+    a_add_overflow = apint_add_karatsuba(a_add, a_high, a_low); // a_high and a_low have to be the same length for now ASSUMPTION
+    b_add_overflow = apint_add_karatsuba(b_add, b_high, b_low); // a_high and a_low have to be the same length for now
 
     apint_mul_karatsuba_recurse_extend_basecase(z0, a_low, b_low);
-    apint_mul_karatsuba_recurse_extend_basecase(z1, a_add, b_add);   // THE LENGTH NEVER DECREASES, ok now it decreases, so its fine
+    apint_mul_karatsuba_base_case(z1, a_add, b_add);                 // THE LENGTH NEVER DECREASES, ok now it decreases, so its fine
     apint_mul_karatsuba_recurse_extend_basecase(z2, a_high, b_high); // There should be an overflow but I don't think I need to do anything with it
 
     // FREE THINGS
@@ -1070,7 +1150,7 @@ uint64_t apint_mul_karatsuba_recurse_extend_basecase(apint_ptr x, apint_srcptr a
     apint_t first_operand; // z2 + z0
     first_operand->sign = 1;
     apint_init(first_operand, (z2->length) * 64);
-    apint_add(first_operand, z2, z0);
+    apint_add_karatsuba(first_operand, z2, z0);
 
     apint_t second_operand; // z1 - (z2 + z0)
     second_operand->sign = 1;
@@ -1078,15 +1158,17 @@ uint64_t apint_mul_karatsuba_recurse_extend_basecase(apint_ptr x, apint_srcptr a
     apint_sub(second_operand, z1, first_operand);
 
     // Shift results appropriately, should be stored in z2 and second_operand
-    d = d * 64;                // in the beginning we split by d, but d is a limb, which is 64 bits
-    apint_shiftl(z2, (2 * d)); // multiply by 2 because of Karatsuba algorithm
-    apint_shiftl(second_operand, d);
+    d = d * 64; // in the beginning we split by d, but d is a limb, which is 64 bits
+    // apint_shiftl(z2, (2 * d)); // multiply by 2 because of Karatsuba algorithm
+    // apint_shiftl(second_operand, d);
+    apint_shiftl_optim2(z2, (2 * d)); // multiply by 2 because of Karatsuba algorithm
+    apint_shiftl_optim2(second_operand, d);
 
     // x = z2 * 2 ^ (2 * d) + (z1 - z2 - z0) * 2 ^ (d) + z0;
     apint_t temp_x;
     apint_init(temp_x, (x->length) * 64);
-    apint_add(temp_x, z2, second_operand);
-    apint_add(x, temp_x, z0);
+    apint_add_karatsuba(temp_x, z2, second_operand);
+    apint_add_karatsuba(x, temp_x, z0);
 
     // FREE EVERYTHING ELSE
     apint_free(z0);
@@ -1100,7 +1182,7 @@ uint64_t apint_mul_karatsuba_recurse_extend_basecase(apint_ptr x, apint_srcptr a
     return result;
 }
 
-/* -------------------------------------- OPTIMIZATIONS BELOW (Karatsuba ILP) --------------------------------------  */
+/* -------------------------------------- OPTIMIZATIONS BELOW (Karatsuba INLINING) --------------------------------------  */
 uint64_t apint_mul_karatsuba_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b)
 {
     assert(x->limbs && a->limbs && b->limbs);
@@ -1112,7 +1194,7 @@ uint64_t apint_mul_karatsuba_OPT1(apint_ptr x, apint_srcptr a, apint_srcptr b)
 
     // if lengths small enough, return a*b
     if (a->length <= 1 || b->length <= 1) // they have to be the same length anyways
-        return apint_mul_karatsuba_base_case(x, a, b);
+        return apint_mul(x, a, b);
 
     uint64_t overflow = apint_mul_karatsuba_recurse_OPT1(x, a, b); // Although I don't think there will be overflow here
     return overflow;                                               // this returns a unit64_t
@@ -1178,14 +1260,14 @@ uint64_t apint_mul_karatsuba_recurse_OPT1(apint_ptr x, apint_srcptr a, apint_src
     a_add->sign = 1;
     b_add->sign = 1;
     char a_add_overflow, b_add_overflow;
-    apint_init(a_add, (max(a_high->length, a_low->length)) * 64);
-    apint_init(b_add, (max(b_high->length, b_low->length)) * 64);
+    apint_init(a_add, (max(a_high->length, a_low->length) + 1) * 64);
+    apint_init(b_add, (max(b_high->length, b_low->length) + 1) * 64);
 
-    a_add_overflow = apint_add(a_add, a_high, a_low); // a_high and a_low have to be the same length for now ASSUMPTION
-    b_add_overflow = apint_add(b_add, b_high, b_low); // a_high and a_low have to be the same length for now
+    a_add_overflow = apint_add_karatsuba(a_add, a_high, a_low); // a_high and a_low have to be the same length for now ASSUMPTION
+    b_add_overflow = apint_add_karatsuba(b_add, b_high, b_low); // a_high and a_low have to be the same length for now
 
     apint_mul_karatsuba_recurse_OPT1(z0, a_low, b_low);
-    apint_mul_karatsuba_recurse_OPT1(z1, a_add, b_add);   // THE LENGTH NEVER DECREASES, ok now it decreases, so its fine
+    apint_mul_karatsuba_base_case(z1, a_add, b_add);      // THE LENGTH NEVER DECREASES, ok now it decreases, so its fine
     apint_mul_karatsuba_recurse_OPT1(z2, a_high, b_high); // There should be an overflow but I don't think I need to do anything with it
 
     // FREE THINGS
@@ -1199,7 +1281,7 @@ uint64_t apint_mul_karatsuba_recurse_OPT1(apint_ptr x, apint_srcptr a, apint_src
     apint_t first_operand; // z2 + z0
     first_operand->sign = 1;
     apint_init(first_operand, (z2->length) * 64);
-    apint_add(first_operand, z2, z0);
+    apint_add_karatsuba(first_operand, z2, z0);
 
     apint_t second_operand; // z1 - (z2 + z0)
     second_operand->sign = 1;
@@ -1210,7 +1292,7 @@ uint64_t apint_mul_karatsuba_recurse_OPT1(apint_ptr x, apint_srcptr a, apint_src
     d = d * 64; // in the beginning we split by d, but d is a limb, which is 64 bits
     // INLINE THE SHIFTS
     // apint_shiftl(z2, (2 * d));       // multiply by 2 because of Karatsuba algorithm
-    uint full_limbs_shifted = d / APINT_LIMB_BITS;
+    uint full_limbs_shifted = d / APINT_LIMB_BITS; // TODO
     d -= full_limbs_shifted * APINT_LIMB_BITS;
     for (int i = z2->length - 1; i >= 0; i--)
     {
@@ -1254,8 +1336,124 @@ uint64_t apint_mul_karatsuba_recurse_OPT1(apint_ptr x, apint_srcptr a, apint_src
     // x = z2 * 2 ^ (2 * d) + (z1 - z2 - z0) * 2 ^ (d) + z0;
     apint_t temp_x;
     apint_init(temp_x, (x->length) * 64);
-    apint_add(temp_x, z2, second_operand);
-    apint_add(x, temp_x, z0);
+    apint_add_karatsuba(temp_x, z2, second_operand);
+    apint_add_karatsuba(x, temp_x, z0);
+
+    // FREE EVERYTHING ELSE
+    apint_free(z0);
+    apint_free(z1);
+    apint_free(z2);
+    apint_free(first_operand);
+    apint_free(second_operand);
+    apint_free(temp_x);
+
+    uint64_t result; // not used yet
+    return result;
+}
+
+/* -------------------------------------- OPTIMIZATIONS BELOW (Karatsuba OPT inside methods) --------------------------------------  */
+uint64_t apint_mul_karatsuba_OPT2(apint_ptr x, apint_srcptr a, apint_srcptr b)
+{
+    assert(x->limbs && a->limbs && b->limbs);
+    assert(a->length == b->length); // only handle same lengths of input
+    assert(a->length == x->length); // assuming that output has same precision as both inputs
+
+    // Make sure to keep track of the sign, but pass everything in as positive
+    x->sign = a->sign * b->sign;
+
+    // if lengths small enough, return a*b
+    if (a->length <= 1 || b->length <= 1) // they have to be the same length anyways
+        return apint_mul(x, a, b);
+
+    uint64_t overflow = apint_mul_karatsuba_recurse_OPT2(x, a, b); // Although I don't think there will be overflow here
+    return overflow;                                               // this returns a unit64_t
+}
+
+/*
+This is a recursive method, it seems like apint_add is still the bottleneck
+- calling optimized shift
+*/
+uint64_t apint_mul_karatsuba_recurse_OPT2(apint_ptr x, apint_srcptr a, apint_srcptr b)
+{
+    // if lengths small enough, return a*b
+    // karatsuba_base_case handles different precision input and output because it is needed
+    // 10 saw improvements
+    if (a->length <= 8 || b->length <= 8)
+        return apint_mul_karatsuba_base_case(x, a, b);
+
+    // d = floor(max(length(a), length(b)) / 2)
+    apint_size_t d = floor(max(a->length, b->length) / 2); // They're the same length anyways
+
+    // x_high, x_low = split x at d, or right shift by d
+    apint_t a_high, a_low;
+    a_high->sign = 1;
+    a_low->sign = 1;
+    apint_init(a_high, (a->length - d) * 64); // The 64 bits here is under the assumption that we use ints to represent everything
+    apint_init(a_low, d * 64);
+
+    apint_copyover(a_low, a, 0); // Pretty sure I can use the apint_limb function but that just sets one limb right?
+    apint_copyover(a_high, a, d);
+
+    // y_high, y_low = split y at d, or right shift by d
+    apint_t b_high, b_low;
+    b_high->sign = 1;
+    b_low->sign = 1;
+    apint_init(b_high, (b->length - d) * 64);
+    apint_init(b_low, d * 64);
+
+    apint_copyover(b_low, b, 0);
+    apint_copyover(b_high, b, d);
+
+    apint_t z0, z1, z2;
+    z0->sign = 1;
+    z1->sign = 1;
+    z2->sign = 1;
+    apint_init(z0, x->length * 64); // Padding it to oblivion, trade off between performance and precision
+    apint_init(z1, x->length * 64);
+    apint_init(z2, x->length * 64);
+
+    apint_t a_add, b_add;
+    a_add->sign = 1;
+    b_add->sign = 1;
+    char a_add_overflow, b_add_overflow;
+    apint_init(a_add, (max(a_high->length, a_low->length) + 1) * 64);
+    apint_init(b_add, (max(b_high->length, b_low->length) + 1) * 64);
+
+    a_add_overflow = apint_add_karatsuba(a_add, a_high, a_low); // a_high and a_low have to be the same length for now ASSUMPTION
+    b_add_overflow = apint_add_karatsuba(b_add, b_high, b_low); // a_high and a_low have to be the same length for now
+
+    apint_mul_karatsuba_recurse_OPT2(z0, a_low, b_low);
+    apint_mul_karatsuba_base_case(z1, a_add, b_add);      // THE LENGTH NEVER DECREASES, ok now it decreases, so its fine
+    apint_mul_karatsuba_recurse_OPT2(z2, a_high, b_high); // There should be an overflow but I don't think I need to do anything with it
+
+    // FREE THINGS
+    apint_free(a_high);
+    apint_free(a_low);
+    apint_free(b_high);
+    apint_free(b_low);
+    apint_free(a_add);
+    apint_free(b_add);
+
+    apint_t first_operand; // z2 + z0
+    first_operand->sign = 1;
+    apint_init(first_operand, (z2->length) * 64);
+    apint_add_karatsuba(first_operand, z2, z0); // is a better version of this done?
+
+    apint_t second_operand; // z1 - (z2 + z0)
+    second_operand->sign = 1;
+    apint_init(second_operand, (z1->length) * 64);
+    apint_sub(second_operand, z1, first_operand);
+
+    // Shift results appropriately, should be stored in z2 and second_operand
+    d = d * 64;                             // in the beginning we split by d, but d is a limb, which is 64 bits
+    apint_shiftl_optim2(z2, (2 * d));       // multiply by 2 because of Karatsuba algorithm
+    apint_shiftl_optim2(second_operand, d); // this is the most optimized shiftl method!!!!!
+
+    // x = z2 * 2 ^ (2 * d) + (z1 - z2 - z0) * 2 ^ (d) + z0;
+    apint_t temp_x;
+    apint_init(temp_x, (x->length) * 64);
+    apint_add_karatsuba(temp_x, z2, second_operand);
+    apint_add_karatsuba(x, temp_x, z0);
 
     // FREE EVERYTHING ELSE
     apint_free(z0);
