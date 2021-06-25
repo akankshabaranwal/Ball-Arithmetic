@@ -7,11 +7,9 @@
 #include "tsc_x86.h"
 #include "benchmark.h"
 
-<<<<<<< HEAD
-#define ITERATE(CODE) for (size_t i = 0; i < BENCHMARK_ITER; i++)(CODE);
-=======
-#define ITERATE(CODE) for (size_t i = 0; i < BENCHMARK_ITER; i++) CODE;
->>>>>>> master
+#define ITERATE(CODE)                           \
+    for (size_t i = 0; i < BENCHMARK_ITER; i++) \
+        CODE;
 
 static double bench(benchmark_fun_t f, unsigned int prec)
 {
